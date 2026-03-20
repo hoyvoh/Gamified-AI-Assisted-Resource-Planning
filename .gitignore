@@ -1,0 +1,68 @@
+# ── Environment & secrets ─────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.local
+
+# Sensitive JSON files
+credentials.json
+secrets.json
+*.secret.json
+*.private.json
+service-account.json
+
+# ── Node / pnpm ───────────────────────────────────────────────────────────
+node_modules/
+.pnp
+.pnp.js
+.pnpm-store/
+
+# ── Next.js ───────────────────────────────────────────────────────────────
+ui/.next/
+ui/out/
+ui/build/
+ui/.swc/
+ui/next-env.d.ts
+
+# ── Lint / Build caches ───────────────────────────────────────────────────
+.eslintcache
+*.tsbuildinfo
+.cache/
+
+# ── Python ────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+.venv/
+venv/
+dist/
+build/
+
+# ── UV ────────────────────────────────────────────────────────────────────
+be/.venv/
+
+# ── Type / Lint caches ────────────────────────────────────────────────────
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+htmlcov/
+.coverage
+
+# ── IDEs ──────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ── Test coverage ─────────────────────────────────────────────────────────
+coverage/
+.nyc_output/
+
+# ── Misc ──────────────────────────────────────────────────────────────────
+*.log
+tmp/
+.tmp/

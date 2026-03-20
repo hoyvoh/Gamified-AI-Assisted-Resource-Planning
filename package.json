@@ -1,0 +1,29 @@
+{
+  "name": "gamified-resource-planning",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Gamified resource planning — monorepo root",
+  "scripts": {
+    "prepare": "simple-git-hooks"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "pnpm exec lint-staged",
+    "commit-msg": "pnpm commitlint --edit $1"
+  },
+  "commitlint": {
+    "extends": ["@commitlint/config-conventional"]
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.6.0",
+    "@commitlint/config-conventional": "^19.6.0",
+    "lint-staged": "^15.3.0",
+    "simple-git-hooks": "^2.11.1"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "packageManager": "pnpm@10.6.5",
+  "pnpm": {
+    "onlyBuiltDependencies": ["simple-git-hooks"]
+  }
+}
