@@ -25,30 +25,32 @@ Strategic Board vẫn là giao diện planning trung tâm của sản phẩm, nh
 
 ## 2. Người Dùng & Vai Trò
 
-| Role | Mô tả |
-|------|-------|
-| **Project Manager (PM)** | Tạo dự án, nhập proposal / project brief, thực hiện Project Analysis cùng Tech Lead, phê duyệt planning scenario, theo dõi execution |
-| **Tech Lead (TL)** | Đánh giá technical feasibility, architecture risk, readiness, review task estimates, đóng góp quyết định kỹ thuật |
-| **BOD / Executive Reviewer** | Thực hiện HR Analysis, xem developer profiles, chạy team match và xem team composition recommendations |
-| **Org Admin** | Quản lý tổ chức, users, personnel và access control |
-| **Team Member** | Xem task được giao, cập nhật tiến độ hằng ngày, nhận XP, theo dõi execution liên quan đến phần việc được giao |
+| Role                         | Mô tả                                                                                                                                |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| **Project Manager (PM)**     | Tạo dự án, nhập proposal / project brief, thực hiện Project Analysis cùng Tech Lead, phê duyệt planning scenario, theo dõi execution |
+| **Tech Lead (TL)**           | Đánh giá technical feasibility, architecture risk, readiness, review task estimates, đóng góp quyết định kỹ thuật                    |
+| **BOD / Executive Reviewer** | Thực hiện HR Analysis, xem developer profiles, chạy team match và xem team composition recommendations                               |
+| **Org Admin**                | Quản lý tổ chức, users, personnel và access control                                                                                  |
+| **Team Member**              | Xem task được giao, cập nhật tiến độ hằng ngày, nhận XP, theo dõi execution liên quan đến phần việc được giao                        |
 
 ### 2.1 Quyền Truy Cập
 
-| Capability | PM | TL | BOD | Team Member | Admin |
-|-----------|----|----|-----|-------------|-------|
-| Mode 1 - Project Analysis | Full | Full | Read if needed | No | Governance only |
-| Mode 2 - HR Analysis screen | Theo frontend-spec hiện tại | Theo frontend-spec hiện tại | Full theo planning/knowledge-base docs | No | Governance only |
-| Full developer profile | Không theo knowledge-base access matrix | Own profile only theo knowledge-base access matrix | Full | No | Governance only |
-| Mode 3 - Strategic Board | Full | Full | Optional reviewer | No | No |
-| Mode 4 - Execution | Full | Read / support | Read summary | Xem và cập nhật phần việc được giao | No |
+| Capability                  | PM                                      | TL                                                 | BOD                                    | Team Member                         | Admin           |
+| --------------------------- | --------------------------------------- | -------------------------------------------------- | -------------------------------------- | ----------------------------------- | --------------- |
+| Mode 1 - Project Analysis   | Full                                    | Full                                               | Read if needed                         | No                                  | Governance only |
+| Mode 2 - HR Analysis screen | Theo frontend-spec hiện tại             | Theo frontend-spec hiện tại                        | Full theo planning/knowledge-base docs | No                                  | Governance only |
+| Full developer profile      | Không theo knowledge-base access matrix | Own profile only theo knowledge-base access matrix | Full                                   | No                                  | Governance only |
+| Mode 3 - Strategic Board    | Full                                    | Full                                               | Optional reviewer                      | No                                  | No              |
+| Mode 4 - Execution          | Full                                    | Read / support                                     | Read summary                           | Xem và cập nhật phần việc được giao | No              |
 
 **Ghi chú đồng bộ hiện trạng docs:**  
 Hiện có mâu thuẫn giữa tài liệu:
+
 - `frontend-spec` đang mô tả Mode 2 cho `PM, TL`
 - `planning docs` và `knowledge-base` đang mô tả Mode 2 là `BOD-only`
 
 Business spec này phản ánh đúng trạng thái hiện có của design docs bằng cách:
+
 - ghi nhận `BOD` là owner nghiệp vụ của Mode 2
 - giữ lưu ý rằng frontend hiện vẫn đang mô tả route/access khác
 
@@ -128,15 +130,15 @@ Khi có profile, hệ thống tính `WFU_effective` và dùng cho matching / pla
 
 Task được ước tính effort theo breakdown:
 
-| Phase | Ví dụ |
-|-------|-------|
-| Investigate | 0.5 ngày |
-| Design | 0.5 ngày |
-| Implement | 2.0 ngày |
-| Testing | 1.0 ngày |
-| Review & Feedback | 1.0 ngày |
-| Support Release | 0.5 ngày |
-| **Total** | **5.5 man-days** |
+| Phase             | Ví dụ            |
+| ----------------- | ---------------- |
+| Investigate       | 0.5 ngày         |
+| Design            | 0.5 ngày         |
+| Implement         | 2.0 ngày         |
+| Testing           | 1.0 ngày         |
+| Review & Feedback | 1.0 ngày         |
+| Support Release   | 0.5 ngày         |
+| **Total**         | **5.5 man-days** |
 
 Effort breakdown có thể được chỉnh sửa trong planning.
 
@@ -169,20 +171,21 @@ Threshold:
 
 **10-axis radar** - PM + Tech Lead chấm điểm với AI hỗ trợ:
 
-| # | Axis | Layer |
-|---|------|-------|
-| 1 | Problem-Solution Fit | Theory of Change |
-| 2 | Success Criterion Clarity | Logic Model |
-| 3 | TELOS Feasibility Composite | Feasibility Gate |
-| 4 | Quality Attribute Coverage | Architecture |
-| 5 | Architecture Risk & Tradeoff | Architecture |
-| 6 | Strategic Value | MCDA |
-| 7 | Financial Return (ROI) | MCDA |
-| 8 | Technology Maturity (TRL) | Readiness |
-| 9 | Organizational Readiness | Readiness |
-| 10 | Legal / Regulatory Readiness | Readiness |
+| #   | Axis                         | Layer            |
+| --- | ---------------------------- | ---------------- |
+| 1   | Problem-Solution Fit         | Theory of Change |
+| 2   | Success Criterion Clarity    | Logic Model      |
+| 3   | TELOS Feasibility Composite  | Feasibility Gate |
+| 4   | Quality Attribute Coverage   | Architecture     |
+| 5   | Architecture Risk & Tradeoff | Architecture     |
+| 6   | Strategic Value              | MCDA             |
+| 7   | Financial Return (ROI)       | MCDA             |
+| 8   | Technology Maturity (TRL)    | Readiness        |
+| 9   | Organizational Readiness     | Readiness        |
+| 10  | Legal / Regulatory Readiness | Readiness        |
 
 **Theo backend-spec hiện tại:**
+
 - composite >= 4.0 -> proceed
 - composite 3.0 - 3.9 -> conditional
 - composite < 3.0 -> do_not_proceed
@@ -193,6 +196,7 @@ Threshold:
 **Risk register** được auto-populate từ các axis score thấp.
 
 **AI assist** dùng để:
+
 - gợi ý scoring cho từng axis
 - draft rationale
 - phát hiện thiếu thông tin trong project brief
@@ -202,6 +206,7 @@ Threshold:
 **Trigger:** Sau khi Project Analysis trả verdict `Proceed` hoặc `Conditional`.
 
 **Developer profiles** gồm 5 lớp:
+
 - OCEAN
 - Behavioral
 - Technical
@@ -209,6 +214,7 @@ Threshold:
 - Performance
 
 **Các output chính:**
+
 - developer profile
 - project-developer match score
 - top 3 team configurations
@@ -247,15 +253,15 @@ Threshold:
 
 ### 5.6 Warnings Engine
 
-| Type | Điều kiện | Mức |
-|------|-----------|-----|
-| `CAPACITY` | Tổng daily hours > 7h | Critical |
-| `JUNIOR_ALONE` | Junior không có senior kèm trên critical task | Critical |
-| `TIME_RISK` | P(on_time) < 50% hoặc EAC > deadline | Warning |
-| `BUDGET` | Chi phí nhân sự > budget dự án | Warning |
-| `LICENSE` | Tool seats vượt quota | Warning |
-| `SKILL_MISMATCH` | Assignee không match techstack | Info / Warning |
-| `DEPENDENCY_RISK` | Dependency chưa xong nhưng task sau sắp start | Warning |
+| Type              | Điều kiện                                     | Mức            |
+| ----------------- | --------------------------------------------- | -------------- |
+| `CAPACITY`        | Tổng daily hours > 7h                         | Critical       |
+| `JUNIOR_ALONE`    | Junior không có senior kèm trên critical task | Critical       |
+| `TIME_RISK`       | P(on_time) < 50% hoặc EAC > deadline          | Warning        |
+| `BUDGET`          | Chi phí nhân sự > budget dự án                | Warning        |
+| `LICENSE`         | Tool seats vượt quota                         | Warning        |
+| `SKILL_MISMATCH`  | Assignee không match techstack                | Info / Warning |
+| `DEPENDENCY_RISK` | Dependency chưa xong nhưng task sau sắp start | Warning        |
 
 ### 5.7 Tool & License Management
 
@@ -270,6 +276,7 @@ Mỗi dự án có thể có tool budget / seat allocation cho các công cụ n
 ### 5.9 XP & Leveling
 
 Khi kết thúc dự án:
+
 - thành viên nhận XP
 - skill progression được cập nhật
 - historical outcome được dùng để calibrate planning tốt hơn ở các dự án sau
@@ -278,13 +285,13 @@ Khi kết thúc dự án:
 
 ## 6. Constraints Hệ Thống
 
-| Constraint | Rule |
-|-----------|------|
-| Daily capacity | <= 7h / ngày tổng tất cả dự án |
-| Junior rule | Junior không được lead critical task một mình |
+| Constraint         | Rule                                             |
+| ------------------ | ------------------------------------------------ |
+| Daily capacity     | <= 7h / ngày tổng tất cả dự án                   |
+| Junior rule        | Junior không được lead critical task một mình    |
 | Non-linear scaling | Brooks' Law áp dụng khi thêm người vào task muộn |
-| Dependency order | Tasks phải theo topological order |
-| Skill multiplier | Fast / quality chỉ khi matching techstack |
+| Dependency order   | Tasks phải theo topological order                |
+| Skill multiplier   | Fast / quality chỉ khi matching techstack        |
 
 ---
 
@@ -311,6 +318,7 @@ Organization
 ```
 
 **Các entity mới theo database-spec:**
+
 - `project_evaluations`
 - `personnel_profiles`
 - `project_team_matches`
@@ -319,23 +327,23 @@ Organization
 
 ## 8. Integrations
 
-| Integration | Mục đích |
-|-------------|----------|
-| LLM provider | Task generation, scoring assist, risk analysis, profile summarization |
-| COCOMO II | Effort estimation |
-| Genetic Algorithm | Multi-constraint scenario optimization |
-| CPM | Critical path, float calculation |
-| Earned Value + P(on_time) | Schedule health, completion probability |
-| GitHub CLI / APIs | HR Analysis data collection |
-| Slack API / Export | Bổ sung corpus cho HR Analysis khi được phép |
+| Integration               | Mục đích                                                              |
+| ------------------------- | --------------------------------------------------------------------- |
+| LLM provider              | Task generation, scoring assist, risk analysis, profile summarization |
+| COCOMO II                 | Effort estimation                                                     |
+| Genetic Algorithm         | Multi-constraint scenario optimization                                |
+| CPM                       | Critical path, float calculation                                      |
+| Earned Value + P(on_time) | Schedule health, completion probability                               |
+| GitHub CLI / APIs         | HR Analysis data collection                                           |
+| Slack API / Export        | Bổ sung corpus cho HR Analysis khi được phép                          |
 
 ---
 
 ## 9. Non-Functional Requirements
 
 - Board render tốt với quy mô MVP
-- Warning recompute nhanh sau mỗi assignment change
-- P(on_time) compute nhanh sau EV update
+- Warning recompute <500ms sau mỗi assignment change
+- P(on_time) compute <1s (sau EV update)
 - Multi-tenant isolation giữa orgs
 - Concurrent planning session hỗ trợ realtime updates
 - Access control cho dữ liệu profile nhạy cảm của Pillar 2
@@ -346,6 +354,7 @@ Organization
 ## 10. Ghi Chú Đồng Bộ
 
 Business spec này được đồng bộ từ các design docs hiện tại:
+
 - `frontend-spec`
 - `backend-spec`
 - `database-spec`
