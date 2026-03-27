@@ -1,0 +1,15 @@
+# ============================================================
+# Local Development Overrides  (gitignored)
+# ============================================================
+# Uncomment and set values to override default.yaml locally.
+# Never commit secrets here.
+# ============================================================
+
+# database_url: "sqlite+aiosqlite:///./local.db"
+# debug: true
+
+# cocomo:
+#   a: 3.10   # Recalibrated from your org's historical data
+
+# llm:
+#   anthropic_api_key: "sk-ant-..."

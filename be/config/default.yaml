@@ -1,0 +1,37 @@
+# ============================================================
+# Application Default Configuration
+# ============================================================
+# Layer order (highest priority wins):
+#   1. Environment variables  (COCOMO__A=3.0, LLM__MODEL=...)
+#   2. config/local.yaml      (gitignored — local dev overrides)
+#   3. config/default.yaml    (this file — committed defaults)
+#
+# Nested keys map to env vars with __ separator:
+#   cocomo.a  →  COCOMO__A
+#   llm.model →  LLM__MODEL
+# ============================================================
+
+# --- Database ---
+database_url: "sqlite+aiosqlite:///./dev.db"
+secret_key: "change-me"
+debug: false
+
+# --- COCOMO II Calibration ---
+# Formula: PM = A * Size^E * prod(EM),  E = B + 0.01 * sum(SF)
+# Reference: Boehm et al., "Software Cost Estimation with COCOMO II", 2000
+cocomo:
+  a: 2.94                    # Calibration constant (fitted to historical project data)
+  b: 0.91                    # Scaling exponent base (diseconomies of scale)
+  working_days_per_month: 21.67  # 260 working days/year / 12 months (COCOMO II standard)
+
+# --- LLM ---
+llm:
+  provider: "anthropic"       # "anthropic" | "openai"
+  model: "claude-sonnet-4-6"
+  anthropic_api_key: null     # Set via env: ANTHROPIC_API_KEY
+  openai_api_key: null        # Set via env: OPENAI_API_KEY
+
+# --- Genetic Algorithm Optimizer ---
+optimizer:
+  population: 100             # Chromosome population size per generation
+  generations: 500            # Number of evolution cycles
