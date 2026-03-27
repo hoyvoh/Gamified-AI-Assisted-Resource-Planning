@@ -8,10 +8,15 @@ Stack: **PostgreSQL** · **SQLAlchemy 2.x** · **Alembic** (migrations)
 
 ```
 organizations ──< projects ──< scenarios ──< tasks ──< resource_assignments >── personnel
-                                                 └──< task_dependencies
+                      │                          └──< task_dependencies
+                      │──< project_evaluations         (Pillar 1 — PM/TL)
+                      └──< project_team_matches >── personnel  (Pillar 2 — HR Analysis)
+
 organizations ──< personnel ──< skill_matrix_entries
-                               └──< personnel_languages
-personnel ──< project_memberships >── projects
+                      │          └──< personnel_languages
+                      │──< project_memberships >── projects
+                      └──< personnel_profiles        (Pillar 2 — HR Analysis)
+
 tasks ──< task_progress_logs
 personnel ──< xp_events
 scenarios ──< project_warnings
@@ -56,6 +61,9 @@ Nhân sự trong tổ chức — đây là "quân cờ" trên bàn cờ.
 | `hourly_cost` | DECIMAL(10,2) | Cho budget calculation |
 | `avatar_url` | TEXT NULLABLE | |
 | `velocity_baseline` | DECIMAL(4,2) NULLABLE | Avg actual WFU từ lịch sử dự án (dùng cho P(on_time) calibration) |
+| `dreyfus_level` | SMALLINT NULLABLE | Overall Dreyfus level 1–5 (derived from HR profile — null nếu chưa có profile) |
+| `github_username` | VARCHAR(100) NULLABLE | GitHub username — dùng cho HR profile data collection |
+| `profile_last_synced_at` | TIMESTAMPTZ NULLABLE | Lần cuối HR profile được update từ GitHub data |
 | `created_at` | TIMESTAMPTZ | |
 
 ### `personnel_languages`
@@ -79,6 +87,7 @@ Ngôn ngữ làm việc của nhân sự — dùng cho LANGUAGE_BARRIER warning.
 | `wfu_multiplier_standard` | DECIMAL(3,2) DEFAULT 1.0 | WFU multiplier khi dùng skill này |
 | `wfu_multiplier_fast` | DECIMAL(3,2) DEFAULT 1.2 | Khi chọn "fast mode" |
 | `wfu_multiplier_quality` | DECIMAL(3,2) DEFAULT 1.5 | Khi chọn "quality mode" |
+| `dreyfus_level` | SMALLINT DEFAULT 3 | Dreyfus level cho skill cụ thể này (1=Novice, 5=Expert) |
 
 ### `projects`
 | Column | Type | Notes |
@@ -93,6 +102,8 @@ Ngôn ngữ làm việc của nhân sự — dùng cho LANGUAGE_BARRIER warning.
 | `budget_currency` | VARCHAR(10) DEFAULT 'USD' | |
 | `active_scenario_id` | UUID FK → scenarios NULLABLE | |
 | `raw_proposal` | TEXT | Input gốc từ PM |
+| `evaluation_id` | UUID FK → project_evaluations NULLABLE | Link tới kết quả Project Analysis |
+| `evaluation_status` | ENUM(not_started, in_progress, complete, waived) DEFAULT not_started | |
 | `created_by` | UUID FK → users | |
 | `created_at` | TIMESTAMPTZ | |
 | `updated_at` | TIMESTAMPTZ | |
@@ -262,6 +273,64 @@ Lưu P(on_time) được tính theo thời gian — dùng để vẽ trend chart
 | `spi` | DECIMAL(5,3) | Schedule Performance Index at time of snapshot |
 | `active_risk_count` | INTEGER | Số warnings đang active |
 
+### `project_evaluations`
+Kết quả 10-axis Project Analysis (Pillar 1). Mỗi dự án có tối đa 1 evaluation hiện hành.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | UUID PK | |
+| `project_id` | UUID FK → projects UNIQUE | 1-to-1 với project |
+| `status` | ENUM(draft, complete) DEFAULT draft | draft = đang điền, complete = đã có verdict |
+| `verdict` | ENUM(proceed, conditional, do_not_proceed) NULLABLE | Null khi status=draft |
+| `composite_score` | DECIMAL(3,2) NULLABLE | Weighted sum của 10 axis (1.0–5.0) |
+| `axis_scores` | JSONB | `{axis_id: {score, rationale, assessor_id}}` cho 10 axes |
+| `telos_breakdown` | JSONB | `{T, E, L, O, S}` sub-scores (1–5 mỗi dimension) |
+| `risk_register` | JSONB | Danh sách risks tự động từ axis ≤ 2, mỗi item: `{axis, score, action_required, owner}` |
+| `axis_weights` | JSONB | AHP weights đã dùng (default hoặc custom của org) |
+| `llm_session_id` | UUID FK → llm_sessions NULLABLE | AI assist session log |
+| `created_by` | UUID FK → users | PM khởi tạo |
+| `updated_by` | UUID FK → users NULLABLE | Người update cuối |
+| `created_at` | TIMESTAMPTZ | |
+| `updated_at` | TIMESTAMPTZ | |
+
+### `personnel_profiles`
+Developer profile 5-layer — Inferred từ GitHub behavioral data.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | UUID PK | |
+| `personnel_id` | UUID FK → personnel UNIQUE | |
+| `profile_version` | VARCHAR(20) | ISO date e.g. "2026-03-27" |
+| `data_period_from` | DATE | GitHub data collected from this date |
+| `data_period_to` | DATE | GitHub data collected to this date |
+| `corpus_size` | INTEGER | Số messages analyzed cho OCEAN inference |
+| `ocean_scores` | JSONB | `{O,C,E,A,ES}: {score: float, confidence: float}` |
+| `behavioral_prefs` | JSONB | `{work_rhythm, collaboration_intensity, domain_concentration, review_thoroughness, ...}` |
+| `tech_capability` | JSONB | `{TC1..TC8}: {score: float, evidence_summary: str}` (Dreyfus 1–5) |
+| `soft_skills` | JSONB | `{SS1..SS8}: {score: float, confidence: float}` |
+| `performance` | JSONB | `{delivery_reliability, code_quality, operational_stability, team_impact, growth_trajectory}: {score: float}` |
+| `wfu_factors` | JSONB | `{project_familiarity_typical, technology_match_by_skill, quality_history, delivery_reliability}` |
+| `flags` | JSONB | Array of flag strings: burnout risk, low confidence, language bias, etc. |
+| `github_repos_analyzed` | JSONB | List of repo names included in analysis |
+| `synced_at` | TIMESTAMPTZ | Thời điểm sync gần nhất |
+| `created_at` | TIMESTAMPTZ | |
+
+### `project_team_matches`
+Kết quả HR Analysis — match score giữa project requirements và personnel profiles.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | UUID PK | |
+| `project_id` | UUID FK → projects | |
+| `personnel_id` | UUID FK → personnel | |
+| `match_score` | DECIMAL(4,3) | 0.0–1.0 cosine similarity |
+| `skill_coverage_score` | DECIMAL(4,3) | Bao phủ bao nhiêu % kỹ năng yêu cầu |
+| `ocean_fit_score` | DECIMAL(4,3) | Personality fit với project type |
+| `growth_opportunity_score` | DECIMAL(4,3) | Đây có phải good growth assignment không |
+| `effective_wfu_estimate` | DECIMAL(4,2) | WFU_effective ước tính cho project này |
+| `match_details` | JSONB | Breakdown chi tiết per skill + per layer |
+| `computed_at` | TIMESTAMPTZ | |
+
 ### `llm_sessions`
 Lưu lịch sử các LLM interactions cho audit và replay.
 
@@ -308,6 +377,16 @@ CREATE INDEX idx_completion_snapshots_scenario ON scenario_completion_snapshots(
 
 -- Language lookups
 CREATE INDEX idx_personnel_languages ON personnel_languages(personnel_id);
+
+-- Project evaluation lookups
+CREATE UNIQUE INDEX idx_project_evaluations_project ON project_evaluations(project_id);
+
+-- Personnel profile lookups
+CREATE UNIQUE INDEX idx_personnel_profiles_personnel ON personnel_profiles(personnel_id);
+
+-- Team match queries
+CREATE INDEX idx_team_matches_project ON project_team_matches(project_id, match_score DESC);
+CREATE INDEX idx_team_matches_personnel ON project_team_matches(personnel_id);
 ```
 
 ---

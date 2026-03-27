@@ -45,6 +45,25 @@ POST   /projects/{projectId}/analyze          # LLM task generation
 POST   /projects/{projectId}/finalize         # Trigger XP calculation
 ```
 
+### Project Evaluation (Mode 1 — PM/TL)
+```
+GET    /projects/{projectId}/evaluation                    # Get current evaluation (or 404)
+POST   /projects/{projectId}/evaluation                    # Create evaluation (idempotent)
+PATCH  /projects/{projectId}/evaluation                    # Update axis scores
+POST   /projects/{projectId}/evaluation/finalize           # Compute verdict, lock evaluation
+POST   /projects/{projectId}/evaluation/ai-assist          # AI scoring suggestion for 1 axis
+DELETE /projects/{projectId}/evaluation                    # Reset to draft
+```
+
+### HR Analysis (Mode 2)
+```
+GET    /orgs/{orgId}/personnel/{personnelId}/profile       # Get developer profile
+POST   /orgs/{orgId}/personnel/{personnelId}/profile/refresh  # Trigger GitHub data sync
+GET    /projects/{projectId}/team-match                    # Get cached match results
+POST   /projects/{projectId}/team-match                    # Run/re-run team match computation
+GET    /projects/{projectId}/team-match/recommendations    # Top 3 team configs
+```
+
 ### Scenarios
 ```
 GET    /projects/{projectId}/scenarios
@@ -101,6 +120,115 @@ DELETE /assignments/{assignmentId}
 ---
 
 ## Core Services
+
+### `ProjectEvaluationService` (`services/project_evaluation.py`)
+Manages the 10-axis Project Analysis scoring (Mode 1):
+
+```python
+class ProjectEvaluationService:
+    def get_or_create(self, project_id: UUID) -> ProjectEvaluation: ...
+
+    def update_axis_scores(
+        self,
+        evaluation_id: UUID,
+        axis_scores: dict[str, AxisScore],   # {axis_id: {score, rationale}}
+        telos_breakdown: TelosBreakdown | None = None
+    ) -> ProjectEvaluation: ...
+
+    def compute_verdict(self, evaluation_id: UUID) -> ProjectEvaluation:
+        # 1. Compute composite = Σ (weight_i × score_i) for 10 axes
+        # 2. Apply hard gate rules:
+        #    - any score == 1 → do_not_proceed
+        #    - legal axis < 2 → do_not_proceed
+        #    - TRL axis < 2 → conditional at minimum
+        # 3. Composite → verdict:
+        #    - ≥ 4.0 → proceed
+        #    - 3.0–3.9 → conditional
+        #    - < 3.0 → do_not_proceed
+        # 4. Auto-generate risk_register from axes with score ≤ 2
+        ...
+
+    def ai_assist_axis(
+        self,
+        project_id: UUID,
+        axis_id: str,             # e.g. "problem_solution_fit"
+        proposal_text: str
+    ) -> AxisScoringSuggestion:
+        # Calls LLM with:
+        # - Full rubric for the axis (from knowledge base)
+        # - Project proposal text
+        # Returns: suggested score + reasoning + questions to answer
+        ...
+```
+
+### `PersonnelProfileService` (`services/personnel_profile.py`)
+Manages developer profiles (Mode 2):
+
+```python
+class PersonnelProfileService:
+    def get_profile(self, personnel_id: UUID) -> PersonnelProfile:
+        ...
+
+    def refresh_profile(
+        self,
+        personnel_id: UUID,
+        github_repos: list[str],
+        date_from: date,
+        date_to: date
+    ) -> PersonnelProfile:
+        # 1. Collect GitHub data via gh CLI wrapper
+        # 2. Extract behavioral signals (quantitative)
+        # 3. Build NLP corpus (PR bodies, review comments, issues)
+        # 4. Call LLM for OCEAN inference + quality signals
+        # 5. Compute 5-layer profile scores
+        # 6. Compute WFU factors
+        # 7. Generate flags
+        # 8. Persist to personnel_profiles
+        ...
+
+    def compute_wfu_factors(self, profile: PersonnelProfile, project: Project) -> WFUFactors:
+        # project_familiarity_factor: based on project_tenure months in similar repos
+        # technology_match_factor: based on tech_capability scores vs project tech_stacks
+        # quality_history_factor: based on performance.code_quality score
+        # delivery_reliability_factor: based on performance.delivery_reliability score
+        ...
+```
+
+### `TeamMatchService` (`services/team_match.py`)
+Computes project-developer match scores and team composition recommendations:
+
+```python
+class TeamMatchService:
+    def compute_matches(
+        self,
+        project_id: UUID,
+        evaluation: ProjectEvaluation,
+        available_personnel: list[Personnel]
+    ) -> list[PersonnelMatch]:
+        # For each personnel with a profile:
+        # 1. Build project_requirements_vector from evaluation (required skills, tech axes)
+        # 2. Build developer_profile_vector from personnel_profile
+        # 3. match_score = cosine_similarity(profile_vector, requirements_vector)
+        # 4. skill_coverage = coverage of project tech_stacks by developer skill matrix
+        # 5. ocean_fit = personality fit for this project type
+        # 6. growth_opportunity = would this project expand their weakest dimensions?
+        # 7. effective_wfu = compute_wfu_factors for this project
+        ...
+
+    def recommend_teams(
+        self,
+        matches: list[PersonnelMatch],
+        project: Project,
+        n_recommendations: int = 3
+    ) -> list[TeamConfiguration]:
+        # Greedy + local search to find top N team configs that:
+        # - Cover all required skills (minimum viable)
+        # - Maximize skill_coverage_score
+        # - Respect budget constraints (if set)
+        # - Balance OCEAN profiles (not all introverts, not all high-E)
+        # Returns top N configs sorted by composite team score
+        ...
+```
 
 ### `ProjectAnalysisService` (`services/project_analysis.py`)
 - **Input:** raw project proposal text + personnel list + org context
