@@ -6,21 +6,161 @@ Stack: **Next.js 15 · React 19 · Three.js · TypeScript strict · Tailwind CSS
 
 ## Screens & Routes
 
-| Route | Screen | Component |
-|-------|--------|-----------|
-| `/` | Landing / Org selector | `app/page.tsx` |
-| `/org/[orgId]` | Org dashboard — projects list | `app/org/[orgId]/page.tsx` |
-| `/org/[orgId]/projects/new` | Create project + input proposal | `app/org/[orgId]/projects/new/page.tsx` |
-| `/org/[orgId]/projects/[projectId]` | Project hub — scenario list | `app/org/[orgId]/projects/[projectId]/page.tsx` |
-| `/org/[orgId]/projects/[projectId]/scenarios/[scenarioId]` | **Strategic Board** (main screen) | `app/.../scenarios/[scenarioId]/page.tsx` |
-| `/org/[orgId]/projects/[projectId]/scenarios/[scenarioId]/gantt` | Gantt Chart view | `.../gantt/page.tsx` |
-| `/org/[orgId]/projects/[projectId]/scenarios/[scenarioId]/deps` | Dependency Graph | `.../deps/page.tsx` |
-| `/org/[orgId]/projects/[projectId]/execution` | Execution / Progress Tracking | `.../execution/page.tsx` |
-| `/org/[orgId]/personnel` | Personnel management | `.../personnel/page.tsx` |
+| Route | Screen | Role | Component |
+|-------|--------|------|-----------|
+| `/` | Landing / Org selector | All | `app/page.tsx` |
+| `/org/[orgId]` | Org dashboard — projects list | All | `app/org/[orgId]/page.tsx` |
+| `/org/[orgId]/projects/new` | Create project + input proposal | PM | `app/org/[orgId]/projects/new/page.tsx` |
+| `/org/[orgId]/projects/[projectId]` | Project hub — scenario list + mode navigation | All | `app/org/[orgId]/projects/[projectId]/page.tsx` |
+| `/org/[orgId]/projects/[projectId]/evaluate` | **Mode 1: Project Analysis** (10-axis radar) | PM, TL | `.../evaluate/page.tsx` |
+| `/org/[orgId]/projects/[projectId]/team-analysis` | **Mode 2: HR Analysis** (developer profiles + match) | PM, TL | `.../team-analysis/page.tsx` |
+| `/org/[orgId]/projects/[projectId]/scenarios/[scenarioId]` | **Mode 3: Strategic Board** | PM, TL | `app/.../scenarios/[scenarioId]/page.tsx` |
+| `/org/[orgId]/projects/[projectId]/scenarios/[scenarioId]/gantt` | Gantt Chart view | PM, TL, Member | `.../gantt/page.tsx` |
+| `/org/[orgId]/projects/[projectId]/scenarios/[scenarioId]/deps` | Dependency Graph | PM, TL | `.../deps/page.tsx` |
+| `/org/[orgId]/projects/[projectId]/execution` | **Mode 4: Execution / Progress Tracking** | All | `.../execution/page.tsx` |
+| `/org/[orgId]/personnel` | Personnel management | Admin | `.../personnel/page.tsx` |
+
+### Project Hub Navigation (mode switcher)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  [Project Name]                                    [Status Badge] │
+├────────────┬──────────────┬──────────────┬──────────────────────┤
+│ 📋 Analyze │  👥 HR Match │  🎯 Plan     │  ▶ Execute           │
+│ (Mode 1)   │  (Mode 2)    │  (Mode 3)    │  (Mode 4)            │
+│ PM + TL    │  PM + TL     │  PM + TL     │  All                 │
+│ ✅ Done    │  ⚠️ Pending  │  🔒 Locked   │  🔒 Locked           │
+└────────────┴──────────────┴──────────────┴──────────────────────┘
+```
+
+Mode 3 locked until Mode 1 verdict = Proceed/Conditional.
+Mode 4 locked until Mode 3 has an active scenario.
 
 ---
 
-## Main Screen: Strategic Board
+## Mode 1: Project Analysis Screen
+
+**Route:** `/org/[orgId]/projects/[projectId]/evaluate`
+**Access:** PM, Tech Lead
+
+### Layout
+
+```
+┌───────────────────────────────────────────────────────────────────┐
+│ TopBar: [Project Name] > Project Analysis        [Save] [Finalize] │
+├──────────────────────────────┬────────────────────────────────────┤
+│                              │                                    │
+│   10-Axis Radar Chart        │  Axis Scoring Panel                │
+│   (spider chart, live)       │                                    │
+│                              │  ┌─ Axis 1: Problem-Solution Fit  │
+│   Composite: 3.7 / 5.0       │  │  Score: [1][2][3][4][5]        │
+│   Verdict: ⚠️ Conditional    │  │  Rationale: [text input]       │
+│                              │  │  [🤖 AI Assist]                │
+│   Color zones:               │  ├─ Axis 2: Success Criteria ...  │
+│   Red < 2 / Amber 2–3        │  ├─ Axis 3: TELOS Composite       │
+│   Green > 3.5                │  │    T:[_] E:[_] L:[_] O:[_] S:[_]│
+│                              │  ├─ Axis 4–10 ...                 │
+│                              │  └────────────────────────────────│
+│                              │                                    │
+│                              │  Risk Register (auto-populated)    │
+│                              │  🔴 Axis 3 TELOS (2.0) →          │
+│                              │     Legal review required [owner]  │
+│                              │  🟠 Axis 8 TRL (2.5) →            │
+│                              │     PoC needed [owner]             │
+└──────────────────────────────┴────────────────────────────────────┘
+```
+
+### Key Components
+
+**`ProjectRadarChart`** — SVG radar (10 axes, 1–5 scale)
+- Live update on every score change
+- Color fill: green zone (≥3.5), amber zone (2–3), red zone (<2)
+- Hover axis: shows rubric definition tooltip
+- Center label: composite score + verdict badge
+
+**`AxisScoringPanel`** — Scrollable list of 10 axes
+- Score selector (1–5 radio buttons with rubric labels on hover)
+- Rationale textarea (required before finalize)
+- `TELOS` axis expands into 5 sub-dimension sliders (T, E, L, O, S)
+- `[🤖 AI Assist]` button → calls `POST /projects/{id}/evaluation/ai-assist` with current proposal + axis → streams scoring suggestion
+
+**`RiskRegister`** — Auto-populated from axes ≤ 2
+- Each risk: axis name, score, severity icon, action required field, owner dropdown
+- Owner must be set before Finalize is enabled
+
+**`VerdictBadge`**
+```tsx
+// proceed → ✅ green "Proceed"
+// conditional → ⚠️ amber "Proceed with Conditions — N risks to resolve"
+// do_not_proceed → ❌ red "Do Not Proceed — resolve blockers first"
+// Hard gate: any axis = 1 → always do_not_proceed regardless of composite
+```
+
+---
+
+## Mode 2: HR Analysis Screen
+
+**Route:** `/org/[orgId]/projects/[projectId]/team-analysis`
+**Access:** PM, Tech Lead
+
+### Layout
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│ TopBar: [Project Name] > HR Analysis                    [Sync Profiles] │
+├──────────────────────┬──────────────────────────────────────────────┤
+│                      │                                              │
+│  Developer Roster    │  Team Composition Panel                      │
+│  (left, 340px)       │  (right, fills remaining)                    │
+│                      │                                              │
+│  🔍 Search / Filter  │  Recommended Teams:                          │
+│                      │  ┌─ Team Config A (Match: 87%) ────────────┐│
+│  ┌─ Alice N.  ──────┐│  │ Alice + Bob + Carol                      ││
+│  │ ████████ 4.2/5   ││  │ Coverage: 95% skills · Cost: $X/sprint   ││
+│  │ T-shape: Backend ││  │ WFU effective est: 8.4 total             ││
+│  │ Match: ★★★★☆    ││  │ [Select this team]                       ││
+│  └────────────────┘││  └──────────────────────────────────────────┘│
+│                      │  ┌─ Team Config B (Match: 79%) ────────────┐│
+│  ┌─ Bob T.   ──────┐│  │ ...                                       ││
+│  │ ██████░░ 3.1/5   ││  └──────────────────────────────────────────┘│
+│  │ T-shape: Full    ││                                              │
+│  │ Match: ★★★☆☆   ││  Developer Detail (click any card)           │
+│  └────────────────┘││  ┌────────────────────────────────────────┐ │
+│                      │  │ 5-Radar Profile: Alice N.              │ │
+│  [Match All →]       │  │ [OCEAN][Behavioral][Tech][Soft][Perf]  │ │
+│                      │  │ Flags: none · WFU est: 1.15×           │ │
+│                      │  └────────────────────────────────────────┘ │
+└──────────────────────┴──────────────────────────────────────────────┘
+```
+
+### Key Components
+
+**`DeveloperRosterPanel`** (left sidebar)
+- Sorted by match score (default) or by layer score
+- Each card: name, overall match bar, T-shape summary, top skill
+- Click → opens `DeveloperProfileDrawer`
+- Filter: by skill, seniority, availability, match score threshold
+
+**`DeveloperProfileDrawer`**
+- Tabbed 5-layer view: OCEAN | Behavioral | Technical | Soft Skills | Performance
+- Each tab: mini radar + axis scores with confidence indicators
+- Low-confidence axes (< 0.6) shown with `~` prefix and amber color
+- Flags section: burnout risk 🔥, small corpus ⚠️, language calibration 🌐
+- WFU factors breakdown: familiarity × tech_match × quality × reliability = effective multiplier
+
+**`TeamCompositionPanel`** (main area)
+- Top 3 team configurations from `POST /projects/{id}/team-match`
+- Each config card: developers, skill coverage %, estimated WFU budget, OCEAN compatibility score, growth opportunity notes
+- `[Select this team]` → pre-populates Mode 3 project membership with selected personnel
+- Manual composition: drag developers from roster to build custom team
+
+**`ProfileSyncStatus`** (top bar widget)
+- Shows last sync date per developer
+- `[Sync Profiles]` → triggers `POST /personnel/{id}/profile/refresh` for selected devs
+
+---
+
+## Main Screen: Strategic Board (Mode 3)
 
 ### Layout
 ```

@@ -16,10 +16,37 @@ Ngôn ngữ: EN-VN (bilingual)
 
 | Role | Mô tả |
 |------|--------|
-| **Project Manager** | Tạo dự án, nhập yêu cầu, phê duyệt phân bổ, snapshot scenario |
-| **Tech Lead** | Review task ước tính, điều chỉnh techstack, approve kỹ thuật |
+| **Project Manager** | Tạo dự án, chạy Project Analysis, phê duyệt phân bổ, snapshot scenario |
+| **Tech Lead** | Review task ước tính, điều chỉnh techstack, approve kỹ thuật, đóng góp điểm TELOS/ATAM |
 | **Team Member** | Xem task được phân, cập nhật tiến độ hàng ngày, nhận XP |
 | **Org Admin** | Quản lý tổ chức, nhân sự, dự án cấp org |
+| **BOD** | _(reserved for future use)_ |
+
+---
+
+## 2a. Luồng Người Dùng Cấp Cao (High-Level User Flow)
+
+```
+PM tạo dự án (nhập proposal)
+        ↓
+[Mode 1] Project Analysis Screen     ← PM + Tech Lead chạy
+   · 10-axis radar: ToC → TELOS → ATAM → MCDA → TRL
+   · Verdict: Proceed / Conditional / Do Not Proceed
+   · Risk register tự động từ điểm thấp
+        ↓ (nếu verdict = Proceed hoặc Conditional)
+[Mode 2] HR Analysis Screen          ← PM + Tech Lead chạy
+   · Developer profiles (5 layers): OCEAN, Behavioral, Technical, Soft Skills, Performance
+   · Project-developer match score
+   · Team composition recommendation
+        ↓
+[Mode 3] Resource Allocation Board   ← PM + Tech Lead vận hành
+   · Strategic Board (Three.js) — phân bổ nhân sự từ gợi ý Mode 2
+   · Warnings engine, Gantt, Deps, Calendar
+   · Optimization (GA), Risk Analysis (LLM)
+        ↓
+[Mode 4] Execution Mode              ← Team members + PM
+   · Daily progress, EV metrics, P(on_time)
+```
 
 ---
 
@@ -33,6 +60,18 @@ Ngôn ngữ: EN-VN (bilingual)
   - `fast` → WFU × 1.2 (hoàn thành nhanh hơn)
   - `quality` → WFU × 1.5 (hoàn thành nhanh hơn, ít lỗi hơn)
   - Multiplier chỉ được kích hoạt khi techstack của task khớp với skill matrix của người đó
+
+**WFU Multi-Factor Calibration (dùng khi có developer profile từ HR Analysis):**
+
+```
+WFU_effective = base_wfu
+              × project_familiarity_factor    # 0.7 (mới) → 1.2 (quen thuộc)
+              × technology_match_factor        # 0.8 (tech mới) → 1.5 (expert match)
+              × quality_history_factor         # 0.9 (có history lỗi) → 1.1 (high quality)
+              × delivery_reliability_factor    # 0.8 (hay miss deadline) → 1.1 (reliable)
+```
+
+Khi chưa có HR profile, hệ thống dùng WFU đơn giản (base × mode multiplier). Khi có profile từ Mode 2, hệ thống tự động tính `WFU_effective` và hiển thị delta so với estimate thô.
 
 ### 3.2 Skill Matrix
 ```json
@@ -77,6 +116,61 @@ Nếu P(on_time) < 50% → 🔴 Critical
 ---
 
 ## 4. Tính Năng Chính
+
+### 4.0 Project Analysis Mode (Pillar 1)
+
+**Trigger:** PM nhập project proposal → trước khi tạo scenario, hệ thống yêu cầu chạy Project Analysis.
+
+**10-axis radar** — PM + Tech Lead chấm điểm 1–5 có AI hỗ trợ:
+
+| # | Axis | Layer |
+|---|------|-------|
+| 1 | Problem-Solution Fit | Theory of Change |
+| 2 | Success Criterion Clarity | Logic Model |
+| 3 | TELOS Feasibility Composite | Feasibility Gate |
+| 4 | Quality Attribute Coverage | Architecture (ATAM) |
+| 5 | Architecture Risk & Tradeoff | Architecture (CBAM) |
+| 6 | Strategic Value | MCDA/AHP |
+| 7 | Financial Return (ROI) | MCDA |
+| 8 | Technology Maturity (TRL) | Readiness |
+| 9 | Organizational Readiness | Readiness |
+| 10 | Legal/Regulatory Readiness | Readiness |
+
+**Verdict tự động:**
+- Composite ≥ 4.0 → ✅ Proceed
+- Composite 3.0–3.9 → ⚠️ Proceed with Conditions
+- Composite < 3.0 hoặc bất kỳ axis = 1 → ❌ Do Not Proceed
+
+**Risk register** tự động tạo từ axis có điểm ≤ 2 — PM cần điền action plan trước khi proceed.
+
+**AI assist:** Với mỗi axis, PM có thể prompt AI để nhận gợi ý dựa trên project proposal đã nhập.
+
+---
+
+### 4.0b HR Analysis Mode (Pillar 2)
+
+**Trigger:** Sau khi Project Analysis trả verdict Proceed/Conditional.
+
+**Developer profiles** (5 layers, inferred từ GitHub data):
+- Layer 1: OCEAN personality (Openness, Conscientiousness, Extraversion, Agreeableness, Emotional Stability)
+- Layer 2: Behavioral preferences (work rhythm, collaboration intensity, domain preference)
+- Layer 3: Technical capability (8 axes — Dreyfus 1–5)
+- Layer 4: Soft skills (8 axes — Communication, Collaboration, Initiative, Mentorship, etc.)
+- Layer 5: Performance & Growth (Delivery Reliability, Code Quality, Team Impact, Growth Trajectory)
+
+**Project-Developer matching:** Hệ thống tính match score giữa project requirements và từng developer profile.
+
+**Team composition recommendations:** Top 3 team configurations tối ưu:
+- Skill coverage đủ cho project requirements
+- OCEAN compatibility (team dynamics)
+- WFU effective budget estimate
+- Growth opportunity alignment (ai được học gì từ dự án này)
+
+**WFU enhancement:** Profiles từ Pillar 2 → tự động populate `WFU_effective` factors cho Mode 3.
+
+**Access:** PM và Tech Lead có thể xem HR Analysis sau khi verdict từ Mode 1 là Proceed/Conditional. PM đưa gợi ý team → làm allocation trên board.
+
+---
 
 ### 4.1 Input & Phân Tích Dự Án (LLM)
 - PM nhập **Project Proposal** (text)

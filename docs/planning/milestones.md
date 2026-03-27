@@ -3,11 +3,11 @@
 ## Timeline Overview
 
 ```
-Mar 22 ──────── Mar 30 ──────── Apr 1 ──────── Apr 20 ──────── Apr 30 ──────── May 15 ──────── May 31
-   │                │              │               │                │               │               │
-   │                │              │               │                │               │               │
-Phase 0+1       Phase 2        🏆 MVP          Phase 5         Phase 6          Phase 7        Phase 8
-Foundation      Board          Launch          Views           Tracking           XP             QA
+Mar 22 ── Mar 27 ─── Mar 30 ─── Apr 1 ──── Apr 20 ─── Apr 30 ─── May 15 ─── May 31
+   │          │           │          │           │           │           │          │
+Phase 0    Phase 0.5   Phase 1    🏆 MVP     Phase 3     Phase 4     Phase 5   Phase 6
+Foundation Analysis    Board      Launch     Views+Opt   Execution     XP         QA
+           Modules
 ```
 
 ---
@@ -23,6 +23,25 @@ Foundation      Board          Launch          Views           Tracking         
 - [ ] CI pipeline green (cả FE + BE)
 
 **Definition of Done:** `uv run pytest` pass, `pnpm build` pass, `alembic upgrade head` pass
+
+---
+
+## M0.5 — Analysis Modules
+**Target: 27/3/2026**
+
+**Deliverables:**
+- [ ] DB schema: `project_evaluations`, `personnel_profiles`, `project_team_matches` (migration)
+- [ ] Project Evaluation API: CRUD + verdict computation + AI assist per axis
+- [ ] Personnel Profile API: BOD-only, 5-layer storage + WFU factors
+- [ ] Team Match engine: cosine similarity scoring + top-N team recommendation
+- [ ] Project Analysis screen (Mode 1): 10-axis radar, scoring form, risk register, verdict
+- [ ] HR Analysis screen (Mode 2): developer roster, profile drawer, team composition panel
+- [ ] Project hub mode switcher: Analyze → HR → Plan → Execute with lock/unlock logic
+
+**Definition of Done:**
+PM có thể nhập proposal → chạy Project Analysis → xem 10-axis radar + verdict.
+BOD có thể xem developer profiles → chạy team match → nhận team composition recommendations.
+Verdict từ Mode 1 unlock Mode 3 (Strategic Board).
 
 ---
 
