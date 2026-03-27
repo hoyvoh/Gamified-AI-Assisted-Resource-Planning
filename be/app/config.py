@@ -37,13 +37,14 @@ class CocomoSettings(BaseModel):
 
 class LLMSettings(BaseModel):
     """Shape only — values come from config/default.yaml.
-    Secrets (api keys) are optional: set via env var or config/local.yaml, never committed.
+
+    LLM operations are performed via CLI subprocess (claude / codex), not direct API calls.
+    No API keys are stored or managed here — authentication is handled by the CLI tool itself
+    (e.g. `claude auth login`, `codex auth`).
     """
 
-    provider: Literal["anthropic", "openai"]
-    model: str
-    anthropic_api_key: str | None = None
-    openai_api_key: str | None = None
+    cli_tool: Literal["claude", "codex"]
+    model: str  # Passed as --model flag when supported by the CLI
 
 
 class OptimizerSettings(BaseModel):

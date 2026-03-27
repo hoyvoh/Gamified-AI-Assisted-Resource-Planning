@@ -205,10 +205,10 @@ class CocomoSettings(BaseModel):
     working_days_per_month: float
 
 class LLMSettings(BaseModel):
-    provider: Literal["anthropic", "openai"]
-    model: str
-    anthropic_api_key: str | None = None  # optional — set via env/local.yaml, never committed
-    openai_api_key: str | None = None
+    # LLM ops run via CLI subprocess (claude / codex) — no API keys stored here.
+    # Authenticate once with: `claude auth login` or `codex auth`
+    cli_tool: Literal["claude", "codex"]
+    model: str  # Passed as --model flag when supported by the CLI
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -224,7 +224,7 @@ class Settings(BaseSettings):
     optimizer: OptimizerSettings
 ```
 
-Only `debug` and nullable secrets keep Python defaults. Everything else is required and must exist in the YAML.
+Only `debug` keeps a Python default (safe boolean fallback). Everything else is required and must exist in the YAML.
 
 **`config/default.yaml` example:**
 
@@ -238,8 +238,8 @@ cocomo:
   working_days_per_month: 21.67
 
 llm:
-  provider: "anthropic"
-  model: "claude-sonnet-4-6"
+  cli_tool: "claude"          # "claude" | "codex"
+  model: "claude-sonnet-4-6"  # Passed via --model flag
 
 optimizer:
   population: 100

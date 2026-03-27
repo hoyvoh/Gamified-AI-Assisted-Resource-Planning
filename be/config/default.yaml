@@ -25,11 +25,11 @@ cocomo:
   working_days_per_month: 21.67  # 260 working days/year / 12 months (COCOMO II standard)
 
 # --- LLM ---
+# LLM operations run via CLI subprocess — no API keys stored here.
+# Authenticate once with: `claude auth login` or `codex auth`
 llm:
-  provider: "anthropic"       # "anthropic" | "openai"
-  model: "claude-sonnet-4-6"
-  anthropic_api_key: null     # Set via env: ANTHROPIC_API_KEY
-  openai_api_key: null        # Set via env: OPENAI_API_KEY
+  cli_tool: "claude"          # "claude" | "codex"
+  model: "claude-sonnet-4-6"  # Passed via --model flag
 
 # --- Genetic Algorithm Optimizer ---
 optimizer:

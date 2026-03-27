@@ -12,4 +12,4 @@
 #   a: 3.10   # Recalibrated from your org's historical data
 
 # llm:
-#   anthropic_api_key: "sk-ant-..."
+#   cli_tool: "codex"   # Switch to codex CLI locally
