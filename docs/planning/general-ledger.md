@@ -26,6 +26,22 @@ Tài liệu này theo dõi toàn cảnh trạng thái implementation của từn
 
 ---
 
+## Dependency Chain Analysis
+
+```
+Critical sequential chain (the bottleneck path):
+
+BE-002 → BE-003 → BE-004 → BE-006 → BE-010 → BE-011 → FE-015
+                          → BE-005 → FE-012
+BE-002 → PA-BE-001 → PA-BE-002 → PA-FE-001 → PA-FE-002
+                   → PA-BE-003 ↗
+FE-001 → FE-002 → FE-003 ┐
+                 → FE-004 ┘→ INT-001 → FE-005 → FE-006/FE-007
+                                     → FE-008/FE-009/FE-011/FE-012/FE-013
+```
+
+---
+
 ## Assignment Overview
 
 > **Critical path first.** Tasks listed in dependency order within each phase.
