@@ -83,6 +83,10 @@ body {
 .lang-btn { font-size:11px; font-weight:700; letter-spacing:0.05em; padding:3px 10px; border-radius:16px; border:none; background:transparent; color:var(--text-3); cursor:pointer; transition:all 0.18s; }
 .lang-btn.active { background:var(--white); color:var(--text-1); box-shadow:var(--shadow-sm); }
 #slide-counter { font-size:11px; color:var(--text-3); min-width:36px; text-align:right; font-variant-numeric:tabular-nums; }
+#scale-ctrl { display:flex; align-items:center; gap:4px; background:var(--off-white); border:1px solid var(--border-md); border-radius:20px; padding:2px 8px; }
+.scale-btn { width:22px; height:22px; border:none; background:transparent; cursor:pointer; color:var(--text-2); font-size:15px; font-weight:700; line-height:1; display:flex; align-items:center; justify-content:center; border-radius:50%; transition:background 0.15s; }
+.scale-btn:hover { background:var(--border); }
+#scale-val { font-size:10px; font-weight:700; color:var(--text-2); min-width:32px; text-align:center; font-variant-numeric:tabular-nums; }
 
 /* ── PROGRESS ── */
 #progress-track { position:fixed; top:46px; left:0; right:0; height:2px; background:var(--border); z-index:200; }
@@ -91,7 +95,7 @@ body {
 /* ── DECK ── */
 #deck { position:relative; height:100vh; padding-top:48px; overflow:hidden; }
 .slide {
-  position:absolute; inset:48px 0 0;
+  position:absolute; inset:48px 0 36px;
   overflow-y:auto; opacity:0; visibility:hidden; pointer-events:none;
   transform:translateY(14px);
   transition:opacity 0.32s var(--ease), transform 0.32s var(--ease);
@@ -145,7 +149,7 @@ h1,h2 { font-family:'Space Grotesk',sans-serif; }
 .slide-label {
   display:inline-flex; align-items:center; gap:6px;
   font-size:10px; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-3);
-  margin-bottom:14px;
+  margin-bottom:8px;
 }
 .slide-label::before { content:''; width:6px; height:6px; border-radius:50%; background:var(--grad-hero); flex-shrink:0; }
 
@@ -197,23 +201,23 @@ h1,h2 { font-family:'Space Grotesk',sans-serif; }
 
 /* ── SLIDE WRAPPERS ── */
 .sw { max-width:860px; margin:0 auto; padding:44px 40px 80px; position:relative; }
-.sw-center { max-width:780px; margin:0 auto; padding:44px 40px 80px; display:flex; flex-direction:column; justify-content:center; min-height:calc(100vh - 48px); }
+.sw-center { max-width:780px; margin:0 auto; padding:44px 40px 80px; display:flex; flex-direction:column; justify-content:center; min-height:calc(100vh - 84px); }
 
 /* ── COVER ── */
-.cover-wrap { min-height:calc(100vh - 48px); display:flex; flex-direction:column; justify-content:center; padding:48px 10vw; position:relative; }
+.cover-wrap { min-height:calc(100vh - 48px); display:flex; flex-direction:column; justify-content:center; padding:8px 8vw 60px 18vw; position:relative; zoom:1.2; gap:0; }
 .cover-acro {
   font-family:'Space Grotesk',sans-serif;
-  font-size:clamp(60px,10vw,120px); font-weight:800; line-height:1;
+  font-size:clamp(52px,8vw,100px); font-weight:800; line-height:1;
   letter-spacing:-0.04em;
   background:var(--grad-hero); background-size:200% 200%;
   -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
-  animation:gradShift 6s ease infinite; margin-bottom:8px;
+  animation:gradShift 6s ease infinite; margin-bottom:4px;
 }
-.cover-full { font-size:clamp(11px,1.3vw,14px); color:var(--text-3); max-width:440px; line-height:1.45; margin-bottom:30px; }
-.cover-line { font-family:'Space Grotesk',sans-serif; font-size:clamp(18px,2.8vw,32px); font-weight:700; color:var(--text-1); line-height:1.3; max-width:600px; margin-bottom:28px; }
-.cover-tags { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:36px; }
-.cover-quote { font-size:clamp(12px,1.4vw,15px); color:var(--text-2); font-style:italic; line-height:1.65; max-width:580px; padding:14px 18px; background:linear-gradient(90deg,rgba(255,45,85,0.04),transparent); border-left:2px solid var(--pink); border-radius:0 8px 8px 0; }
-.live-dot { position:absolute; bottom:36px; right:10vw; display:flex; align-items:center; gap:8px; font-size:11px; color:var(--text-3); }
+.cover-full { font-size:clamp(11px,1.2vw,13px); color:var(--text-3); max-width:440px; line-height:1.4; margin-bottom:14px; }
+.cover-line { font-family:'Space Grotesk',sans-serif; font-size:clamp(16px,2.2vw,26px); font-weight:700; color:var(--text-1); line-height:1.25; max-width:600px; margin-bottom:14px; }
+.cover-tags { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+.cover-quote { font-size:clamp(11px,1.2vw,13px); color:var(--text-2); font-style:italic; line-height:1.55; max-width:540px; padding:10px 16px; background:linear-gradient(90deg,rgba(255,45,85,0.04),transparent); border-left:2px solid var(--pink); border-radius:0 8px 8px 0; }
+.live-dot { display:flex; align-items:center; gap:8px; font-size:11px; color:var(--text-3); margin-top:16px; }
 .dot-pulse { width:8px; height:8px; border-radius:50%; background:var(--blue); animation:pulseDot 2.2s ease-in-out infinite; }
 
 /* ── IMPACT WORD (slide 3) ── */
@@ -273,11 +277,138 @@ pre { background:var(--off-white); border:1px solid var(--border-md); border-rad
 code { font-family:'SF Mono','Fira Code',monospace; background:var(--off-white); border:1px solid var(--border); padding:2px 6px; border-radius:4px; font-size:0.88em; color:var(--purple); }
 .rv { display:inline-block; font-size:10px; font-weight:700; padding:2px 8px; border-radius:4px; background:var(--blue-t); color:var(--blue); border:1px solid rgba(10,132,255,0.18); margin-right:6px; font-family:'SF Mono',monospace; }
 
+/* ── DEMO SLIDES ── */
+.sw-demo { max-width:960px; margin:0 auto; padding:20px 28px 10px; height:100%; display:flex; flex-direction:column; }
+.demo-header { flex-shrink:0; margin-bottom:12px; }
+/* HR Demo */
+.hr-layout { display:grid; grid-template-columns:200px 1fr; gap:12px; flex:1; min-height:0; overflow:hidden; }
+.hr-list { overflow-y:auto; display:flex; flex-direction:column; gap:7px; padding-bottom:8px; }
+.hr-list::-webkit-scrollbar,.hr-detail::-webkit-scrollbar { width:3px; }
+.hr-list::-webkit-scrollbar-thumb,.hr-detail::-webkit-scrollbar-thumb { background:var(--border-md); border-radius:2px; }
+.dev-card { background:var(--white); border:1.5px solid var(--border); border-radius:11px; padding:10px 12px; cursor:pointer; transition:all 0.18s; }
+.dev-card:hover { border-color:var(--blue); box-shadow:0 2px 12px rgba(10,132,255,0.1); }
+.dev-card.sel { border-color:var(--blue); background:var(--blue-t); }
+.dev-avatar { width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-family:'Space Grotesk',sans-serif; font-size:11px; font-weight:800; color:#fff; flex-shrink:0; }
+.hr-detail { overflow-y:auto; display:flex; flex-direction:column; gap:9px; padding-bottom:8px; }
+.hd-top { background:var(--white); border:1px solid var(--border); border-radius:12px; padding:12px 14px; display:flex; align-items:center; gap:12px; flex-shrink:0; }
+.hd-mid { display:grid; grid-template-columns:148px 1fr; gap:9px; }
+.hd-radar { background:var(--white); border:1px solid var(--border); border-radius:12px; padding:10px; display:flex; flex-direction:column; align-items:center; }
+.hd-skills { background:var(--white); border:1px solid var(--border); border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:8px; }
+.sk-row { display:flex; align-items:center; gap:8px; }
+.sk-name { width:50px; color:var(--text-2); font-weight:600; flex-shrink:0; font-size:11px; }
+.sk-track { flex:1; height:5px; background:var(--border); border-radius:3px; }
+.sk-fill { height:100%; border-radius:3px; transition:width 0.5s var(--ease); }
+.hd-bot { display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+.hd-box { background:var(--white); border:1px solid var(--border); border-radius:12px; padding:12px; }
+.match-big { font-family:'Space Grotesk',sans-serif; font-size:28px; font-weight:800; line-height:1; margin-bottom:5px; }
+.match-track { height:6px; background:var(--border); border-radius:3px; margin-bottom:7px; }
+.match-fill { height:100%; border-radius:3px; transition:width 0.6s var(--ease); }
+
+/* ── PROJECT DEMO ── */
+.proj-layout { display:grid; grid-template-columns:210px 1fr; gap:12px; flex:1; min-height:0; overflow:hidden; }
+.proj-left { display:flex; flex-direction:column; gap:9px; overflow-y:auto; min-height:0; }
+.proj-right { overflow-y:auto; display:flex; flex-direction:column; gap:9px; padding-bottom:8px; min-height:0; }
+.proj-left::-webkit-scrollbar,.proj-right::-webkit-scrollbar { width:3px; }
+.proj-left::-webkit-scrollbar-thumb,.proj-right::-webkit-scrollbar-thumb { background:var(--border-md); border-radius:2px; }
+.verdict-badge { display:inline-flex; align-items:center; padding:4px 12px; border-radius:20px; font-size:10px; font-weight:800; letter-spacing:0.08em; }
+.v-proceed    { background:rgba(48,209,88,0.1);  color:#30D158; border:1.5px solid rgba(48,209,88,0.3); }
+.v-conditional{ background:rgba(255,214,10,0.14); color:#9A6500; border:1.5px solid rgba(255,214,10,0.5); }
+.v-stop       { background:rgba(255,45,85,0.10);  color:#FF2D55; border:1.5px solid rgba(255,45,85,0.3); }
+.axis-row { display:flex; align-items:center; gap:8px; }
+.axis-name { width:60px; font-size:10px; font-weight:600; color:var(--text-2); flex-shrink:0; }
+.axis-track { flex:1; height:5px; background:var(--border); border-radius:3px; }
+.axis-fill { height:100%; border-radius:3px; transition:width 0.5s var(--ease); }
+.risk-row { display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px solid var(--border); }
+.risk-row:last-child { border-bottom:none; }
+.risk-sev { font-size:9px; font-weight:800; padding:2px 7px; border-radius:8px; flex-shrink:0; min-width:34px; text-align:center; }
+
+/* ── PLANNING BOARD ── */
+.plan-layout { display:flex; flex-direction:column; flex:1; min-height:0; gap:9px; }
+.hr-pool { display:flex; gap:7px; flex-wrap:wrap; padding:8px 10px; background:var(--off-white); border:1px solid var(--border); border-radius:10px; flex-shrink:0; }
+.hr-mini { display:flex; align-items:center; gap:7px; padding:5px 10px; background:var(--white); border:1.5px solid var(--border); border-radius:10px; cursor:grab; font-size:11px; font-weight:600; color:var(--text-1); user-select:none; transition:all 0.18s; }
+.hr-mini:hover { border-color:var(--blue); box-shadow:0 2px 8px rgba(10,132,255,0.1); }
+.hr-mini:active { cursor:grabbing; opacity:0.7; }
+.kanban { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; flex:1; min-height:0; }
+.k-col { display:flex; flex-direction:column; min-height:0; background:var(--off-white); border-radius:12px; padding:10px; }
+.k-col-header { font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-3); padding-bottom:8px; margin-bottom:8px; border-bottom:1px solid var(--border); flex-shrink:0; display:flex; align-items:center; gap:6px; }
+.k-col-body { display:flex; flex-direction:column; gap:7px; overflow-y:auto; min-height:0; flex:1; }
+.k-col-body::-webkit-scrollbar { width:3px; }
+.k-col-body::-webkit-scrollbar-thumb { background:var(--border-md); border-radius:2px; }
+.k-task { background:var(--white); border:1.5px solid var(--border); border-radius:10px; padding:10px 12px; transition:all 0.18s; flex-shrink:0; }
+.k-task.drag-over { border-color:var(--blue); background:var(--blue-t); transform:scale(1.02); }
+.k-col-body.col-hover { background:rgba(10,132,255,0.05); border-radius:8px; outline:1.5px dashed var(--blue); }
+.k-task.done-task { opacity:0.6; }
+.k-task-title { font-size:12px; font-weight:600; color:var(--text-1); margin-bottom:7px; }
+.k-task-meta { display:flex; align-items:center; justify-content:space-between; }
+.k-slot { font-size:10px; color:var(--text-3); font-style:italic; padding:3px 8px; border:1px dashed var(--border-md); border-radius:8px; }
+.k-est { font-size:9px; font-weight:700; color:var(--text-3); padding:2px 6px; background:var(--off-white); border-radius:6px; flex-shrink:0; }
+.constraint-bar { background:var(--white); border:1px solid var(--border); border-radius:12px; padding:10px 14px; flex-shrink:0; }
+.c-metrics { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+.c-metric-label { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-3); margin-bottom:4px; }
+.c-metric-val { font-family:'Space Grotesk',sans-serif; font-size:20px; font-weight:800; line-height:1; margin-bottom:5px; }
+.c-bar { height:5px; background:var(--border); border-radius:3px; }
+.c-bar-fill { height:100%; border-radius:3px; transition:width 0.5s var(--ease), background 0.5s; }
+/* deadline pressure bar */
+.dl-bar { height:10px; background:var(--border); border-radius:5px; overflow:hidden; }
+.dl-fill { height:100%; border-radius:5px; width:0%; transition:width 0.6s var(--ease), background 0.6s; }
+.dl-crit-line { position:absolute; top:-5px; bottom:-5px; left:70%; width:2px; background:rgba(255,45,85,0.55); border-radius:1px; pointer-events:none; }
+.dl-crit-line::before { content:''; position:absolute; top:-1px; left:50%; transform:translateX(-50%); width:6px; height:6px; border-radius:50%; background:rgba(255,45,85,0.55); }
+.dl-crit-label { position:absolute; top:-18px; left:70%; transform:translateX(-50%); font-size:8px; font-weight:800; color:rgba(255,45,85,0.65); letter-spacing:0.06em; white-space:nowrap; }
+.dl-warn { font-size:10px; font-weight:700; color:var(--pink); margin-top:7px; padding:5px 10px; background:rgba(255,45,85,0.07); border:1px solid rgba(255,45,85,0.2); border-radius:8px; display:none; align-items:center; gap:6px; }
+.dl-warn.show { display:flex; animation:fadeUp 0.3s var(--ease); }
+
+/* ── GANTT CHART ── */
+.gantt-wrap { display:flex; flex-direction:column; flex:1; min-height:0; gap:9px; }
+.gantt-table { background:var(--white); border:1px solid var(--border); border-radius:12px; overflow:hidden; flex:1; min-height:0; display:flex; flex-direction:column; }
+.gantt-scroll { overflow-y:auto; flex:1; min-height:0; }
+.gantt-scroll::-webkit-scrollbar { width:3px; }
+.gantt-scroll::-webkit-scrollbar-thumb { background:var(--border-md); border-radius:2px; }
+.gantt-row { display:grid; grid-template-columns:148px 38px 1fr; align-items:center; border-bottom:1px solid var(--border); min-height:38px; }
+.gantt-row:last-child { border-bottom:none; }
+.gantt-hdr-row { background:var(--off-white); min-height:28px; flex-shrink:0; }
+.g-task-col { padding:0 10px; }
+.g-own-col  { display:flex; align-items:center; justify-content:center; }
+.g-tl-col   { padding:0 10px; }
+.g-task-name { font-size:11px; font-weight:600; color:var(--text-1); }
+.gantt-metrics-grid { display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr 2fr; gap:14px; padding:10px 14px; background:var(--white); border:1px solid var(--border); border-radius:12px; flex-shrink:0; align-items:center; }
+.g-metric-lbl { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-3); margin-bottom:3px; }
+.g-metric-val { font-family:'Space Grotesk',sans-serif; font-size:22px; font-weight:800; line-height:1; }
+.pont-bar { height:6px; background:var(--border); border-radius:3px; margin-top:5px; }
+.pont-fill { height:100%; border-radius:3px; transition:width 0.6s var(--ease); }
+
+/* ── TOPIC BAR ── */
+#topic-bar {
+  position:fixed; bottom:0; left:0; right:0; height:36px; z-index:200;
+  background:rgba(255,255,255,0.94); backdrop-filter:blur(14px);
+  border-top:1px solid var(--border);
+  display:flex; align-items:stretch; overflow-x:auto; overflow-y:hidden;
+  padding:0 8px;
+}
+#topic-bar::-webkit-scrollbar { display:none; }
+.topic-item {
+  flex-shrink:0; padding:0 12px; height:36px; font-size:10.5px; font-weight:600;
+  color:var(--text-3); background:none; border:none; cursor:pointer;
+  white-space:nowrap; letter-spacing:0.02em;
+  transition:color 0.18s, background 0.18s;
+  position:relative; display:flex; align-items:center;
+}
+.topic-item:hover { color:var(--text-2); }
+.topic-item.active { color:var(--blue); font-weight:700; }
+.topic-item.active::after {
+  content:''; position:absolute; bottom:0; left:8px; right:8px;
+  height:2px; background:var(--blue); border-radius:2px 2px 0 0;
+}
+.topic-item.t-demo.active { color:var(--purple); }
+.topic-item.t-demo.active::after { background:var(--purple); }
+.topic-item.t-app.active { color:var(--text-2); }
+.topic-item.t-app.active::after { background:var(--text-3); }
+.topic-sep { width:1px; background:var(--border); margin:8px 4px; flex-shrink:0; }
+
 /* ── RESPONSIVE ── */
 @media(max-width:680px) {
   .sw,.sw-center { padding:28px 18px 80px; }
   .g2,.g3,.g4 { grid-template-columns:1fr; }
-  .cover-wrap { padding:40px 22px; }
+  .cover-wrap { padding:40px 16px 40px 24px; zoom:1.0; }
   #brand-name { display:none; }
 }
 </style>
@@ -295,12 +426,17 @@ code { font-family:'SF Mono','Fira Code',monospace; background:var(--off-white);
     <span id="brand-name">Gamified AI-Assisted Resource Planning &amp; Decision Support Platform</span>
   </div>
   <div id="bar-right">
+    <div id="scale-ctrl">
+      <button class="scale-btn" onclick="changeScale(-0.1)">−</button>
+      <span id="scale-val">100%</span>
+      <button class="scale-btn" onclick="changeScale(0.1)">+</button>
+    </div>
     <div id="lang-toggle">
       <button class="lang-btn active" onclick="setLang('en')">EN</button>
       <button class="lang-btn"        onclick="setLang('vi')">VI</button>
       <button class="lang-btn"        onclick="setLang('ja')">JA</button>
     </div>
-    <span id="slide-counter">1 / 11</span>
+    <span id="slide-counter">1 / 15</span>
   </div>
 </div>
 <div id="progress-track"><div id="progress-fill"></div></div>
@@ -309,8 +445,9 @@ code { font-family:'SF Mono','Fira Code',monospace; background:var(--off-white);
 <div id="deck">
 
 <!-- ═══ S1 COVER ═══ -->
-<div class="slide active" data-i="0">
-<div class="cover-wrap">
+<div class="slide active" data-i="0" style="overflow:hidden;">
+<img src="gradient-component.png" alt="" aria-hidden="true" style="position:absolute;right:-60px;top:50%;transform:translateY(-50%) rotate(45deg);width:min(680px,58vw);pointer-events:none;z-index:0;opacity:0.9;user-select:none;">
+<div class="cover-wrap" style="position:relative;z-index:1;">
   <div class="a slide-label" data-k="s1_lbl">Decision Intelligence Platform</div>
   <div class="a cover-acro">GAIARP</div>
   <div class="a cover-full" data-k="s1_full">Gamified AI-Assisted Resource Planning and Decision Support Platform</div>
@@ -462,8 +599,204 @@ code { font-family:'SF Mono','Fira Code',monospace; background:var(--off-white);
 </div>
 </div>
 
-<!-- ═══ S6 TRUST ═══ -->
+<!-- ═══ S6 ARCHITECTURE ═══ -->
 <div class="slide" data-i="5">
+<div class="sw">
+  <div class="a"><span class="app-tag"><i data-lucide="server"></i> <span data-k="ap_c">High Level Architecture</span></span></div>
+  <h2 class="a heading" style="font-size:clamp(20px,3vw,32px);" data-k="ap_c_t">High-Level Architecture</h2>
+  <div class="a">
+<pre>GitHub API ──┐
+Slack API  ──┤→ Data Pipeline → Feature Extraction
+             │                        ↓
+             │              LLM Profile Inference (Claude API)
+             │                        ↓
+             │              Developer Profiles (5-layer)
+             │
+Project Brief ──→ LLM Scoring Engine (Claude API)
+                        ↓
+             10-axis Radar + Verdict + Risk Register
+                        ↓
+         ┌──────────────────────────────────┐
+         │         Planning Board           │
+         │  COCOMO II · WFU · GA Optimizer  │
+         │  Scenario State Machine          │
+         └──────────────────────────────────┘
+                        ↓
+           Earned Value · P(on_time) · Scenario Switch</pre>
+  </div>
+  <div class="a" style="display:flex;flex-wrap:wrap;gap:7px;margin-top:12px;">
+    <span class="pill blue">Next.js 15</span>
+    <span class="pill pink">FastAPI</span>
+    <span class="pill yellow">PostgreSQL</span>
+    <span class="pill purple">Claude API</span>
+    <span class="pill green">GitHub API</span>
+    <span class="pill blue">Slack API</span>
+  </div>
+</div>
+</div>
+
+<!-- ═══ S7 HR ANALYSIS ═══ -->
+<div class="slide" data-i="6" style="overflow:hidden;">
+<div class="sw-demo">
+  <div class="demo-header">
+    <div class="slide-label" data-k="s8_lbl">HR Analysis · Demo</div>
+    <h2 class="heading g-cool" style="font-size:clamp(16px,2.2vw,26px);margin-bottom:0;" data-k="s8_title">Personnel Intelligence — Character Select</h2>
+  </div>
+  <div class="hr-layout">
+    <div class="hr-list" id="hr-list">
+      <!-- populated by JS -->
+    </div>
+    <div class="hr-detail" id="hr-detail">
+      <div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-3);font-size:13px;font-style:italic;">← Select a developer</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══ S8 PROJECT ANALYSIS ═══ -->
+<div class="slide" data-i="7" style="overflow:hidden;">
+<div class="sw-demo">
+  <div class="demo-header">
+    <div class="slide-label" data-k="s9_lbl">Project Analysis · Demo</div>
+    <h2 class="heading g-purple" style="font-size:clamp(16px,2.2vw,26px);margin-bottom:0;" data-k="s9_title">Project Intelligence — Viability Radar</h2>
+  </div>
+  <div class="proj-layout">
+    <!-- LEFT: radar first, then verdict/meta card -->
+    <div class="proj-left">
+      <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <div id="proj-radar"></div>
+      </div>
+      <div id="proj-overview"></div>
+    </div>
+    <!-- RIGHT: name+desc, then axis breakdown + stack/matches + risks -->
+    <div class="proj-right">
+      <div class="hd-box" id="proj-desc"></div>
+      <div class="hd-box" id="proj-axes"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;">
+        <div class="hd-box" id="proj-stack"></div>
+        <div class="hd-box" id="proj-matches"></div>
+      </div>
+      <div class="hd-box" id="proj-risks"></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══ S9 PLANNING BOARD ═══ -->
+<div class="slide" data-i="8" style="overflow:hidden;">
+<div class="sw-demo">
+  <div class="demo-header">
+    <div class="slide-label" data-k="s10_lbl">Planning Board · Demo</div>
+    <h2 class="heading g-cool" style="font-size:clamp(16px,2.2vw,26px);margin-bottom:0;" data-k="s10_title">Resource Planning — Drag &amp; Drop Assignment</h2>
+  </div>
+  <div class="plan-layout">
+
+    <!-- HR pool -->
+    <div style="flex-shrink:0;">
+      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-3);margin-bottom:5px;">Available Developers — drag to a task</div>
+      <div class="hr-pool" id="plan-pool"></div>
+    </div>
+
+    <!-- Kanban -->
+    <div class="kanban">
+      <div class="k-col">
+        <div class="k-col-header">
+          <span style="width:7px;height:7px;border-radius:50%;background:var(--text-3);display:inline-block;flex-shrink:0;"></span>
+          Backlog
+        </div>
+        <div class="k-col-body" id="kbody-backlog"></div>
+      </div>
+      <div class="k-col">
+        <div class="k-col-header">
+          <span style="width:7px;height:7px;border-radius:50%;background:var(--blue);display:inline-block;flex-shrink:0;"></span>
+          In Progress
+        </div>
+        <div class="k-col-body" id="kbody-in-progress"></div>
+      </div>
+      <div class="k-col">
+        <div class="k-col-header">
+          <span style="width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;flex-shrink:0;"></span>
+          Done
+        </div>
+        <div class="k-col-body" id="kbody-done"></div>
+      </div>
+    </div>
+
+    <!-- Live constraints bar -->
+    <div class="constraint-bar">
+      <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-3);margin-bottom:8px;">Live Constraints — updates as you assign</div>
+      <div class="c-metrics">
+        <div>
+          <div class="c-metric-label">WFU Effective</div>
+          <div class="c-metric-val" id="c-wfu">—</div>
+          <div class="c-bar"><div class="c-bar-fill" id="c-wfu-bar" style="width:0%"></div></div>
+        </div>
+        <div>
+          <div class="c-metric-label">Task Coverage</div>
+          <div class="c-metric-val" id="c-coverage" style="color:var(--blue);">—</div>
+          <div class="c-bar"><div class="c-bar-fill" id="c-coverage-bar" style="width:0%;background:var(--blue);"></div></div>
+        </div>
+        <div>
+          <div class="c-metric-label">Risk Level</div>
+          <div class="c-metric-val" id="c-risk" style="font-size:16px;">—</div>
+        </div>
+        <div>
+          <div class="c-metric-label">Est. Remaining</div>
+          <div class="c-metric-val" id="c-eta" style="font-size:16px;color:var(--text-1);">—</div>
+        </div>
+      </div>
+
+      <!-- Deadline pressure bar -->
+      <div style="margin-top:10px;padding-top:9px;border-top:1px solid var(--border);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-3);">Deadline Pressure</span>
+          <span id="c-dl-pct" style="font-size:10px;font-weight:800;color:var(--text-3);">—</span>
+        </div>
+        <div style="position:relative;margin-bottom:4px;">
+          <div class="dl-bar"><div id="c-dl-fill" class="dl-fill"></div></div>
+          <div class="dl-crit-line"></div>
+          <span class="dl-crit-label">CRITICAL 70%</span>
+        </div>
+        <div id="c-dl-warn" class="dl-warn">⚠ Passing deadline — assign remaining tasks to reduce schedule risk</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- ═══ S10 GANTT CHART ═══ -->
+<div class="slide" data-i="9" style="overflow:hidden;">
+<div class="sw-demo">
+  <div class="demo-header">
+    <div class="slide-label" data-k="s11_lbl">Execution · Demo</div>
+    <h2 class="heading g-warm" style="font-size:clamp(16px,2.2vw,26px);margin-bottom:0;" data-k="s11_title">In-Execution — Gantt &amp; P(on_time)</h2>
+  </div>
+  <div class="gantt-wrap">
+
+    <!-- Legend -->
+    <div style="display:flex;gap:16px;align-items:center;flex-shrink:0;flex-wrap:wrap;">
+      <span style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-3);"><span style="width:18px;height:6px;background:rgba(0,0,0,0.09);border-radius:2px;display:inline-block;"></span>Baseline</span>
+      <span style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-3);"><span style="width:18px;height:8px;background:#0A84FF;opacity:0.25;border-radius:3px;display:inline-block;"></span>Planned</span>
+      <span style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-3);"><span style="width:18px;height:8px;background:#0A84FF;border-radius:3px;display:inline-block;"></span>Actual</span>
+      <span style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--blue);"><span style="width:2px;height:14px;background:var(--blue);display:inline-block;border-radius:1px;"></span>Today</span>
+      <span style="margin-left:auto;font-size:10px;color:var(--text-3);font-style:italic;">Project: E-Commerce Replatform v3</span>
+    </div>
+
+    <!-- Table -->
+    <div class="gantt-table">
+      <div id="gantt-container" class="gantt-scroll"><!-- populated by JS --></div>
+    </div>
+
+    <!-- Metrics strip -->
+    <div id="gantt-metrics"><!-- populated by JS --></div>
+
+  </div>
+</div>
+</div>
+
+<!-- ═══ S11 TRUST ═══ -->
+<div class="slide" data-i="10">
 <div class="sw">
   <div class="a slide-label" data-k="s6_lbl">Why Trust It</div>
   <h2 class="a heading g-cool" data-k="s6_title">Trust the System.<br>Not the Gut.</h2>
@@ -492,8 +825,8 @@ code { font-family:'SF Mono','Fira Code',monospace; background:var(--off-white);
 </div>
 </div>
 
-<!-- ═══ S7 VISION ═══ -->
-<div class="slide" data-i="6">
+<!-- ═══ S12 VISION ═══ -->
+<div class="slide" data-i="11">
 <div class="sw-center">
   <div class="a slide-label" data-k="s7_lbl">Vision</div>
   <div class="a vision-q" data-k="s7_q">"The best projects aren't won by the biggest team — but by the team that sees the clearest."</div>
@@ -506,7 +839,7 @@ code { font-family:'SF Mono','Fira Code',monospace; background:var(--off-white);
 </div>
 
 <!-- ═══ APPENDIX A ═══ -->
-<div class="slide" data-i="7">
+<div class="slide" data-i="12">
 <div class="sw">
   <div class="a"><span class="app-tag"><i data-lucide="calculator"></i> <span data-k="ap_a">Appendix A</span></span></div>
   <h2 class="a heading" style="font-size:clamp(20px,3vw,32px);" data-k="ap_a_t">Decision &amp; Estimation Logic</h2>
@@ -546,7 +879,7 @@ code { font-family:'SF Mono','Fira Code',monospace; background:var(--off-white);
 </div>
 
 <!-- ═══ APPENDIX B ═══ -->
-<div class="slide" data-i="8">
+<div class="slide" data-i="13">
 <div class="sw">
   <div class="a"><span class="app-tag"><i data-lucide="database"></i> <span data-k="ap_b">Appendix B</span></span></div>
   <h2 class="a heading" style="font-size:clamp(20px,3vw,32px);" data-k="ap_b_t">Data Foundation</h2>
@@ -569,44 +902,8 @@ code { font-family:'SF Mono','Fira Code',monospace; background:var(--off-white);
 </div>
 </div>
 
-<!-- ═══ APPENDIX C ═══ -->
-<div class="slide" data-i="9">
-<div class="sw">
-  <div class="a"><span class="app-tag"><i data-lucide="server"></i> <span data-k="ap_c">Appendix C</span></span></div>
-  <h2 class="a heading" style="font-size:clamp(20px,3vw,32px);" data-k="ap_c_t">High-Level Architecture</h2>
-  <div class="a">
-<pre>GitHub API ──┐
-Slack API  ──┤→ Data Pipeline → Feature Extraction
-             │                        ↓
-             │              LLM Profile Inference (Claude API)
-             │                        ↓
-             │              Developer Profiles (5-layer)
-             │
-Project Brief ──→ LLM Scoring Engine (Claude API)
-                        ↓
-             10-axis Radar + Verdict + Risk Register
-                        ↓
-         ┌──────────────────────────────────┐
-         │         Planning Board           │
-         │  COCOMO II · WFU · GA Optimizer  │
-         │  Scenario State Machine          │
-         └──────────────────────────────────┘
-                        ↓
-           Earned Value · P(on_time) · Scenario Switch</pre>
-  </div>
-  <div class="a" style="display:flex;flex-wrap:wrap;gap:7px;margin-top:12px;">
-    <span class="pill blue">Next.js 15</span>
-    <span class="pill pink">FastAPI</span>
-    <span class="pill yellow">PostgreSQL</span>
-    <span class="pill purple">Claude API</span>
-    <span class="pill green">GitHub API</span>
-    <span class="pill blue">Slack API</span>
-  </div>
-</div>
-</div>
-
 <!-- ═══ APPENDIX D ═══ -->
-<div class="slide" data-i="10">
+<div class="slide" data-i="14">
 <div class="sw">
   <div class="a"><span class="app-tag"><i data-lucide="map"></i> <span data-k="ap_d">Appendix D</span></span></div>
   <h2 class="a heading" style="font-size:clamp(20px,3vw,32px);" data-k="ap_d_t">Roadmap</h2>
@@ -632,7 +929,28 @@ Project Brief ──→ LLM Scoring Engine (Claude API)
 <button class="nav-btn" id="nav-prev" onclick="navigate(-1)">&#8592;</button>
 <button class="nav-btn" id="nav-next" onclick="navigate(1)">&#8594;</button>
 <div id="dot-nav"></div>
-<div style="position:fixed;bottom:12px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--text-3);letter-spacing:0.05em;pointer-events:none;z-index:100;">← → SPACE</div>
+
+<!-- TOPIC BAR -->
+<div id="topic-bar">
+  <button class="topic-item active" onclick="goTo(0)">Cover</button>
+  <button class="topic-item" onclick="goTo(1)">Motivation</button>
+  <button class="topic-item" onclick="goTo(2)">The Cost</button>
+  <button class="topic-item" onclick="goTo(3)">Core Insight</button>
+  <button class="topic-item" onclick="goTo(4)">Solution</button>
+  <button class="topic-item" onclick="goTo(5)">Architecture</button>
+  <div class="topic-sep"></div>
+  <button class="topic-item t-demo" onclick="goTo(6)">HR Analysis</button>
+  <button class="topic-item t-demo" onclick="goTo(7)">Project Analysis</button>
+  <button class="topic-item t-demo" onclick="goTo(8)">Planning Board</button>
+  <button class="topic-item t-demo" onclick="goTo(9)">Gantt Chart</button>
+  <div class="topic-sep"></div>
+  <button class="topic-item" onclick="goTo(10)">Why Trust It</button>
+  <button class="topic-item" onclick="goTo(11)">Vision</button>
+  <div class="topic-sep"></div>
+  <button class="topic-item t-app" onclick="goTo(12)">Appendix A</button>
+  <button class="topic-item t-app" onclick="goTo(13)">Appendix B</button>
+  <button class="topic-item t-app" onclick="goTo(14)">Appendix D</button>
+</div>
 
 <script>
 /* ── LANG DATA ── */
@@ -681,6 +999,10 @@ en:{
   s7_q:'"The best projects aren\'t won by the biggest team — but by the team that sees the clearest."',
   s7_body:'GAIARP turns scattered daily signals into project decisions that are confident, transparent, and capable of learning over time.',
   s7_close:'Better delivery starts with better decisions — and better decisions start with the right information.',
+  s8_lbl:'HR Analysis · Demo', s8_title:'Personnel Intelligence — Character Select',
+  s9_lbl:'Project Analysis · Demo', s9_title:'Project Intelligence — Viability Radar',
+  s10_lbl:'Planning Board · Demo', s10_title:'Resource Planning — Drag & Drop Assignment',
+  s11_lbl:'Execution · Demo', s11_title:'In-Execution — Gantt & P(on_time)',
   ap_a:'Appendix A', ap_a_t:'Decision & Estimation Logic',
   ap_a_p2:'Project Analysis (Pillar 2)',
   ap_a_p2_1:'10 axes, 1–5 scale with AI assist',
@@ -752,6 +1074,10 @@ vi:{
   s7_q:'"Dự án tốt nhất không được thắng bởi team đông nhất — mà bởi team thấy rõ nhất."',
   s7_body:'GAIARP biến tín hiệu rời rạc hàng ngày thành quyết định dự án tự tin, minh bạch và có thể học hỏi theo thời gian.',
   s7_close:'Better delivery starts with better decisions — and better decisions start with the right information.',
+  s8_lbl:'Phân Tích Nhân Sự · Demo', s8_title:'Thông Tin Nhân Sự — Chọn Nhân Vật',
+  s9_lbl:'Phân Tích Dự Án · Demo', s9_title:'Thông Minh Dự Án — Radar Khả Thi',
+  s10_lbl:'Bảng Kế Hoạch · Demo', s10_title:'Lập Kế Hoạch Nguồn Lực — Kéo & Thả',
+  s11_lbl:'Thực Thi · Demo', s11_title:'Trong Thực Thi — Gantt & P(on_time)',
   ap_a:'Phụ Lục A', ap_a_t:'Logic Tính Toán & Ước Lượng',
   ap_a_p2:'Phân Tích Dự Án (Trụ Cột 2)',
   ap_a_p2_1:'10 axes, 1–5 scale có AI assist',
@@ -823,6 +1149,8 @@ ja:{
   s7_q:'"最高のプロジェクトは最大のチームが勝つのではない——最も明確に見えるチームが勝つ。"',
   s7_body:'GAIARPは、日々の断片的なシグナルを、自信を持って透明性の高い、学習するプロジェクト意思決定へと変換します。',
   s7_close:'より良いデリバリーは、より良い意思決定から。より良い意思決定は、正しい情報から。',
+  s8_lbl:'人材分析 · デモ', s8_title:'人材インテリジェンス — キャラクター選択',
+  s9_lbl:'プロジェクト分析 · デモ', s9_title:'プロジェクト知性 — 実行可能性レーダー',
   ap_a:'付録 A', ap_a_t:'意思決定・見積もりロジック',
   ap_a_p2:'プロジェクト分析 (第2の柱)',
   ap_a_p2_1:'10軸、1〜5スケール、AI支援スコアリング',
@@ -852,6 +1180,467 @@ ja:{
 }
 };
 
+/* ── HR DEMO DATA ── */
+const DEVS = [
+  { id:0, initials:'NA', name:'Nguyen Van An',  role:'Sr. Backend Engineer', level:8, joined:'Jan 2021', totalExp:6, orgExp:3, stars:5, color:'#0A84FF',
+    ocean:[0.85,0.72,0.90,0.68,0.80], skillNames:['Python','SQL','React','DevOps','Testing'], skillVals:[0.92,0.85,0.55,0.78,0.82],
+    projects:['E-Commerce v2','Auth Service','Payment API'], match:88, tags:['Backend','API Design','High Reliability'] },
+  { id:1, initials:'TB', name:'Tran Thi Bao',   role:'Full-Stack Engineer',  level:6, joined:'Mar 2022', totalExp:4, orgExp:2, stars:4, color:'#BF5AF2',
+    ocean:[0.70,0.80,0.75,0.85,0.65], skillNames:['Python','SQL','React','DevOps','Testing'], skillVals:[0.70,0.68,0.85,0.60,0.72],
+    projects:['Dashboard UI','Mobile App','CMS Portal'], match:74, tags:['Full-Stack','UI/UX','Adaptable'] },
+  { id:2, initials:'LH', name:'Le Hoang Nam',   role:'DevOps Engineer',      level:7, joined:'Jun 2020', totalExp:5, orgExp:4, stars:4, color:'#30D158',
+    ocean:[0.65,0.90,0.60,0.72,0.88], skillNames:['Python','SQL','React','DevOps','Testing'], skillVals:[0.60,0.80,0.40,0.95,0.85],
+    projects:['CI/CD Pipeline','K8s Migration','Monitoring'], match:62, tags:['Infrastructure','Security','Consistent'] },
+  { id:3, initials:'PL', name:'Pham Lan Anh',   role:'AI/ML Engineer',       level:5, joined:'Sep 2023', totalExp:3, orgExp:1, stars:3, color:'#FF2D55',
+    ocean:[0.90,0.65,0.80,0.70,0.60], skillNames:['Python','SQL','React','DevOps','Testing'], skillVals:[0.88,0.72,0.50,0.55,0.65],
+    projects:['Recommender Engine','NLP Pipeline'], match:71, tags:['ML/AI','Python','Research'] },
+  { id:4, initials:'HV', name:'Hoang Viet Duc', role:'Frontend Engineer',    level:6, joined:'Feb 2022', totalExp:4, orgExp:2, stars:4, color:'#FFD60A',
+    ocean:[0.72,0.75,0.85,0.80,0.68], skillNames:['Python','SQL','React','DevOps','Testing'], skillVals:[0.45,0.50,0.92,0.55,0.70],
+    projects:['Design System','Landing Pages','Admin Panel'], match:65, tags:['Frontend','React','Design System'] }
+];
+
+function makeRadar(vals, lbls, color, sz) {
+  sz = sz || 130;
+  const N=vals.length, cx=sz/2, cy=sz/2, r=sz*0.36;
+  const a=i=>-Math.PI/2+2*Math.PI*i/N;
+  const px=(i,v)=>(cx+v*r*Math.cos(a(i))).toFixed(1);
+  const py=(i,v)=>(cy+v*r*Math.sin(a(i))).toFixed(1);
+  let s=`<svg viewBox="0 0 ${sz} ${sz}" width="${sz}" height="${sz}">`;
+  for(let k=1;k<=4;k++){const pts=Array.from({length:N},(_,i)=>`${px(i,k/4)},${py(i,k/4)}`).join(' ');s+=`<polygon points="${pts}" fill="none" stroke="rgba(0,0,0,0.06)" stroke-width="0.7"/>`;}
+  for(let i=0;i<N;i++)s+=`<line x1="${cx}" y1="${cy}" x2="${px(i,1)}" y2="${py(i,1)}" stroke="rgba(0,0,0,0.08)" stroke-width="0.8"/>`;
+  const dp=Array.from({length:N},(_,i)=>`${px(i,vals[i])},${py(i,vals[i])}`).join(' ');
+  s+=`<polygon points="${dp}" fill="${color}22" stroke="${color}" stroke-width="1.6" stroke-linejoin="round"/>`;
+  for(let i=0;i<N;i++)s+=`<circle cx="${px(i,vals[i])}" cy="${py(i,vals[i])}" r="2.5" fill="${color}"/>`;
+  const lr=r+13;
+  for(let i=0;i<N;i++){const lx=(cx+lr*Math.cos(a(i))).toFixed(1),ly=(cy+lr*Math.sin(a(i))).toFixed(1);s+=`<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" font-size="7.5" fill="#6B7280" font-family="Inter,sans-serif">${lbls[i]}</text>`;}
+  return s+'</svg>';
+}
+
+function showDev(id) {
+  document.querySelectorAll('.dev-card').forEach((c,i)=>c.classList.toggle('sel',i===id));
+  const d=DEVS[id], panel=document.getElementById('hr-detail');
+  const stars='★'.repeat(d.stars)+'☆'.repeat(5-d.stars);
+  const mc=d.match>=80?'#30D158':d.match>=65?'#FFB800':'#FF2D55';
+  const oceanLbls=['Open','Consc','Extra','Agree','Neuro'];
+  panel.innerHTML=`
+    <div class="hd-top">
+      <div class="dev-avatar" style="background:${d.color};width:46px;height:46px;font-size:14px;">${d.initials}</div>
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+          <span style="font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:700;color:var(--text-1)">${d.name}</span>
+          <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:12px;color:#fff;background:${d.color}">Lv.${d.level}</span>
+        </div>
+        <div style="font-size:12px;color:var(--text-2);margin-bottom:3px;">${d.role}</div>
+        <div style="font-size:12px;color:#FFB800;">${stars}</div>
+      </div>
+      <div style="text-align:right;font-size:11px;color:var(--text-3);line-height:1.8;">
+        <div>Joined <strong>${d.joined}</strong></div>
+        <div>${d.totalExp}y exp · ${d.orgExp}y in org</div>
+      </div>
+    </div>
+    <div class="hd-mid">
+      <div class="hd-radar">
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-3);margin-bottom:4px;">OCEAN Profile</div>
+        ${makeRadar(d.ocean,oceanLbls,d.color,128)}
+      </div>
+      <div class="hd-skills">
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-3);margin-bottom:2px;">Skill Proficiency</div>
+        ${d.skillNames.map((n,i)=>`<div class="sk-row"><span class="sk-name">${n}</span><div class="sk-track"><div class="sk-fill" style="width:${Math.round(d.skillVals[i]*100)}%;background:${d.color}"></div></div><span style="font-size:10px;color:var(--text-3);min-width:26px;text-align:right;">${Math.round(d.skillVals[i]*100)}%</span></div>`).join('')}
+      </div>
+    </div>
+    <div class="hd-bot">
+      <div class="hd-box">
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-3);margin-bottom:8px;">Projects Joined</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;">${d.projects.map(p=>`<span class="pill" style="background:var(--off-white);color:var(--text-2);border:1px solid var(--border);font-size:10px;">${p}</span>`).join('')}</div>
+      </div>
+      <div class="hd-box">
+        <div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-3);margin-bottom:4px;">Project Match</div>
+        <div class="match-big" style="color:${mc};">${d.match}%</div>
+        <div class="match-track"><div class="match-fill" style="width:${d.match}%;background:${mc};"></div></div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;">${d.tags.map(t=>`<span style="font-size:9px;font-weight:600;padding:2px 7px;border-radius:10px;background:var(--off-white);color:var(--text-2);border:1px solid var(--border);">${t}</span>`).join('')}</div>
+      </div>
+    </div>`;
+}
+
+function initHrDemo() {
+  const list=document.getElementById('hr-list');
+  if(!list||list.children.length)return;
+  DEVS.forEach((d,i)=>{
+    const card=document.createElement('div');
+    card.className='dev-card'+(i===0?' sel':'');
+    const stars='★'.repeat(d.stars)+'☆'.repeat(5-d.stars);
+    const mc=d.match>=80?'#30D158':d.match>=65?'#FFB800':'#FF2D55';
+    card.innerHTML=`
+      <div style="display:flex;align-items:center;gap:9px;margin-bottom:6px;">
+        <div class="dev-avatar" style="background:${d.color}">${d.initials}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12px;font-weight:700;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${d.name}</div>
+          <div style="font-size:10px;color:var(--text-3);">${d.role}</div>
+        </div>
+        <span style="font-size:9px;font-weight:700;padding:2px 6px;border-radius:8px;color:#fff;background:${d.color};flex-shrink:0;">Lv${d.level}</span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;font-size:9px;">
+        <span style="color:#FFB800;">${stars}</span>
+        <span style="color:${mc};font-weight:700;">${d.match}% match</span>
+      </div>
+      <div style="height:3px;background:var(--border);border-radius:2px;margin-top:5px;">
+        <div style="height:100%;width:${d.match}%;background:${mc};border-radius:2px;"></div>
+      </div>`;
+    card.onclick=()=>showDev(i);
+    list.appendChild(card);
+  });
+  showDev(0);
+}
+
+/* ── PROJECT DEMO DATA ── */
+const PROJECT = {
+  name: 'E-Commerce Replatform v3',
+  description: 'Migrate the existing monolithic e-commerce platform to a microservices architecture. Redesign checkout, inventory, and payment modules with a new API-first backend and a React-based storefront.',
+  meta: [
+    {icon:'calendar',  label:'Timeline',  value:'6 months'},
+    {icon:'users',     label:'Team size',  value:'5 – 7 engineers'},
+    {icon:'banknote',  label:'Budget',     value:'~$120 K'},
+    {icon:'layers',    label:'Domain',     value:'E-Commerce / FinTech'},
+    {icon:'git-branch',label:'Type',       value:'Greenfield + Migration'}
+  ],
+  verdict: 'CONDITIONAL', score: 3.2,
+  axes: {
+    labels:  ['Technical','Economic','Legal','Operational','Scheduling','Feasibility','Risk Ctrl','Team Fit','Innovation','Compliance'],
+    short:   ['Tech','Econ','Legal','Ops','Sched','Feasib','Risk','Team','Innov','Comply'],
+    values:  [0.82, 0.70, 0.90, 0.75, 0.65, 0.80, 0.60, 0.85, 0.72, 0.88]
+  },
+  stack: [
+    {label:'Next.js 15',cls:'blue'},{label:'FastAPI',cls:'pink'},
+    {label:'PostgreSQL',cls:'yellow'},{label:'Redis',cls:'green'},
+    {label:'K8s',cls:'purple'},{label:'Claude API',cls:'blue'}
+  ],
+  topMatches: [{id:0,match:88},{id:1,match:74},{id:3,match:71}],
+  risks: [
+    {label:'Scope creep during migration',    sev:'HIGH', color:'#FF2D55'},
+    {label:'Key person dependency (backend)', sev:'MED',  color:'#FFD60A'},
+    {label:'Compliance gap in payment module',sev:'MED',  color:'#FFD60A'},
+    {label:'Third-party API instability',     sev:'LOW',  color:'#30D158'}
+  ]
+};
+
+function initProjectDemo() {
+  const el = document.getElementById('proj-radar');
+  if (!el || el.children.length) return;
+  const P = PROJECT;
+
+  // Right: name + description (top of right column)
+  document.getElementById('proj-desc').innerHTML = `
+    <div style="font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;color:var(--text-1);margin-bottom:6px;">${P.name}</div>
+    <p style="font-size:11px;color:var(--text-2);line-height:1.65;">${P.description}</p>`;
+
+  // Left: verdict + meta card (below radar)
+  const vClass = P.verdict==='PROCEED'?'v-proceed':P.verdict==='CONDITIONAL'?'v-conditional':'v-stop';
+  document.getElementById('proj-overview').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:9px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div class="verdict-badge ${vClass}">${P.verdict}</div>
+        <div style="text-align:right;">
+          <div style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:800;color:var(--text-1);line-height:1;">${P.score}<span style="font-size:11px;color:var(--text-3);font-weight:400;"> /5</span></div>
+          <div style="font-size:9px;color:var(--text-3);">Viability Score</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px;padding-top:8px;border-top:1px solid var(--border);">
+        ${P.meta.map(m=>`
+          <div style="display:flex;align-items:center;gap:7px;">
+            <span style="color:var(--text-3);flex-shrink:0;display:flex;"><i data-lucide="${m.icon}" style="width:12px;height:12px;"></i></span>
+            <span style="font-size:10px;color:var(--text-3);width:54px;flex-shrink:0;">${m.label}</span>
+            <span style="font-size:11px;font-weight:600;color:var(--text-1);">${m.value}</span>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  if (window.lucide) window.lucide.createIcons();
+
+  // Radar
+  el.innerHTML = makeRadar(P.axes.values, P.axes.short, '#BF5AF2', 188);
+
+  // Axis breakdown
+  document.getElementById('proj-axes').innerHTML =
+    `<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-3);margin-bottom:9px;">Axis Breakdown (1–5)</div>` +
+    P.axes.labels.map((l,i)=>{
+      const v=P.axes.values[i], c=v>=0.7?'#30D158':v>=0.5?'#FFD60A':'#FF2D55';
+      return `<div class="axis-row" style="margin-bottom:5px;"><span class="axis-name">${l}</span><div class="axis-track"><div class="axis-fill" style="width:${v*100}%;background:${c};"></div></div><span style="font-size:10px;color:var(--text-3);min-width:22px;text-align:right;">${(v*5).toFixed(1)}</span></div>`;
+    }).join('');
+
+  // Stack
+  document.getElementById('proj-stack').innerHTML =
+    `<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-3);margin-bottom:8px;">Suggested Stack</div>
+     <div style="display:flex;flex-wrap:wrap;gap:5px;">${P.stack.map(s=>`<span class="pill ${s.cls}">${s.label}</span>`).join('')}</div>`;
+
+  // HR matches
+  document.getElementById('proj-matches').innerHTML =
+    `<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-3);margin-bottom:8px;">Top HR Matches</div>` +
+    P.topMatches.map(m=>{
+      const d=DEVS[m.id], mc=m.match>=80?'#30D158':m.match>=65?'#FFB800':'#FF2D55';
+      return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">
+        <div class="dev-avatar" style="background:${d.color};width:28px;height:28px;font-size:9px;">${d.initials}</div>
+        <div style="flex:1;min-width:0;"><div style="font-size:11px;font-weight:600;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${d.name}</div><div style="font-size:10px;color:var(--text-3);">${d.role}</div></div>
+        <span style="font-size:12px;font-weight:800;color:${mc};flex-shrink:0;">${m.match}%</span>
+      </div>`;
+    }).join('');
+
+  // Risks
+  document.getElementById('proj-risks').innerHTML =
+    `<div style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-3);margin-bottom:4px;">Risk Register</div>` +
+    P.risks.map(r=>`<div class="risk-row"><span class="risk-sev" style="background:${r.color}22;color:${r.color};border:1px solid ${r.color}44;">${r.sev}</span><span style="font-size:11px;color:var(--text-2);">${r.label}</span></div>`).join('');
+}
+
+/* ── PLANNING BOARD DATA ── */
+const planTasks = [
+  {id:'t1', title:'Database Schema',   col:'backlog',     est:5,  assignee:null},
+  {id:'t2', title:'API Gateway Design',col:'backlog',     est:8,  assignee:null},
+  {id:'t3', title:'Payment Service',   col:'backlog',     est:13, assignee:null},
+  {id:'t4', title:'Auth Module',       col:'in-progress', est:13, assignee:0},
+  {id:'t5', title:'Checkout UI',       col:'in-progress', est:8,  assignee:1},
+  {id:'t6', title:'Project Setup',     col:'done',        est:3,  assignee:2},
+  {id:'t7', title:'CI/CD Pipeline',    col:'done',        est:5,  assignee:2},
+];
+let dragDevId = null;
+let dragTaskId = null;
+
+function renderBoard() {
+  ['backlog','in-progress','done'].forEach(colId => {
+    const body = document.getElementById('kbody-' + colId);
+    if (!body) return;
+    body.innerHTML = '';
+    planTasks.filter(t => t.col === colId).forEach(t => {
+      const el = document.createElement('div');
+      el.className = 'k-task' + (colId==='done' ? ' done-task' : '');
+      el.draggable = true;
+      const d = t.assignee !== null ? DEVS[t.assignee] : null;
+      const assigneeHtml = d
+        ? `<div style="display:flex;align-items:center;gap:5px;"><div class="dev-avatar" style="background:${d.color};width:20px;height:20px;font-size:8px;">${d.initials}</div><span style="font-size:10px;font-weight:600;color:var(--text-2);">${d.name.split(' ')[0]}</span></div>`
+        : colId === 'done'
+          ? `<span style="font-size:10px;color:var(--green);">✓ Complete</span>`
+          : `<span class="k-slot">Drop dev here</span>`;
+      el.innerHTML = `<div class="k-task-title">${t.title}</div><div class="k-task-meta">${assigneeHtml}<span class="k-est">${t.est}pt</span></div>`;
+
+      // Task is draggable between columns
+      el.addEventListener('dragstart', e => {
+        dragTaskId = t.id; dragDevId = null;
+        e.dataTransfer.effectAllowed = 'move';
+        e.stopPropagation();
+        setTimeout(() => el.style.opacity = '0.4', 0);
+      });
+      el.addEventListener('dragend', () => { el.style.opacity = '1'; dragTaskId = null; });
+
+      // Dev card dropped onto this task
+      el.addEventListener('dragover', e => {
+        if (dragDevId !== null) { e.preventDefault(); e.stopPropagation(); el.classList.add('drag-over'); }
+      });
+      el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
+      el.addEventListener('drop', e => {
+        if (dragDevId !== null) {
+          e.preventDefault(); e.stopPropagation();
+          el.classList.remove('drag-over');
+          t.assignee = dragDevId; renderBoard();
+        }
+      });
+
+      body.appendChild(el);
+    });
+  });
+  updateConstraints();
+}
+
+function updateConstraints() {
+  const active   = planTasks.filter(t => t.col !== 'done');
+  const assigned = active.filter(t => t.assignee !== null);
+  const coverage = active.length ? Math.round(assigned.length / active.length * 100) : 100;
+  const wfu      = assigned.length
+    ? Math.round(assigned.reduce((s, t) => s + DEVS[t.assignee].match, 0) / assigned.length)
+    : 0;
+  const unassigned  = active.length - assigned.length;
+  const risk        = unassigned >= 3 ? 'HIGH' : unassigned >= 1 ? 'MED' : 'LOW';
+  const riskColor   = risk==='HIGH' ? '#FF2D55' : risk==='MED' ? '#FFB800' : '#30D158';
+  const remaining   = active.reduce((s, t) => s + t.est, 0);
+  const wfuColor    = wfu >= 75 ? '#30D158' : wfu >= 55 ? '#FFB800' : '#FF2D55';
+
+  // Deadline pressure: risk-adjusted effort vs baseline
+  // Unassigned tasks → 1.9× overhead; poor match (<65%) → 1.5×; medium (65-79%) → 1.2×; good (≥80%) → 1.0×
+  const pressurePts = active.reduce((s, t) => {
+    if (t.assignee === null) return s + t.est * 1.9;
+    const m = DEVS[t.assignee].match;
+    return s + t.est * (m >= 80 ? 1.0 : m >= 65 ? 1.2 : 1.5);
+  }, 0);
+  const baseline   = active.reduce((s, t) => s + t.est, 0) || 1;
+  // Map onto 0-105% bar: 1.0× pressure → ~50%, 1.9× → ~100%
+  const dlPct      = Math.min(Math.round(pressurePts / baseline / 1.9 * 100), 105);
+  const CRIT       = 70; // critical line position %
+  const exceeds    = dlPct >= CRIT;
+  const dlColor    = dlPct < 50 ? '#30D158' : dlPct < CRIT ? '#FFD60A' : '#FF2D55';
+
+  const set = (id, val)        => { const el=document.getElementById(id); if(el) el.textContent=val; };
+  const css = (id, prop, val)  => { const el=document.getElementById(id); if(el) el.style[prop]=val; };
+  const tog = (id, cls, on)    => { const el=document.getElementById(id); if(el) el.classList.toggle(cls, on); };
+
+  set('c-wfu',   wfu ? wfu+'%' : '—');  css('c-wfu','color',wfuColor);
+  css('c-wfu-bar','width',wfu+'%');       css('c-wfu-bar','background',wfuColor);
+  set('c-coverage', coverage+'%');        css('c-coverage-bar','width',coverage+'%');
+  set('c-risk', risk);                    css('c-risk','color',riskColor);
+  set('c-eta',  remaining ? remaining+'pt left' : 'All done!');
+  set('c-dl-pct', dlPct+'%');             css('c-dl-pct','color', dlColor);
+  css('c-dl-fill','width', dlPct+'%');    css('c-dl-fill','background', dlColor);
+  tog('c-dl-warn','show', exceeds);
+}
+
+function initPlanningDemo() {
+  const pool = document.getElementById('plan-pool');
+  if (!pool || pool.children.length) return;
+
+  // Dev pool cards
+  DEVS.forEach((d, i) => {
+    const card = document.createElement('div');
+    card.className = 'hr-mini';
+    card.draggable = true;
+    card.innerHTML = `<div class="dev-avatar" style="background:${d.color};width:22px;height:22px;font-size:8px;">${d.initials}</div><span>${d.name.split(' ').slice(0,2).join(' ')}</span>`;
+    card.addEventListener('dragstart', e => { dragDevId = i; dragTaskId = null; e.dataTransfer.effectAllowed='copy'; card.style.opacity='0.5'; });
+    card.addEventListener('dragend',   () => { card.style.opacity='1'; dragDevId = null; });
+    pool.appendChild(card);
+  });
+
+  // Column bodies as task drop targets — set up once, persist across renderBoard calls
+  ['backlog','in-progress','done'].forEach(colId => {
+    const body = document.getElementById('kbody-' + colId);
+    if (!body) return;
+    body.addEventListener('dragover', e => {
+      if (dragTaskId !== null) { e.preventDefault(); body.classList.add('col-hover'); }
+    });
+    body.addEventListener('dragleave', e => {
+      if (!body.contains(e.relatedTarget)) body.classList.remove('col-hover');
+    });
+    body.addEventListener('drop', e => {
+      body.classList.remove('col-hover');
+      if (dragTaskId !== null) {
+        e.preventDefault();
+        const task = planTasks.find(t => t.id === dragTaskId);
+        if (task) { task.col = colId; dragTaskId = null; renderBoard(); }
+      }
+    });
+  });
+
+  renderBoard();
+}
+
+/* ── GANTT DATA ── */
+const GANTT_DATA = {
+  months:  ['Jan','Feb','Mar','Apr','May','Jun'],
+  maxSpan: 7.5,   // full bar width including overrun zone
+  today:   2.5,   // current month position
+  pont: 61, spi: 0.88, cpi: 0.94, eac: '$134K',
+  tasks: [
+    {title:'DB Schema',    owner:0,    color:'#0A84FF', base:[0,1],     plan:[0,1.2],   done:1.0, status:'done'},
+    {title:'API Gateway',  owner:0,    color:'#0A84FF', base:[1,2.5],   plan:[1.2,2.9], done:0.72,status:'progress'},
+    {title:'Auth Module',  owner:0,    color:'#0A84FF', base:[1,3.5],   plan:[1.2,3.8], done:0.55,status:'progress'},
+    {title:'Checkout UI',  owner:1,    color:'#BF5AF2', base:[3,5],     plan:[3.5,5.5], done:0.10,status:'progress'},
+    {title:'Payment Svc',  owner:null, color:'#FF2D55', base:[3.5,5.5], plan:[4.5,6.5], done:0,   status:'risk'},
+    {title:'Testing & QA', owner:null, color:'#FF2D55', base:[5,6],     plan:[6,7.5],   done:0,   status:'risk'}
+  ]
+};
+
+function initGanttDemo() {
+  const el = document.getElementById('gantt-container');
+  if (!el || el.dataset.init) return;
+  el.dataset.init = '1';
+  const G = GANTT_DATA;
+  const S = G.maxSpan;
+  const pc  = v          => (v / S * 100).toFixed(2) + '%';
+  const wd  = (s, e)     => ((e - s) / S * 100).toFixed(2) + '%';
+
+  // Header row
+  const monthCols = G.months.map((m, i) =>
+    `<span style="position:absolute;left:${(i/S*100).toFixed(1)}%;font-size:9px;font-weight:700;
+      color:var(--text-3);letter-spacing:0.06em;transform:translateX(0);">${m}</span>
+     <div style="position:absolute;left:${(i/S*100).toFixed(1)}%;top:0;bottom:0;width:1px;
+      background:var(--border);"></div>`
+  ).join('');
+
+  let rows = `<div class="gantt-row gantt-hdr-row">
+    <div class="g-task-col" style="font-size:9px;font-weight:700;color:var(--text-3);letter-spacing:0.08em;padding:6px 10px;">TASK</div>
+    <div class="g-own-col"  style="font-size:9px;font-weight:700;color:var(--text-3);letter-spacing:0.08em;">DEV</div>
+    <div class="g-tl-col" style="position:relative;height:28px;">${monthCols}
+      <div style="position:absolute;top:0;bottom:0;left:${pc(G.today)};width:2px;background:var(--blue);opacity:0.5;border-radius:1px;"></div>
+    </div>
+  </div>`;
+
+  G.tasks.forEach(t => {
+    const d = t.owner !== null ? DEVS[t.owner] : null;
+    const actualEnd = t.plan[0] + t.done * (t.plan[1] - t.plan[0]);
+    const sc = t.status==='done' ? '#30D158' : t.status==='risk' ? '#FF2D55' : t.color;
+    const gridLines = G.months.map((_,i) =>
+      `<div style="position:absolute;left:${(i/S*100).toFixed(1)}%;top:0;bottom:0;width:1px;background:var(--border);opacity:0.4;"></div>`
+    ).join('');
+    rows += `<div class="gantt-row">
+      <div class="g-task-col">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="width:6px;height:6px;border-radius:50%;background:${sc};flex-shrink:0;"></span>
+          <span class="g-task-name">${t.title}</span>
+        </div>
+      </div>
+      <div class="g-own-col">
+        ${d ? `<div class="dev-avatar" style="background:${d.color};width:22px;height:22px;font-size:8px;">${d.initials}</div>`
+            : `<span style="font-size:12px;color:var(--pink);">⚠</span>`}
+      </div>
+      <div class="g-tl-col" style="position:relative;height:38px;">
+        ${gridLines}
+        <div style="position:absolute;top:50%;margin-top:6px;transform:translateY(-50%);
+          left:${pc(t.base[0])};width:${wd(t.base[0],t.base[1])};height:6px;
+          background:rgba(0,0,0,0.07);border-radius:3px;"></div>
+        <div style="position:absolute;top:50%;transform:translateY(-50%);
+          left:${pc(t.plan[0])};width:${wd(t.plan[0],t.plan[1])};height:10px;
+          background:${sc};border-radius:5px;opacity:0.22;"></div>
+        <div style="position:absolute;top:50%;transform:translateY(-50%);
+          left:${pc(t.plan[0])};width:${wd(t.plan[0],actualEnd)};height:10px;
+          background:${sc};border-radius:5px;"></div>
+        <div style="position:absolute;top:-3px;bottom:-3px;left:${pc(G.today)};
+          width:2px;background:var(--blue);opacity:0.55;border-radius:1px;z-index:3;"></div>
+      </div>
+    </div>`;
+  });
+  el.innerHTML = rows;
+
+  // Metrics strip
+  const pontC = G.pont >= 70 ? '#30D158' : G.pont >= 50 ? '#FFD60A' : '#FF2D55';
+  const spiC  = G.spi  >= 0.9 ? '#30D158' : G.spi  >= 0.75 ? '#FFD60A' : '#FF2D55';
+  const cpiC  = G.cpi  >= 0.95 ? '#30D158' : G.cpi  >= 0.80 ? '#FFD60A' : '#FF2D55';
+  document.getElementById('gantt-metrics').innerHTML = `
+    <div class="gantt-metrics-grid">
+      <div>
+        <div class="g-metric-lbl">P(on_time)</div>
+        <div class="g-metric-val" style="color:${pontC};">${G.pont}%</div>
+        <div class="pont-bar"><div class="pont-fill" style="width:${G.pont}%;background:${pontC};"></div></div>
+      </div>
+      <div>
+        <div class="g-metric-lbl">SPI</div>
+        <div class="g-metric-val" style="color:${spiC};">${G.spi}</div>
+        <div style="font-size:10px;color:var(--text-3);margin-top:3px;">Sched. Performance</div>
+      </div>
+      <div>
+        <div class="g-metric-lbl">CPI</div>
+        <div class="g-metric-val" style="color:${cpiC};">${G.cpi}</div>
+        <div style="font-size:10px;color:var(--text-3);margin-top:3px;">Cost Performance</div>
+      </div>
+      <div>
+        <div class="g-metric-lbl">EAC</div>
+        <div class="g-metric-val" style="color:var(--text-1);font-size:18px;">${G.eac}</div>
+        <div style="font-size:10px;color:var(--text-3);margin-top:3px;">Est. at Completion</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px;">
+        <div style="font-size:10px;font-weight:700;color:var(--pink);padding:6px 10px;
+          background:rgba(255,45,85,0.07);border-radius:8px;border:1px solid rgba(255,45,85,0.2);">
+          ⚠ Velocity declining — 2-week slip on Payment Svc
+        </div>
+        <div style="font-size:10px;color:var(--text-3);padding:4px 10px;">
+          2 tasks unassigned · P(on_time) below threshold
+        </div>
+      </div>
+    </div>`;
+}
+
 /* ── STATE ── */
 const slides = document.querySelectorAll('.slide');
 const TOTAL  = slides.length;
@@ -861,7 +1650,7 @@ let cur = 0, lang = 'en';
 const dotNav = document.getElementById('dot-nav');
 slides.forEach((_, i) => {
   const d = document.createElement('div');
-  d.className = 'dot' + (i >= 7 ? ' app' : '') + (i === 0 ? ' active' : '');
+  d.className = 'dot' + (i >= 12 ? ' app' : '') + (i === 0 ? ' active' : '');
   d.onclick = () => goTo(i);
   dotNav.appendChild(d);
 });
@@ -879,7 +1668,16 @@ function goTo(i) {
   document.getElementById('slide-counter').textContent = (cur+1) + ' / ' + TOTAL;
   document.getElementById('nav-prev').style.opacity = cur === 0       ? '0.3' : '1';
   document.getElementById('nav-next').style.opacity = cur === TOTAL-1 ? '0.3' : '1';
+  // sync topic bar
+  const topics = document.querySelectorAll('.topic-item');
+  topics.forEach((t, j) => t.classList.toggle('active', j === cur));
+  const active = topics[cur];
+  if (active) active.scrollIntoView({behavior:'smooth', block:'nearest', inline:'center'});
   if (window.lucide) window.lucide.createIcons();
+  if (cur === 6) initHrDemo();
+  if (cur === 7) initProjectDemo();
+  if (cur === 8) initPlanningDemo();
+  if (cur === 9) initGanttDemo();
 }
 function navigate(d) { goTo(cur + d); }
 
@@ -901,6 +1699,15 @@ function applyLang() {
   const d = T[lang];
   document.querySelectorAll('[data-k]').forEach(el => { const v = d[el.dataset.k]; if(v != null) el.innerHTML = v; });
   if (window.lucide) window.lucide.createIcons();
+}
+
+/* ── SCALE ── */
+let uiScale = 1.0;
+function changeScale(d) {
+  uiScale = Math.round((uiScale + d) * 10) / 10;
+  uiScale = Math.max(0.5, Math.min(2.5, uiScale));
+  document.body.style.zoom = uiScale;
+  document.getElementById('scale-val').textContent = Math.round(uiScale * 100) + '%';
 }
 
 /* ── INIT ── */
