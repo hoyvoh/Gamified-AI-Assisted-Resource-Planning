@@ -22,11 +22,10 @@ Assignee: <!-- Vy / Tan / Both -->
 
 ## General Ledger
 
-> **Required:** Open [`docs/planning/general-ledger.md`](../docs/planning/general-ledger.md) and confirm the following before requesting review.
+> **Required:** When this PR is merged, update [`docs/planning/general-ledger.md`](../docs/planning/general-ledger.md):
 
-- [ ] The ticket row shows the correct **Assignee**
-- [ ] **Status** updated to 🔄 (in progress) when the PR was opened
-- [ ] After merge: **Status** set to ✅, **Done** column ticked `[x]`, **Approved by** filled with reviewer name + date
+- [ ] **Done** column ticked `[x]`, **Status** set to ✅
+- [ ] **Approved by** filled with reviewer name + date
 - [ ] **Progress Summary** table counts updated
 
 ---
