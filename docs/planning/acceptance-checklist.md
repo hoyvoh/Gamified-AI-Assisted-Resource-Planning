@@ -40,6 +40,7 @@ Agent/QA thực hiện từng item, tick khi pass, ghi tên người verify và 
 | C6 | Launch Project: scenario.status → active, project.started_at được set | ⬜ | | |
 | C7 | Chỉ 1 scenario active tại 1 thời điểm — activate scenario mới → cũ thành archived | ⬜ | | |
 | C8 | Archived scenario read-only (UI disables edit, API 403 on write) | ⬜ | | |
+| C8b | Snapshot scenario (`is_snapshot=true`) vẫn editable — PM có thể tiếp tục chỉnh sửa hoặc activate | ⬜ | | |
 
 ---
 
@@ -182,13 +183,29 @@ Agent/QA thực hiện từng item, tick khi pass, ghi tên người verify và 
 
 ---
 
+---
+
+## O. Infrastructure & Deployment
+
+| # | Check | Pass? | Verified by | Date |
+|---|-------|-------|-------------|------|
+| O1 | GitHub Actions CI pipeline xanh trên main branch (FE + BE parallel jobs) | ⬜ | | |
+| O2 | GitHub Pages deployment: `slides/index.html` accessible tại Pages URL | ⬜ | | |
+| O3 | `GITHUB_STRICT_MODE=true` → chỉ fetch từ `GITHUB_API_HOST`, không có public GitHub calls | ⬜ | | |
+| O4 | `SLACK_BOT_TOKEN` absent → Slack integration gracefully skipped, không crash | ⬜ | | |
+| O5 | LLM prompts load từ `llm_prompts_dir` (`.txt`/`.jinja2`) — không có prompt strings hardcoded trong service files | ⬜ | | |
+| O6 | `be/.env` và `ui/.env.local` không được commit vào git | ⬜ | | |
+| O7 | OpenAPI schema `http://localhost:8000/openapi.json` accessible; FE types generated từ schema (không hand-written) | ⬜ | | |
+
+---
+
 ## Summary
 
 | Section | Total | Pass | Fail | Skip |
 |---------|-------|------|------|------|
 | A. Foundation | 5 | 0 | 0 | 0 |
 | B. Personnel | 4 | 0 | 0 | 0 |
-| C. Scenario Lifecycle | 8 | 0 | 0 | 0 |
+| C. Scenario Lifecycle | 9 | 0 | 0 | 0 |
 | D. Project Analysis (Pillar 1) | 5 | 0 | 0 | 0 |
 | E. HR Analysis (Pillar 2) | 5 | 0 | 0 | 0 |
 | F. AI Task Generation | 4 | 0 | 0 | 0 |
@@ -200,6 +217,7 @@ Agent/QA thực hiện từng item, tick khi pass, ghi tên người verify và 
 | L. Execution Mode | 8 | 0 | 0 | 0 |
 | M. XP | 4 | 0 | 0 | 0 |
 | N. Non-Functional | 6 | 0 | 0 | 0 |
-| **Total** | **79** | **0** | **0** | **0** |
+| O. Infrastructure | 7 | 0 | 0 | 0 |
+| **Total** | **87** | **0** | **0** | **0** |
 
-**Nghiệm thu PASS khi: tất cả 79 items = ✅, 0 Fail.**
+**Nghiệm thu PASS khi: tất cả 87 items = ✅, 0 Fail.**

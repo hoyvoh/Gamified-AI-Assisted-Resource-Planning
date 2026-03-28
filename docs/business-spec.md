@@ -1,19 +1,21 @@
 # Business Specification — Gamified Resource Planning
 
-Ngôn ngữ: EN-VN (bilingual)
+Ngôn ngữ làm việc: **VI · EN · JA** (giao diện và tài liệu hỗ trợ ba ngôn ngữ)
 
 ---
 
 ## 1. Vision
 
-**Gamified Resource Planning** là nền tảng AI-assisted resource planning chuyên nghiệp cho PM/TL — giao diện dạng **card game hiện đại**, thao tác bằng kéo thả, được hỗ trợ bởi hai trụ cột phân tích chạy song song trước khi vào màn hình lập kế hoạch chính.
+**Gamified Resource Planning (GAIARP)** là nền tảng AI-assisted resource planning chuyên nghiệp cho PM/TL — giao diện dạng **card game hiện đại**, thao tác bằng kéo thả, vận hành theo **4 pillars** chạy tuần tự và kết nối liên tục:
 
-Hai pillar hoạt động độc lập rồi hội tụ:
-- **Pillar 1 — Project Analysis:** LLM phân tích project brief theo 5 lớp framework (ToC, TELOS, ATAM, MCDA, TRL) → ra verdict + risk register + requirements vector (skills, timeline, risk profile)
-- **Pillar 2 — Resource Analysis:** Aggregate dữ liệu từ GitHub + Slack → LLM inference 5-layer developer profile (OCEAN, Behavioral, Technical, Soft Skills, Performance) → match score giữa từng developer và project requirements vector
-- **Mode 3 — Planning Board:** Output của 2 pillar làm tiền đề → PM kéo thả developer card vào task card trên kanban board, với WFU effective, warnings, Gantt, và GA optimization
+| Pillar | Tên | Mô tả |
+|--------|-----|-------|
+| **Pillar 1** | Project Analysis | LLM phân tích project brief theo 5 lớp framework (ToC, TELOS, ATAM, MCDA, TRL) → verdict + risk register + requirements vector |
+| **Pillar 2** | Resource Analysis | Aggregate dữ liệu từ GitHub + Slack → LLM inference 5-layer developer profile (OCEAN, Behavioral, Technical, Soft Skills, Performance) → match score giữa developer và project requirements |
+| **Pillar 3** | Planning Board | Output của Pillar 1+2 làm tiền đề → PM kéo thả developer card vào task card, WFU effective, warnings, Gantt, GA optimization, scenario management |
+| **Pillar 4** | Execution Mode | Daily progress tracking, EV metrics, P(on_time), mid-execution scenario switching khi có thay đổi nhân sự/scope/deadline |
 
-**Mục tiêu cốt lõi:** Khi cần quyết định ai làm gì trong dự án — hệ thống đã có sẵn dữ liệu thực tế (không phỏng đoán) và cho thấy ngay liệu plan đó có feasible hay không mà không cần take risk để thử.
+**Mục tiêu cốt lõi:** Khi cần quyết định ai làm gì trong dự án — hệ thống đã có sẵn dữ liệu thực tế (không phỏng đoán) và cho thấy ngay liệu plan đó có feasible hay không. Khi dự án đang chạy và điều kiện thay đổi, PM có thể switch plan và cân đối lại resource ngay lập tức mà không mất progress đã có.
 
 ---
 
@@ -21,11 +23,30 @@ Hai pillar hoạt động độc lập rồi hội tụ:
 
 | Role | Mô tả |
 |------|--------|
-| **Project Manager** | Tạo dự án, chạy Project Analysis, phê duyệt phân bổ, snapshot scenario |
-| **Tech Lead** | Review task ước tính, điều chỉnh techstack, approve kỹ thuật, đóng góp điểm TELOS/ATAM |
+| **Project Manager (PM)** | Tạo dự án, chạy Project Analysis, phê duyệt phân bổ, snapshot scenario, launch/switch plan |
+| **Tech Lead (TL)** | Review task ước tính, điều chỉnh techstack, approve kỹ thuật, đóng góp điểm TELOS/ATAM |
 | **Team Member** | Xem task được phân, cập nhật tiến độ hàng ngày, nhận XP |
 | **Org Admin** | Quản lý tổ chức, nhân sự, dự án cấp org |
-| **BOD** | _(reserved for future use)_ |
+| **BOD** | _(reserved for future use — xem mục 4.0b về quyền truy cập profile)_ |
+
+### 2a. Levels Nhân Sự
+
+| Level | Ký hiệu | Mô tả |
+|-------|---------|-------|
+| Intern | `intern` | Thực tập sinh, chưa có kinh nghiệm thực tế |
+| Fresher | `fresher` | Mới tốt nghiệp, < 6 tháng kinh nghiệm |
+| Junior I | `junior_1` | 6 tháng – 1.5 năm kinh nghiệm |
+| Junior II | `junior_2` | 1.5 – 3 năm kinh nghiệm |
+| Senior I | `senior_1` | 3 – 6 năm kinh nghiệm, đã lead task độc lập |
+| Senior II | `senior_2` | > 6 năm kinh nghiệm, có thể mentor và design architecture |
+
+> **WFU rule:** Intern/Fresher/Junior I → base WFU × 0.8 (20% learning overhead). Junior II trở lên → base WFU × 1.0 trở lên tùy mode.
+
+### 2b. Roles Chức Năng
+
+Mỗi nhân sự có thể có một hoặc nhiều role chức năng — dùng để match với task category và warning engine:
+
+`Developer` · `Communicator` · `PM` · `TL` · `Bridge SWE` · `Manager` · `DevOps` · `PQM` · `QA` · `Tester`
 
 ---
 
@@ -103,7 +124,19 @@ Mỗi task được ước tính theo breakdown effort:
 Effort breakdown được **chỉnh sửa trong meeting** — PM/Tech Lead có thể điều chỉnh từng phần.
 
 ### 3.5 Tiến Độ Không Tuyến Tính (Brooks' Law)
-Thêm người không tự động giảm thời gian. Communication overhead tăng theo `n(n-1)/2` pairs. Áp dụng khi task đã >50% hoàn thành: thêm người lúc này làm chậm hơn.
+
+Thêm người không tự động giảm thời gian. Communication overhead tăng theo `n(n-1)/2` pairs.
+
+**Rules theo số người trên 1 task:**
+
+| Số assignees | Rule | Action |
+|-------------|------|--------|
+| 1 người | Optimal cho task nhỏ (<2 ngày) | — |
+| 2 người | Có thể tăng tốc nếu task đủ lớn và scope rõ | — |
+| 3+ người | Conflict resolution overhead tăng mạnh — task thường chậm hơn | ⚠️ Warning: "3 người trên task này sẽ tạo overhead — xem xét split thành subtasks" |
+| > scope phù hợp | Nếu task quá nhỏ (< 1 ngày) mà có 2+ người | ⚠️ Warning: "Scope quá nhỏ — 1 người làm là tối ưu" |
+
+**Cảnh báo muộn (late addition):** Nếu task đã > 50% hoàn thành → thêm người lúc này làm chậm hơn → trigger "LATE_ADDITION" warning khi PM assign thêm người.
 
 ### 3.6 Xác Suất Hoàn Thành (Completion Probability)
 Hệ thống tính **P(on_time)** — xác suất hoàn thành đúng hạn — từ:
@@ -126,7 +159,9 @@ Nếu P(on_time) < 50% → 🔴 Critical
 
 **Trigger:** PM nhập project proposal → trước khi tạo scenario, hệ thống yêu cầu chạy Project Analysis.
 
-**10-axis radar** — PM + Tech Lead chấm điểm 1–5 có AI hỗ trợ:
+**10-axis radar** — PM + Tech Lead chấm điểm 1–5 có AI hỗ trợ.
+
+> **Scoring rubrics chi tiết:** Xem [`docs/design/knowledge-base/project-analysis/02_project_radar_scoring_matrix.md`](design/knowledge-base/project-analysis/02_project_radar_scoring_matrix.md) — đây là **nguồn sự thật duy nhất** cho rubrics, weights, và logic tính composite. Business spec không duplicate nội dung đó.
 
 | # | Axis | Layer |
 |---|------|-------|
@@ -140,6 +175,8 @@ Nếu P(on_time) < 50% → 🔴 Critical
 | 8 | Technology Maturity (TRL) | Readiness |
 | 9 | Organizational Readiness | Readiness |
 | 10 | Legal/Regulatory Readiness | Readiness |
+
+**Axis 3 — TELOS input:** PM nhập riêng 5 sub-dimension scores (T, E, L, O, S), mỗi dimension 1–5. Composite TELOS = trung bình có trọng số. Xem scoring matrix doc để biết weights.
 
 **Verdict tự động:**
 - Composite ≥ 4.0 → ✅ Proceed
@@ -180,6 +217,8 @@ Nếu P(on_time) < 50% → 🔴 Critical
 
 **Access:** PM và Tech Lead có thể xem HR Analysis sau khi verdict từ Mode 1 là Proceed/Conditional. PM đưa gợi ý team → làm allocation trên board.
 
+> ⚠️ **Lưu ý về visibility:** Theo thiết kế nghiên cứu ([`01_resource_profile_methodology.md`](design/knowledge-base/resource-analysis/01_resource_profile_methodology.md)), raw 5-layer profiles về mặt lý tưởng chỉ dành cho BOD-level để tránh bias và privacy risk. **Hiện tại (MVP): PM + TL được xem full profile** để hệ thống hoạt động được. Giới hạn visibility xuống BOD-only là **tính năng tương lai/promised** — cần review về permission model trước khi implement.
+
 ---
 
 ### 4.1 Input & Phân Tích Dự Án (LLM)
@@ -219,16 +258,18 @@ Giao diện kanban dạng thẻ bài hiện đại — inspired by cline/kanban 
 
 ### 4.4 Hệ Thống Cảnh Báo
 
-| Loại | Điều kiện | Mức |
-|------|-----------|-----|
-| **CAPACITY** | Tổng daily hours > 7 (qua tất cả projects) | 🔴 Critical |
-| **JUNIOR_ALONE** | Junior <1yr không có senior kèm trên critical task | 🔴 Critical |
-| **TIME_RISK** | P(on_time) < 50% hoặc EAC > deadline | 🟠 Warning |
-| **LANGUAGE_BARRIER** | Task requires language mà assignee không có | 🟠 Warning |
-| **BUDGET** | Chi phí nhân sự > project.budget_total | 🟠 Warning |
-| **LICENSE** | Tool seats (e.g., Claude Code) được phân bổ > project license budget | 🟠 Warning |
-| **SKILL_MISMATCH** | >50% assignees không match techstack của task | 🟡 Info |
-| **DEPENDENCY_RISK** | Task B sắp start nhưng Task A (dependency) chưa xong | 🟠 Warning |
+| Loại | Điều kiện | Mức | Weight trong P(on_time) |
+|------|-----------|-----|------------------------|
+| **CAPACITY** | Tổng daily hours > 7 (qua tất cả projects) | 🔴 Critical | −0.15 |
+| **JUNIOR_ALONE** | `[intern, fresher, junior_1]` không có senior kèm trên critical/high task | 🔴 Critical | −0.12 |
+| **LANGUAGE_BARRIER** | Task requires language mà assignee không có | 🟠 Warning | −0.10 |
+| **SKILL_MISMATCH** | >50% assignees không match techstack của task | 🟡 Info | −0.08 |
+| **DEPENDENCY_RISK** | Task B sắp start nhưng Task A (dependency) chưa xong | 🟠 Warning | −0.07 |
+| **TIME_RISK** | P(on_time) < 50% hoặc EAC > deadline | 🟠 Warning | −0.05 |
+| **BUDGET** | Chi phí nhân sự > project.budget_total | 🟠 Warning | −0.03 |
+| **LICENSE** | Tool seats (e.g., Claude Code) được phân bổ > project license budget | 🟠 Warning | −0.02 |
+
+> Weights dùng trong `CompletionProbabilityService` — xem [`design/backend-spec.md`](design/backend-spec.md#completionprobabilityservice) để biết công thức đầy đủ.
 
 ### 4.5 Tool & License Management
 Mỗi dự án có **tool budget** (số ghế công cụ được phân bổ, e.g., 3 Claude Code licenses, 2 GitHub Copilot seats). Khi phân bổ nhiều người hơn số ghế → **LICENSE** warning.
@@ -461,17 +502,33 @@ Organization
 
 ---
 
-## 7. Integrations
+## 7. Integrations & Data Sources
 
-| Integration | Mục đích |
-|-------------|---------|
-| **Claude API (Anthropic)** | Pillar 1: project scoring + risk register. Pillar 2: developer profile inference. Mode 3: task gen, task split/merge, risk analysis |
-| **GitHub API / GitHub CLI** | Pillar 2 data source: commit history, PR reviews, code quality metrics, repository activity per developer |
-| **Slack API** | Pillar 2 data source: communication patterns, collaboration signals, thread engagement per developer |
-| **COCOMO II** | Effort estimation từ function points |
-| **Genetic Algorithm** | Multi-constraint schedule optimization |
-| **CPM** | Critical path, float calculation |
-| **Earned Value + P(on_time)** | Schedule health, completion probability |
+| Integration | Mục đích | Mode |
+|-------------|---------|------|
+| **Claude API (Anthropic)** | Pillar 1: project scoring + risk register. Pillar 2: developer profile inference. Pillar 3: task gen, task split/merge, risk analysis | Required |
+| **GitHub CLI (`gh`)** | Pillar 2 data source: fetch commits, PRs, code reviews, issues — **ưu tiên dùng `gh` CLI** thay vì GitHub REST API trực tiếp | Optional (graceful skip nếu không có) |
+| **GitHub API** | Fallback khi `gh` CLI không available. Open mode: public repos. Strict mode (config): chỉ fetch từ host cụ thể để tránh data leak | Optional |
+| **Slack via MCP** | Pillar 2: communication patterns, collaboration signals — fetch qua **MCP Slack** (giả định đã có MCP server configured) | Optional (graceful skip) |
+| **Confluence via MCP** | Pillar 2: document authorship, knowledge sharing — fetch qua **MCP Confluence** (optional) | Optional (graceful skip) |
+| **COCOMO II** | Effort estimation từ function points | Required |
+| **Genetic Algorithm** | Multi-constraint schedule optimization | Required |
+| **CPM** | Critical path, float calculation | Required |
+| **Earned Value + P(on_time)** | Schedule health, completion probability | Required |
+
+### 7a. Data Collection Design Principles
+
+**Graceful degradation:** Nếu GitHub CLI, Slack MCP, hoặc Confluence MCP không available → hệ thống báo lỗi rõ ràng và bỏ qua các tính năng đó. App không fail.
+
+**Strict mode vs Open mode (GitHub):**
+- `open` (default): fetch từ bất kỳ public GitHub repo nào
+- `strict` (config): chỉ fetch từ host cụ thể (e.g., `github.company.com`) để tránh gửi request ra ngoài với code nhạy cảm
+- Config được đặt trong `backend/config.py` — không hardcode
+
+**Prompt organization:**
+- Tất cả LLM prompts được tổ chức tập trung trong `be/app/llm/prompts/` — tách biệt khỏi code
+- Mỗi prompt là file `.txt` hoặc `.jinja2` với placeholders rõ ràng cho input params
+- Không scatter prompts ở nhiều service files khác nhau
 
 ---
 

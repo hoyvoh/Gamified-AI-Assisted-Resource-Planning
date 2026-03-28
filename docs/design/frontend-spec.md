@@ -252,9 +252,11 @@ Mode 4 locked until Mode 3 has an active scenario.
 ### `TaskDetailDrawer`
 - Full task info: description, effort breakdown (investigate/design/implement/test/review/support) — **editable trong meeting**
 - Techstack chips + required language chips
-- Assigned personnel với allocation % + **WFU mode selector** (standard / fast ×1.2 / quality ×1.5)
-  - fast/quality chỉ hiển thị khi nhân sự đó có matching skill với task techstack
-- Dependency list (visualized as mini tree)
+- Assigned personnel với allocation % (read-only display trong drawer — edit qua AllocationModal khi re-assign)
+  - WFU mode của mỗi assignment hiển thị dạng badge (standard / fast / quality)
+  - Để thay đổi WFU mode: kéo thả lại nhân sự vào task để mở AllocationModal
+- Dependency list (visualized as mini tree) — mỗi dependency hiển thị type badge: `FS` / `SS` / `FF` và lag_days
+  - Nút "Add dependency": mở `TaskDependencyModal` → chọn task phụ thuộc + **dependency type** (Finish-to-Start / Start-to-Start / Finish-to-Finish) + lag days
 - Edit mode: chỉnh effort, dates, dependencies — realtime recalc trên Gantt khi thay đổi
 - Prompt input: "Ask AI to re-estimate this task"
 
@@ -282,7 +284,7 @@ Components:
 - PlanningBoard/TaskCard.tsx    — task card with badges, drag target
 - PlanningBoard/DeveloperCard.tsx — developer card, drag source
 - PlanningBoard/TaskLane.tsx    — lane column (Unassigned/In Progress/Done)
-- PlanningBoard/AllocationModal.tsx — % + WFU mode selector on drop
+- PlanningBoard/AllocationModal.tsx — % + **WFU mode selector on drop** (standard / fast ×1.2 / quality ×1.5 — fast/quality chỉ hiển thị khi skill match)
 - PlanningBoard/ScenarioBar.tsx — scenario selector + P(on_time) + Launch button
 ```
 
@@ -428,7 +430,7 @@ Custom SVG Gantt — no heavy lib. Used in both Mode 3 (planning) and Mode 4 (ex
 **File:** `src/components/DependencyGraph/`
 - Dagre layout (DAG visualization)
 - Nodes: task cards với status color
-- Edges: dependency arrows
+- Edges: dependency arrows với label hiển thị type (FS/SS/FF) và lag nếu > 0
 - Highlight: critical path (longest path to deadline) in red
 - Zoom + pan
 

@@ -1,6 +1,8 @@
 # Architecture Overview
 
-**Gamified Resource Planning** — Nền tảng AI-assisted resource planning chuyên nghiệp dạng card-game hiện đại. Kết hợp hai pillar độc lập (Project Analysis + Resource Analysis) rồi hội tụ vào board lập kế hoạch phân bổ nhân sự dạng kéo thả. COCOMO II, Genetic Algorithm, và LLM hỗ trợ ra quyết định real-time.
+**Gamified Resource Planning (GAIARP)** — Nền tảng AI-assisted resource planning chuyên nghiệp dạng card-game hiện đại. Vận hành theo **4 Pillars** tuần tự: Pillar 1 (Project Analysis) và Pillar 2 (Resource Analysis) chạy song song → hội tụ vào Pillar 3 (Planning Board, kéo thả) → Pillar 4 (Execution Mode, daily tracking + scenario switching). COCOMO II, Genetic Algorithm, và LLM hỗ trợ ra quyết định real-time.
+
+> Xem định nghĩa đầy đủ 4 Pillars tại [`business-spec.md §1`](business-spec.md).
 
 ---
 
@@ -52,9 +54,16 @@ FastAPI (be/)            Port 8000 (dev)
   │      Slack API              — communication patterns, collaboration
   │      LLM (Claude API)       — 5-layer developer profile inference
   │
-  ├─── Pillar 3: Allocation Engine
+  ├─── Pillar 3: Planning Board (Allocation Engine)
   │      Genetic Algorithm      — multi-constraint optimization
   │      CPM / EV engine        — critical path + earned value
+  │      Warning Engine         — 8 warning types, real-time recompute
+  │
+  ├─── Pillar 4: Execution Mode
+  │      Progress tracking      — daily completion % per member
+  │      Earned Value           — SPI, CPI, EAC
+  │      P(on_time) engine      — completion probability with risk weights
+  │      Scenario switch        — mid-execution plan switching with continuity
   │
   ▼
 PostgreSQL               Port 5432 (dev)
@@ -128,28 +137,35 @@ Organization
         └── participates in Projects via ProjectMembership (allocation %)
 ```
 
-### Two-Pillar Architecture (pre-planning)
+### Four-Pillar Architecture
 
 ```
 ┌──────────────────────────────────┐    ┌──────────────────────────────────┐
-│    PILLAR 1: Project Analysis    │    │   PILLAR 2: Resource Analysis    │
+│   PILLAR 1: Project Analysis     │    │   PILLAR 2: Resource Analysis    │
 │                                  │    │                                  │
-│  PM/TL input project brief       │    │  GitHub API + Slack API          │
+│  PM/TL input project brief       │    │  GitHub CLI + Slack MCP          │
 │      ↓                           │    │      ↓                           │
 │  [10-axis LLM scoring engine]    │    │  [Data pipeline + feature ext.]  │
 │      ↓                           │    │      ↓                           │
 │  Radar + Verdict + Risk Register │    │  [5-layer profile engine (LLM)]  │
 │      ↓                           │    │      ↓                           │
-│  Project Requirements Vector     │    │  Developer Profiles (BOD-only)   │
+│  Project Requirements Vector     │    │  Developer Profiles (PM/TL view) │
 │  (skills needed, risk, timeline) │    │      ↓                           │
-└────────────────┬─────────────────┘    │  Match Engine                    │
-                 │                      │      ↓                           │
-                 │                      │  Team Recommendations            │
-                 └──────────┬───────────┘
-                            ↓
-              [Mode 3: Resource Planning Board]
-              Card-based kanban, drag-and-drop assignments,
-              WFU effective, warnings, Gantt, GA optimization
+└────────────────┬─────────────────┘    │  Match Engine → Team Recs        │
+                 │                      └──────────────┬───────────────────┘
+                 └──────────────────┬──────────────────┘
+                                    ↓
+              ┌─────── PILLAR 3: Planning Board ───────────┐
+              │  Card kanban · drag-and-drop assignments   │
+              │  WFU effective · 8 warnings · Gantt        │
+              │  GA optimization · scenario management     │
+              └─────────────────┬──────────────────────────┘
+                                ↓  (Launch Project)
+              ┌─────── PILLAR 4: Execution Mode ───────────┐
+              │  Daily progress % · EV (SPI/CPI/EAC)       │
+              │  P(on_time) · scenario switch mid-run       │
+              │  ProgressLogs persist across plan switches  │
+              └────────────────────────────────────────────┘
 ```
 
 ---
@@ -161,8 +177,10 @@ Organization
 | `DATABASE_URL` | `be/.env` | PostgreSQL connection string |
 | `SECRET_KEY` | `be/.env` | JWT signing key |
 | `ANTHROPIC_API_KEY` | `be/.env` | Backend → Claude API (Pillar 1 scoring, Pillar 2 profile inference, task gen) |
-| `GITHUB_TOKEN` | `be/.env` | GitHub API access for developer data pipeline (Pillar 2) |
-| `SLACK_BOT_TOKEN` | `be/.env` | Slack API access for communication data pipeline (Pillar 2) |
+| `GITHUB_TOKEN` | `be/.env` | GitHub API / CLI access for developer data pipeline (Pillar 2) |
+| `GITHUB_API_HOST` | `be/.env` | GitHub API hostname — default `api.github.com`; set to `github.company.com/api` for private instances |
+| `GITHUB_STRICT_MODE` | `be/.env` | `false` (default) = any public repo; `true` = only fetch from `GITHUB_API_HOST` |
+| `SLACK_BOT_TOKEN` | `be/.env` | Slack API access for communication data pipeline (Pillar 2) — optional, graceful skip if absent |
 | `NEXT_PUBLIC_API_URL` | `ui/.env.local` | Backend base URL (default: `http://localhost:8000`) |
 
 **Never commit `.env` files.** Use `.env.example` as template.

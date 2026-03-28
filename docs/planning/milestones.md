@@ -5,6 +5,7 @@
 ```
 Phase 0    Phase 0.5   Phase 1    Phase 2    🏆 MVP     Phase 4-5   Phase 6    Phase 7   Phase 8
 Foundation  Analysis    Core Data  Board      Launch     Opt+Views   Execution   XP        QA
+   M0          M0.5        M1         M1        M2           M3          M3        M4-M5     M6
 ```
 
 > Dates are targets — reset as needed based on actual velocity.
@@ -85,18 +86,19 @@ Project đang chạy → P(on_time) giảm → banner xuất hiện → PM switc
 
 ---
 
-## M4 — XP System & Full Feature
+## M5 — XP System & Full Feature
 
 **Deliverables:**
 - [ ] XP calculation khi finalize project
 - [ ] Skill level up system
 - [ ] XP reflected trong personnel profile cho dự án tiếp theo
+- [ ] Velocity calibration sau mỗi dự án hoàn thành
 
 **Definition of Done:** Finalize project → mỗi member xem XP + skill progress.
 
 ---
 
-## M5 — Production Ready
+## M6 — Production Ready
 
 **Deliverables:**
 - [ ] E2E test suite pass (QA-001)

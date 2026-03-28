@@ -10,8 +10,8 @@ sources:
   - "00_sources/performance_metrics_devops.md"
   - "00_sources/developer_experience_code_quality.md"
   - "00_sources/github_data_methodology.md"
-target_users: ["BOD only"]
-visibility: "BOD-only — never visible to individual developers or their managers"
+target_users: ["PM", "Tech Lead", "BOD"]
+visibility: "MVP: PM + Tech Lead after Mode 1 verdict = Proceed/Conditional. BOD-only restriction is a future privacy feature — see business-spec §4.0b"
 output: "5-layer developer profile with radar charts per layer"
 ai_role: "Infers signals from data; human validates; no automated decisions"
 ---
@@ -22,7 +22,9 @@ ai_role: "Infers signals from data; human validates; no automated decisions"
 
 This document defines the unified methodology for building behavioral developer profiles from GitHub and Slack data. These profiles support **resource planning, team composition, and growth investment decisions** — they are **not** used for performance reviews, compensation, or disciplinary actions.
 
-**Visibility:** BOD only. Raw scores and inferred traits are never shared with the individual developers being profiled, their managers, or external parties.
+**Visibility (MVP):** PM + Tech Lead có thể xem profiles sau khi Mode 1 verdict = Proceed/Conditional. Raw scores không bao giờ được share trực tiếp với developer bản thân hoặc external parties.
+
+> **Future:** Giới hạn visibility xuống BOD-only là tính năng đã được thiết kế nhưng chưa implement trong MVP — cần review về permission model và privacy requirements trước. Xem business-spec §4.0b.
 
 **AI role:** Signals are inferred by the AI from behavioral data. All inferences carry uncertainty. Human validation is required before any profile is acted upon.
 
@@ -136,7 +138,8 @@ Step 3: OCEAN regression
 
 ## Layer 2: Behavioral Preference Model (Dynamic Persona)
 
-**Source framework:** DEEPER (arXiv 2502.11078v2)
+**Source framework:** DEEPER (arXiv 2502.11078v2) — xem `00_sources/deeper_personality.md` và PDF `docs/design/additional-specs/2502.11078v2.pdf`
+**Role in the system:** DEEPER là cơ chế cập nhật dynamic cho Layer 2. Nó KHÔNG thay thế OCEAN (Layer 1) — OCEAN vẫn là static trait inference. DEEPER dùng RL-based discrepancy signals để cập nhật behavioral persona khi behavior thực tế diverge khỏi prediction.
 **Data sources:** Historical behavioral patterns extracted from GitHub activity
 **Update frequency:** Quarterly (or triggered by significant role/project change)
 

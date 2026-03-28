@@ -174,10 +174,6 @@ This axis directly reflects the TELOS composite score, normalized to 1–5:
 | 4 | Core technology at TRL 7–8; near-production or production-proven; minor gaps only |
 | 5 | Core technology at TRL 9; proven at required scale in production globally; well-understood failure modes |
 
-**AI/ML component adjustment:**
-- Score AI/ML components one level lower than raw TRL would suggest, due to distribution shift and drift risks
-- A model at TRL 6 (deployed in limited production) scores 2 on this axis until drift monitoring is in place
-
 ---
 
 ### Axis 9: Organizational Readiness (ORL)

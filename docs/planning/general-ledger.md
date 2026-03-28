@@ -11,10 +11,10 @@ Tài liệu này theo dõi toàn cảnh trạng thái implementation của từn
 
 | Document | Purpose |
 |----------|---------|
-| [architecture-overview.md](../architecture-overview.md) | System architecture, tech stack, two-pillar design |
+| [architecture-overview.md](../architecture-overview.md) | System architecture, tech stack, 4-pillar design |
 | [business-spec.md](../business-spec.md) | Business requirements, WFU rules, scenario lifecycle, warning types |
 | [milestones.md](milestones.md) | Timeline & milestone targets |
-| [acceptance-checklist.md](acceptance-checklist.md) | Final acceptance criteria (79 items) |
+| [acceptance-checklist.md](acceptance-checklist.md) | Final acceptance criteria (87 items) |
 | [guides/ticket-workflow.md](../guides/ticket-workflow.md) | How to pick, work, and close a ticket |
 | [guides/backend-guide.md](../guides/backend-guide.md) | BE code patterns (Clean Architecture, Pydantic, Alembic) |
 | [guides/frontend-guide.md](../guides/frontend-guide.md) | FE code patterns (Next.js, Zustand, OpenAPI types) |
@@ -98,7 +98,7 @@ BE-011 + FE-014 → FE-015 (XP Review)
 
 ---
 
-## Phase 0 — Foundation
+## Phase 0 — Foundation (→ M0)
 
 | Ticket | Title | Done | Status | Assignee | Branch | Notes |
 |--------|-------|:----:|--------|----------|--------|-------|
@@ -108,7 +108,7 @@ BE-011 + FE-014 → FE-015 (XP Review)
 | FE-001 | Application Shell & Routing | [ ] | ⬜ | **Tan** | `feature/FE-001-app-shell` | Parallel with BE-002 |
 | FE-002 | Design System & Shared Components | [ ] | ⬜ | **Tan** | `feature/FE-002-design-system` | After FE-001 |
 
-## Phase 0.5 — Analysis Modules
+## Phase 0.5 — Analysis Modules (→ M0.5)
 
 | Ticket | Title | Done | Status | Assignee | Branch | Notes |
 |--------|-------|:----:|--------|----------|--------|-------|
@@ -119,7 +119,7 @@ BE-011 + FE-014 → FE-015 (XP Review)
 | PA-FE-001 | Project Analysis Screen (Mode 1) | [ ] | ⬜ | **Tan** | `feature/PA-FE-001-project-analysis` | After INT-001 + PA-BE-002 |
 | PA-FE-002 | HR Analysis Screen (Mode 2) | [ ] | ⬜ | **Tan** | `feature/PA-FE-002-hr-analysis` | After PA-FE-001 + PA-BE-003 |
 
-## Phase 1 — Core Data Management
+## Phase 1 — Core Data Management (→ M1)
 
 | Ticket | Title | Done | Status | Assignee | Branch | Notes |
 |--------|-------|:----:|--------|----------|--------|-------|
@@ -130,7 +130,7 @@ BE-011 + FE-014 → FE-015 (XP Review)
 | BE-006 | Assignment APIs & Warning Engine | [ ] | ⬜ | **Tan** | `feature/BE-006-assignments-warnings` | After BE-004 |
 | INT-001 | FE-BE Integration: Personnel & Tasks | [ ] | ⬜ | **Both** | `feature/INT-001-integration` | **Sync point** — after BE-003 + FE-003 + FE-004 |
 
-## Phase 2 — Planning Board
+## Phase 2 — Planning Board (→ M1)
 
 | Ticket | Title | Done | Status | Assignee | Branch | Notes |
 |--------|-------|:----:|--------|----------|--------|-------|
@@ -139,7 +139,7 @@ BE-011 + FE-014 → FE-015 (XP Review)
 | FE-007 | Warning Bar | [ ] | ⬜ | **Tan** | `feature/FE-007-warning-bar` | After BE-006 + FE-005 |
 | FE-008 | Scenario Management UI (full lifecycle) | [ ] | ⬜ | **Tan** | `feature/FE-008-scenario-management` | After INT-001 + BE-004; includes Launch, fork, compare, states |
 
-## Phase 3 — LLM Pipeline (MVP Target)
+## Phase 3 — LLM Pipeline (→ M2 MVP)
 
 | Ticket | Title | Done | Status | Assignee | Branch | Notes |
 |--------|-------|:----:|--------|----------|--------|-------|
@@ -148,14 +148,14 @@ BE-011 + FE-014 → FE-015 (XP Review)
 | FE-009 | AI Prompt Interface | [ ] | ⬜ | **Tan** | `feature/FE-009-ai-prompt` | After INT-001 |
 | INT-002 | E2E: Proposal → Board (MVP) | [ ] | ⬜ | **Both** | `feature/INT-002-mvp-e2e` | **MVP milestone sync point** |
 
-## Phase 4 — Optimization Engine
+## Phase 4 — Optimization Engine (→ M2)
 
 | Ticket | Title | Done | Status | Assignee | Branch | Notes |
 |--------|-------|:----:|--------|----------|--------|-------|
 | BE-009 | Genetic Algorithm Optimizer | [ ] | ⬜ | **Vy** | `feature/BE-009-ga-optimizer` | After BE-006 + BE-005 |
 | FE-010 | Optimization Results UI | [ ] | ⬜ | **Tan** | `feature/FE-010-optimization-ui` | After BE-009 + FE-006 |
 
-## Phase 5 — Views & Visualizations
+## Phase 5 — Views & Visualizations (→ M3)
 
 | Ticket | Title | Done | Status | Assignee | Branch | Notes |
 |--------|-------|:----:|--------|----------|--------|-------|
@@ -163,26 +163,26 @@ BE-011 + FE-014 → FE-015 (XP Review)
 | FE-012 | Dependency Graph | [ ] | ⬜ | **Tan** | `feature/FE-012-dep-graph` | After BE-005 + INT-001 |
 | FE-013 | Calendar View | [ ] | ⬜ | **Tan** | `feature/FE-013-calendar-view` | After INT-001 |
 
-## Phase 6 — Execution Mode
+## Phase 6 — Execution Mode (→ M3)
 
 | Ticket | Title | Done | Status | Assignee | Branch | Notes |
 |--------|-------|:----:|--------|----------|--------|-------|
 | BE-010 | Progress Log, Earned Value & Scenario Switch | [ ] | ⬜ | **Tan** | `feature/BE-010-progress-ev-switch` | After BE-006; includes fork-from-execution + archive-with-trigger |
 | FE-014 | Execution Screen (MyTasks + Gantt + Switch Plan) | [ ] | ⬜ | **Tan** | `feature/FE-014-execution-screen` | After BE-010 + INT-001 + FE-011 |
 
-## Phase 7 — XP & Gamification
+## Phase 7 — XP & Gamification (→ M4–M5)
 
 | Ticket | Title | Done | Status | Assignee | Branch | Notes |
 |--------|-------|:----:|--------|----------|--------|-------|
 | BE-011 | XP Calculation Engine | [ ] | ⬜ | **Vy** | `feature/BE-011-xp-engine` | After BE-010 |
 | FE-015 | XP & End-of-Project Review | [ ] | ⬜ | **Tan** | `feature/FE-015-xp-review` | After BE-011 + FE-014 |
 
-## Phase 8 — QA & Acceptance
+## Phase 8 — QA & Acceptance (→ M6)
 
 | Ticket | Title | Done | Status | Assignee | Branch | Notes |
 |--------|-------|:----:|--------|----------|--------|-------|
 | QA-001 | End-to-End Test Suite | [ ] | ⬜ | **Both** | `feature/QA-001-e2e-tests` | All phases done |
-| ACCEPT-001 | Acceptance Checklist Execution | [ ] | ⬜ | **Both** | N/A | Manual — 79 items |
+| ACCEPT-001 | Acceptance Checklist Execution | [ ] | ⬜ | **Both** | N/A | Manual — 87 items |
 
 ---
 
