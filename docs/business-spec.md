@@ -1,14 +1,21 @@
 # Business Specification — Gamified Resource Planning
 
-Ngôn ngữ: EN-VN (bilingual)
+Ngôn ngữ làm việc: **VI · EN · JA** (giao diện và tài liệu hỗ trợ ba ngôn ngữ)
 
 ---
 
 ## 1. Vision
 
-**Gamified Resource Planning** biến quá trình họp phân bổ nhân sự dự án thành một **bàn cờ chiến lược Desert Empire**. Background: một thành trì sừng sững ở chân trời — đó là deadline/mục tiêu dự án. Bạn là tướng lĩnh, nhân sự là quân cờ, các task là doanh trại chiến thuật. Hệ thống kết hợp COCOMO II, Genetic Algorithm, và LLM để hỗ trợ ra quyết định real-time trong phòng họp.
+**Gamified Resource Planning (GAIARP)** là nền tảng AI-assisted resource planning chuyên nghiệp cho PM/TL — giao diện dạng **card game hiện đại**, thao tác bằng kéo thả, vận hành theo **4 pillars** chạy tuần tự và kết nối liên tục:
 
-**Mục tiêu cốt lõi:** Khi dự án có nguy cơ trễ và bạn cần tìm cách cứu dự án — bạn sẽ nhìn thấy ngay liệu có thể cứu được hay không mà không cần take risk để thử.
+| Pillar | Tên | Mô tả |
+|--------|-----|-------|
+| **Pillar 1** | Project Analysis | LLM phân tích project brief theo 5 lớp framework (ToC, TELOS, ATAM, MCDA, TRL) → verdict + risk register + requirements vector |
+| **Pillar 2** | Resource Analysis | Aggregate dữ liệu từ GitHub + Slack → LLM inference 5-layer developer profile (OCEAN, Behavioral, Technical, Soft Skills, Performance) → match score giữa developer và project requirements |
+| **Pillar 3** | Planning Board | Output của Pillar 1+2 làm tiền đề → PM kéo thả developer card vào task card, WFU effective, warnings, Gantt, GA optimization, scenario management |
+| **Pillar 4** | Execution Mode | Daily progress tracking, EV metrics, P(on_time), mid-execution scenario switching khi có thay đổi nhân sự/scope/deadline |
+
+**Mục tiêu cốt lõi:** Khi cần quyết định ai làm gì trong dự án — hệ thống đã có sẵn dữ liệu thực tế (không phỏng đoán) và cho thấy ngay liệu plan đó có feasible hay không. Khi dự án đang chạy và điều kiện thay đổi, PM có thể switch plan và cân đối lại resource ngay lập tức mà không mất progress đã có.
 
 ---
 
@@ -16,11 +23,30 @@ Ngôn ngữ: EN-VN (bilingual)
 
 | Role | Mô tả |
 |------|--------|
-| **Project Manager** | Tạo dự án, chạy Project Analysis, phê duyệt phân bổ, snapshot scenario |
-| **Tech Lead** | Review task ước tính, điều chỉnh techstack, approve kỹ thuật, đóng góp điểm TELOS/ATAM |
+| **Project Manager (PM)** | Tạo dự án, chạy Project Analysis, phê duyệt phân bổ, snapshot scenario, launch/switch plan |
+| **Tech Lead (TL)** | Review task ước tính, điều chỉnh techstack, approve kỹ thuật, đóng góp điểm TELOS/ATAM |
 | **Team Member** | Xem task được phân, cập nhật tiến độ hàng ngày, nhận XP |
 | **Org Admin** | Quản lý tổ chức, nhân sự, dự án cấp org |
-| **BOD** | _(reserved for future use)_ |
+| **BOD** | _(reserved for future use — xem mục 4.0b về quyền truy cập profile)_ |
+
+### 2a. Levels Nhân Sự
+
+| Level | Ký hiệu | Mô tả |
+|-------|---------|-------|
+| Intern | `intern` | Thực tập sinh, chưa có kinh nghiệm thực tế |
+| Fresher | `fresher` | Mới tốt nghiệp, < 6 tháng kinh nghiệm |
+| Junior I | `junior_1` | 6 tháng – 1.5 năm kinh nghiệm |
+| Junior II | `junior_2` | 1.5 – 3 năm kinh nghiệm |
+| Senior I | `senior_1` | 3 – 6 năm kinh nghiệm, đã lead task độc lập |
+| Senior II | `senior_2` | > 6 năm kinh nghiệm, có thể mentor và design architecture |
+
+> **WFU rule:** Intern/Fresher/Junior I → base WFU × 0.8 (20% learning overhead). Junior II trở lên → base WFU × 1.0 trở lên tùy mode.
+
+### 2b. Roles Chức Năng
+
+Mỗi nhân sự có thể có một hoặc nhiều role chức năng — dùng để match với task category và warning engine:
+
+`Developer` · `Communicator` · `PM` · `TL` · `Bridge SWE` · `Manager` · `DevOps` · `PQM` · `QA` · `Tester`
 
 ---
 
@@ -98,7 +124,19 @@ Mỗi task được ước tính theo breakdown effort:
 Effort breakdown được **chỉnh sửa trong meeting** — PM/Tech Lead có thể điều chỉnh từng phần.
 
 ### 3.5 Tiến Độ Không Tuyến Tính (Brooks' Law)
-Thêm người không tự động giảm thời gian. Communication overhead tăng theo `n(n-1)/2` pairs. Áp dụng khi task đã >50% hoàn thành: thêm người lúc này làm chậm hơn.
+
+Thêm người không tự động giảm thời gian. Communication overhead tăng theo `n(n-1)/2` pairs.
+
+**Rules theo số người trên 1 task:**
+
+| Số assignees | Rule | Action |
+|-------------|------|--------|
+| 1 người | Optimal cho task nhỏ (<2 ngày) | — |
+| 2 người | Có thể tăng tốc nếu task đủ lớn và scope rõ | — |
+| 3+ người | Conflict resolution overhead tăng mạnh — task thường chậm hơn | ⚠️ Warning: "3 người trên task này sẽ tạo overhead — xem xét split thành subtasks" |
+| > scope phù hợp | Nếu task quá nhỏ (< 1 ngày) mà có 2+ người | ⚠️ Warning: "Scope quá nhỏ — 1 người làm là tối ưu" |
+
+**Cảnh báo muộn (late addition):** Nếu task đã > 50% hoàn thành → thêm người lúc này làm chậm hơn → trigger "LATE_ADDITION" warning khi PM assign thêm người.
 
 ### 3.6 Xác Suất Hoàn Thành (Completion Probability)
 Hệ thống tính **P(on_time)** — xác suất hoàn thành đúng hạn — từ:
@@ -121,7 +159,9 @@ Nếu P(on_time) < 50% → 🔴 Critical
 
 **Trigger:** PM nhập project proposal → trước khi tạo scenario, hệ thống yêu cầu chạy Project Analysis.
 
-**10-axis radar** — PM + Tech Lead chấm điểm 1–5 có AI hỗ trợ:
+**10-axis radar** — PM + Tech Lead chấm điểm 1–5 có AI hỗ trợ.
+
+> **Scoring rubrics chi tiết:** Xem [`docs/design/knowledge-base/project-analysis/02_project_radar_scoring_matrix.md`](design/knowledge-base/project-analysis/02_project_radar_scoring_matrix.md) — đây là **nguồn sự thật duy nhất** cho rubrics, weights, và logic tính composite. Business spec không duplicate nội dung đó.
 
 | # | Axis | Layer |
 |---|------|-------|
@@ -136,6 +176,8 @@ Nếu P(on_time) < 50% → 🔴 Critical
 | 9 | Organizational Readiness | Readiness |
 | 10 | Legal/Regulatory Readiness | Readiness |
 
+**Axis 3 — TELOS input:** PM nhập riêng 5 sub-dimension scores (T, E, L, O, S), mỗi dimension 1–5. Composite TELOS = trung bình có trọng số. Xem scoring matrix doc để biết weights.
+
 **Verdict tự động:**
 - Composite ≥ 4.0 → ✅ Proceed
 - Composite 3.0–3.9 → ⚠️ Proceed with Conditions
@@ -149,9 +191,14 @@ Nếu P(on_time) < 50% → 🔴 Critical
 
 ### 4.0b HR Analysis Mode (Pillar 2)
 
-**Trigger:** Sau khi Project Analysis trả verdict Proceed/Conditional.
+**Trigger:** Chạy song song với Pillar 1 (không cần chờ verdict). Output được dùng khi Mode 3 mở.
 
-**Developer profiles** (5 layers, inferred từ GitHub data):
+**Data sources (aggregate per developer by username):**
+- **GitHub:** commit history, PR code/comments, repository contributions, code review patterns, issue activity
+- **Slack:** message patterns, thread responses, collaboration frequency, cross-team mentions
+- **Confluence (future):** document authorship, knowledge sharing activity
+
+**Developer profiles** (5 layers, inferred từ aggregated data via LLM):
 - Layer 1: OCEAN personality (Openness, Conscientiousness, Extraversion, Agreeableness, Emotional Stability)
 - Layer 2: Behavioral preferences (work rhythm, collaboration intensity, domain preference)
 - Layer 3: Technical capability (8 axes — Dreyfus 1–5)
@@ -170,6 +217,8 @@ Nếu P(on_time) < 50% → 🔴 Critical
 
 **Access:** PM và Tech Lead có thể xem HR Analysis sau khi verdict từ Mode 1 là Proceed/Conditional. PM đưa gợi ý team → làm allocation trên board.
 
+> ⚠️ **Lưu ý về visibility:** Theo thiết kế nghiên cứu ([`01_resource_profile_methodology.md`](design/knowledge-base/resource-analysis/01_resource_profile_methodology.md)), raw 5-layer profiles về mặt lý tưởng chỉ dành cho BOD-level để tránh bias và privacy risk. **Hiện tại (MVP): PM + TL được xem full profile** để hệ thống hoạt động được. Giới hạn visibility xuống BOD-only là **tính năng tương lai/promised** — cần review về permission model trước khi implement.
+
 ---
 
 ### 4.1 Input & Phân Tích Dự Án (LLM)
@@ -180,12 +229,15 @@ Nếu P(on_time) < 50% → 🔴 Critical
   - Ước tính COCOMO II
 - PM/Tech Lead review, chỉnh sửa, confirm trước khi planning
 
-### 4.2 Bàn Cờ Chiến Lược (Three.js)
-- Desert empire 3D scene: thành trì ở chân trời = deadline
-- **Doanh trại (camps):** mỗi task = 1 camp, kích thước tỷ lệ với effort
-- **Quân cờ:** mỗi nhân sự = 1 unit kéo thả được
-- Thanh trái: danh sách nhân sự · Thanh phải: danh sách tasks
-- Camera orbit, zoom, click để inspect
+### 4.2 Planning Board (Card Game UI)
+Giao diện kanban dạng thẻ bài hiện đại — inspired by cline/kanban research preview:
+- **Task cards:** mỗi task = 1 card có effort badge, techstack tags, status, WFU estimate
+- **Developer cards:** mỗi nhân sự = 1 card kéo thả được, hiển thị availability, skill match %, WFU effective
+- **Lanes:** Unassigned → In Progress → Done (hoặc group by milestone)
+- Left panel: danh sách developer cards (từ Pillar 2 recommendation ra trước)
+- Right/Center: task lane board — kéo developer card vào task card để assign
+- Click task card: expand → effort breakdown, deps, warnings, LLM task split prompt
+- Click developer card: popup → tổng allocation qua tất cả projects, WFU effective breakdown
 
 ### 4.3 Phân Bổ Nhân Sự (In-Meeting)
 
@@ -206,16 +258,18 @@ Nếu P(on_time) < 50% → 🔴 Critical
 
 ### 4.4 Hệ Thống Cảnh Báo
 
-| Loại | Điều kiện | Mức |
-|------|-----------|-----|
-| **CAPACITY** | Tổng daily hours > 7 (qua tất cả projects) | 🔴 Critical |
-| **JUNIOR_ALONE** | Junior <1yr không có senior kèm trên critical task | 🔴 Critical |
-| **TIME_RISK** | P(on_time) < 50% hoặc EAC > deadline | 🟠 Warning |
-| **LANGUAGE_BARRIER** | Task requires language mà assignee không có | 🟠 Warning |
-| **BUDGET** | Chi phí nhân sự > project.budget_total | 🟠 Warning |
-| **LICENSE** | Tool seats (e.g., Claude Code) được phân bổ > project license budget | 🟠 Warning |
-| **SKILL_MISMATCH** | >50% assignees không match techstack của task | 🟡 Info |
-| **DEPENDENCY_RISK** | Task B sắp start nhưng Task A (dependency) chưa xong | 🟠 Warning |
+| Loại | Điều kiện | Mức | Weight trong P(on_time) |
+|------|-----------|-----|------------------------|
+| **CAPACITY** | Tổng daily hours > 7 (qua tất cả projects) | 🔴 Critical | −0.15 |
+| **JUNIOR_ALONE** | `[intern, fresher, junior_1]` không có senior kèm trên critical/high task | 🔴 Critical | −0.12 |
+| **LANGUAGE_BARRIER** | Task requires language mà assignee không có | 🟠 Warning | −0.10 |
+| **SKILL_MISMATCH** | >50% assignees không match techstack của task | 🟡 Info | −0.08 |
+| **DEPENDENCY_RISK** | Task B sắp start nhưng Task A (dependency) chưa xong | 🟠 Warning | −0.07 |
+| **TIME_RISK** | P(on_time) < 50% hoặc EAC > deadline | 🟠 Warning | −0.05 |
+| **BUDGET** | Chi phí nhân sự > project.budget_total | 🟠 Warning | −0.03 |
+| **LICENSE** | Tool seats (e.g., Claude Code) được phân bổ > project license budget | 🟠 Warning | −0.02 |
+
+> Weights dùng trong `CompletionProbabilityService` — xem [`design/backend-spec.md`](design/backend-spec.md#completionprobabilityservice) để biết công thức đầy đủ.
 
 ### 4.5 Tool & License Management
 Mỗi dự án có **tool budget** (số ghế công cụ được phân bổ, e.g., 3 Claude Code licenses, 2 GitHub Copilot seats). Khi phân bổ nhiều người hơn số ghế → **LICENSE** warning.
@@ -227,9 +281,89 @@ Mỗi dự án có **tool budget** (số ghế công cụ được phân bổ, e
 - Accept toàn bộ hoặc chọn lọc
 
 ### 4.7 Scenario Planning
-- **Snapshot** → lưu phương án hiện tại thành plan bất biến (có tên)
-- Fork scenario mới để deal phương án thay thế ("Nếu nhân sự A nghỉ việc thì sao?")
-- So sánh 2 scenarios side-by-side
+
+#### Scenario States
+Mỗi scenario tồn tại ở một trong 3 trạng thái:
+
+| State | Ý nghĩa |
+|-------|---------|
+| `draft` | Đang được build trong Mode 3, có thể edit tự do |
+| `active` | Plan đang được execution track — **chỉ 1 scenario active tại 1 thời điểm** |
+| `archived` | Read-only — đã bị supersede hoặc PM archive thủ công |
+
+#### Scenario Types
+PM đặt tên và type khi tạo — type là label giúp phân biệt intent:
+
+| Type | Ví dụ tên | Dùng khi |
+|------|-----------|---------|
+| `planning` | "Plan Normal", "Plan A", "Plan B" | Phương án planning cơ bản |
+| `contingency` | "Plan Full Resource", "Plan OT", "Plan Reduced Scope" | Pre-prepared response cho known risks |
+| `what_if` | "If Alice leaves", "If deadline -2w" | Khám phá kịch bản giả định, không bao giờ activate |
+
+#### Scenario Actions
+
+**Snapshot (Save current state):**
+- Freeze toàn bộ assignments, task dates, effort vào 1 named plan bất biến
+- Dùng để lưu "Plan A" trước khi tiếp tục thử "Plan B"
+- Snapshot là `draft` — vẫn có thể activate sau
+
+**Fork:**
+- Tạo bản copy editable từ bất kỳ scenario nào (draft hoặc archived)
+- Carry theo: tasks, assignments, WFU modes — nhưng không carry actual progress (dùng cho pure planning)
+- Tên mặc định: "[Source] — Fork [timestamp]", PM đổi ngay
+
+**Compare (side-by-side):**
+- Chọn 2 scenarios → so sánh: makespan, cost, warnings count, P(on_time), team composition
+- Không edit được trong compare view
+
+**Activate → Launch:**
+- PM review tất cả draft scenarios → chọn 1 → "Launch Project"
+- Xem phần 4.10 về launch mechanism
+
+---
+
+#### 4.7b Mid-Execution Scenario Switching
+
+Khi dự án đang chạy và điều kiện thay đổi, PM có thể **switch sang plan mới** mà không mất progress đã có.
+
+**Triggers (PM record thủ công hoặc system auto-suggest):**
+
+| Trigger | Điều kiện | Auto-detect? |
+|---------|-----------|-------------|
+| `MEMBER_DEPARTURE` | Team member nghỉ việc/rời dự án | ❌ PM record |
+| `SCOPE_CHANGE` | Yêu cầu mở rộng, task mới được thêm | ❌ PM record |
+| `DEADLINE_CHANGE` | Deadline bị kéo gần lại | ✅ Khi PM đổi project deadline |
+| `BUDGET_CUT` | Budget bị cắt giảm | ✅ Khi PM đổi budget_total |
+| `RISK_ESCALATION` | P(on_time) < 40% trong 3 ngày liên tiếp | ✅ Auto-suggest |
+
+**Flow khi switch:**
+
+```
+Condition occurs
+  ↓
+System hiển thị banner: "⚠️ P(on_time) critical — Consider switching plan"
+  (hoặc PM chủ động click "Switch Plan")
+  ↓
+PM chọn: Fork from current state | Activate existing contingency plan
+  ↓
+[Fork from current state]:
+  → System tạo scenario mới clone từ current active scenario
+  → Tasks carry: actual_progress, ProgressLogs
+  → Tasks re-baseline: planned_start/end được reset từ "hôm nay"
+  → PM edit trong Mode 3: thêm người, điều chỉnh tasks, đổi deadline
+  ↓
+PM review P(on_time) của scenario mới → "Activate this plan"
+  ↓
+Old active scenario → archived với:
+  archived_at, archive_reason (trigger), snapshot của progress tại thời điểm switch
+  ↓
+New scenario becomes ACTIVE — Execution Mode tiếp tục track trên plan mới
+```
+
+**Continuity:**
+- `ProgressLogs` gắn với Tasks, không phải Scenarios → không bị mất khi switch
+- Gantt tiếp tục hiện actual bars (từ ProgressLogs) chồng lên planned bars mới
+- Scenario switch history hiển thị trên Gantt như markers ("Switched to Plan OT — member departure")
 
 ### 4.8 Risk Analysis (LLM)
 Sau khi phân bổ xong → prompt: **"Analyze risks"**
@@ -241,8 +375,8 @@ LLM trả danh sách risks với probability, impact, mitigation. Context bao g�
 
 | View | Mô tả |
 |------|--------|
-| **1. Strategic Board** | Bàn cờ 3D — giao diện planning chính. Hiển thị P(on_time) badge. |
-| **2. Gantt Chart** | Timeline auto-generated từ board state. Planned (solid) vs actual (striped). Early completion highlighted in green. Filters: by person, by milestone. |
+| **1. Planning Board** | Kanban card-game UI — giao diện planning chính. Developer cards kéo thả vào task cards. P(on_time) badge trên mỗi task card. |
+| **2. Gantt Chart** | Timeline với 3 lớp bar: Baseline (original launch plan), Planned (active scenario), Actual (từ ProgressLogs). Scenario switch markers. Critical path highlight. Filters: by person, by milestone. |
 | **3. Dependency Graph** | DAG dependencies với critical path. |
 
 **View bổ sung:**
@@ -250,13 +384,75 @@ LLM trả danh sách risks với probability, impact, mitigation. Context bao g�
 |------|--------|
 | **4. Calendar** | Lịch theo ngày — ai làm gì, milestone markers. |
 
-### 4.10 Progress Tracking Mode (Execution)
-Sau khi chốt phương án → chuyển sang **Execution Mode**:
-- Mỗi ngày, member cập nhật % hoàn thành
-- Hệ thống tính EV metrics (SPI, CPI, EAC)
-- **P(on_time) cập nhật hàng ngày** dựa trên velocity thực tế
-- Nếu P(on_time) giảm → warning + gợi ý cụ thể
-- **Thêm WFU mid-execution:** Khi dự án có nguy cơ trễ, PM có thể assign thêm người/tăng allocation. Hệ thống tính lại P(on_time) ngay lập tức và cảnh báo nếu thêm người lúc này không giúp ích (Brooks' Law).
+### 4.10 Execution Mode
+
+#### Launch — Bắt Đầu Dự Án
+
+PM review các draft scenarios trong Mode 3 → chọn 1 plan → "Launch Project":
+
+```
+PM clicks "Launch Project" on a draft scenario
+  ↓
+Confirmation: "Starting execution with [Scenario Name].
+               All task assignees will be notified."
+  ↓
+System:
+  1. scenario.status → active
+  2. Creates execution_baseline snapshot (task dates + assignments, frozen)
+  3. Sets project.started_at = today
+  4. Mode 4 (Execution) becomes available to all project members
+  5. Sends notifications to assigned team members
+```
+
+Chỉ PM mới có thể launch. Phải có ít nhất 1 task với assignment trước khi launch.
+
+---
+
+#### Daily Progress Tracking
+
+Sau khi launch, **Mode 4** là chế độ daily operation:
+
+- **Team members** cập nhật % hoàn thành cho task của họ mỗi ngày (hoặc mỗi khi có update)
+- **System tính toán** sau mỗi update:
+  - EV metrics: SPI (Schedule Performance Index), CPI (Cost Performance Index), EAC (Estimate at Completion)
+  - **P(on_time)** cập nhật dựa trên velocity thực tế + variance + risk factors
+  - Gantt re-renders actual bars
+
+**P(on_time) thresholds:**
+- > 80% → 🟢 On track
+- 50–80% → 🟡 At risk → warning + gợi ý hành động
+- < 50% → 🔴 Critical → system gợi ý "Consider switching plan" banner
+
+**Thêm WFU mid-execution:**
+PM có thể assign thêm người/tăng allocation bất kỳ lúc nào. Hệ thống tính lại P(on_time) ngay lập tức và cảnh báo nếu thêm người lúc này không giúp ích (Brooks' Law — task > 50% done).
+
+---
+
+#### Gantt Chart — Execution View
+
+Gantt có **3 lớp bar** hiển thị chồng lên nhau:
+
+| Bar | Màu | Nguồn dữ liệu | Ý nghĩa |
+|-----|-----|---------------|---------|
+| **Baseline** | Xám nhạt | `execution_baseline` (frozen khi launch) | Plan gốc — dùng để so sánh drift |
+| **Planned** | Xanh dương | Active scenario task dates | Plan hiện tại đang theo |
+| **Actual** | Xanh lá / Đỏ | ProgressLogs | Tiến độ thực tế |
+
+**Markers trên Gantt:**
+- 📍 `Today` line — đường thẳng đứng đánh dấu hôm nay
+- ◆ Milestone diamonds — deadline của từng milestone
+- 🔀 Scenario switch markers — "Switched to Plan OT (member departure)"
+- ⚠️ Delay indicators — task đang trễ so với planned
+
+**Filters:**
+- By person: chỉ hiển thị tasks của 1 người
+- By milestone: group tasks theo milestone
+- By status: in_progress / at_risk / done / blocked
+
+**Interaction:**
+- Drag task bar right/left → đổi deadline trực tiếp trên Gantt (tạo DEADLINE_CHANGE warning)
+- Click task bar → expand task detail
+- Hover bar → tooltip: planned vs actual %, EAC, người phụ trách
 
 ### 4.11 XP & Leveling
 Khi kết thúc dự án:
@@ -284,12 +480,18 @@ Khi kết thúc dự án:
 ```
 Organization
   └── Projects (nhiều dự án cùng lúc)
+        ├── project.status: planning | active | completed | on_hold
+        ├── project.started_at (set khi Launch)
         ├── Project Members (personnel tham gia, allocation %)
+        ├── ExecutionBaseline (frozen snapshot khi Launch — read-only)
         └── Scenarios (các phương án planning)
-              └── Tasks (doanh trại)
+              ├── scenario.status: draft | active | archived
+              ├── scenario.type: planning | contingency | what_if
+              ├── scenario.archive_reason (trigger nếu bị supersede)
+              └── Tasks (task cards trên board)
                     ├── ResourceAssignments → Personnel (wfu_mode user-selected)
                     ├── TaskDependencies
-                    └── ProgressLogs (daily updates)
+                    └── ProgressLogs (daily updates — persist across scenario switches)
 
 Organization
   └── Personnel
@@ -300,15 +502,33 @@ Organization
 
 ---
 
-## 7. Integrations
+## 7. Integrations & Data Sources
 
-| Integration | Mục đích |
-|-------------|---------|
-| **Claude (Anthropic)** | Task generation, risk analysis, task split/merge suggestions |
-| **COCOMO II** | Effort estimation từ function points |
-| **Genetic Algorithm** | Multi-constraint schedule optimization |
-| **CPM** | Critical path, float calculation |
-| **Earned Value + P(on_time)** | Schedule health, completion probability |
+| Integration | Mục đích | Mode |
+|-------------|---------|------|
+| **Claude API (Anthropic)** | Pillar 1: project scoring + risk register. Pillar 2: developer profile inference. Pillar 3: task gen, task split/merge, risk analysis | Required |
+| **GitHub CLI (`gh`)** | Pillar 2 data source: fetch commits, PRs, code reviews, issues — **ưu tiên dùng `gh` CLI** thay vì GitHub REST API trực tiếp | Optional (graceful skip nếu không có) |
+| **GitHub API** | Fallback khi `gh` CLI không available. Open mode: public repos. Strict mode (config): chỉ fetch từ host cụ thể để tránh data leak | Optional |
+| **Slack via MCP** | Pillar 2: communication patterns, collaboration signals — fetch qua **MCP Slack** (giả định đã có MCP server configured) | Optional (graceful skip) |
+| **Confluence via MCP** | Pillar 2: document authorship, knowledge sharing — fetch qua **MCP Confluence** (optional) | Optional (graceful skip) |
+| **COCOMO II** | Effort estimation từ function points | Required |
+| **Genetic Algorithm** | Multi-constraint schedule optimization | Required |
+| **CPM** | Critical path, float calculation | Required |
+| **Earned Value + P(on_time)** | Schedule health, completion probability | Required |
+
+### 7a. Data Collection Design Principles
+
+**Graceful degradation:** Nếu GitHub CLI, Slack MCP, hoặc Confluence MCP không available → hệ thống báo lỗi rõ ràng và bỏ qua các tính năng đó. App không fail.
+
+**Strict mode vs Open mode (GitHub):**
+- `open` (default): fetch từ bất kỳ public GitHub repo nào
+- `strict` (config): chỉ fetch từ host cụ thể (e.g., `github.company.com`) để tránh gửi request ra ngoài với code nhạy cảm
+- Config được đặt trong `backend/config.py` — không hardcode
+
+**Prompt organization:**
+- Tất cả LLM prompts được tổ chức tập trung trong `be/app/llm/prompts/` — tách biệt khỏi code
+- Mỗi prompt là file `.txt` hoặc `.jinja2` với placeholders rõ ràng cho input params
+- Không scatter prompts ở nhiều service files khác nhau
 
 ---
 

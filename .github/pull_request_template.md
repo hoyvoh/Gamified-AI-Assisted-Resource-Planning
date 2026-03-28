@@ -1,3 +1,12 @@
+## Ticket
+
+<!-- Link the ticket this PR closes, e.g. Closes #BE-002 -->
+
+Ticket: <!-- e.g. BE-002 — Database Schema & Migrations -->
+Assignee: <!-- Vy / Tan / Both -->
+
+---
+
 ## Description
 
 <!-- Brief summary of what changed and why -->
@@ -8,6 +17,18 @@
 - [ ] Bug fix
 - [ ] Refactor
 - [ ] Docs / Chore
+
+---
+
+## General Ledger
+
+> **Required:** When this PR is merged, update [`docs/planning/general-ledger.md`](../docs/planning/general-ledger.md):
+
+- [ ] **Done** column ticked `[x]`, **Status** set to ✅
+- [ ] **Approved by** filled with reviewer name + date
+- [ ] **Progress Summary** table counts updated
+
+---
 
 ## Checklist
 

@@ -1,4 +1,4 @@
-# FE-011 — Gantt Chart
+# FE-011 — Gantt Chart (3-Layer + Scenario Markers)
 
 **Phase:** 5 — Views & Visualizations
 **Track:** Frontend
@@ -7,12 +7,18 @@
 **Prerequisites:** INT-001
 
 ## Goal
-SVG-based Gantt chart generated from scenario task data. Shows planned vs actual progress bars, milestones, and supports filtering by person, category, and status.
+SVG-based Gantt chart with 3 bar layers (baseline / planned / actual), scenario switch markers, and interactive deadline editing. Used in both Mode 3 (planning) and Mode 4 (execution).
 
 ## Scope
-- Timeline X-axis by day, Y-axis by task (grouped by category)
-- Planned bar (solid) and actual progress (striped overlay)
-- Milestone diamonds at critical task deadlines
-- Filters: by person, by category, by status
-- Click task bar → opens TaskDetailDrawer
-- No heavy chart library (custom SVG)
+- **3 bar layers per task row:**
+  - Baseline bar (grey, thin) — from `execution_baseline`, only visible after project launch
+  - Planned bar (blue, solid) — from active scenario task dates
+  - Actual bar (green/amber/red overlay) — from ProgressLogs completion %
+- Scenario switch markers on timeline (with trigger reason tooltip)
+- Today marker (vertical dashed line)
+- Deadline marker (vertical red line) and EAC marker (green if ahead, red if behind)
+- Milestone diamonds
+- Filters: by person (swimlane), by milestone (grouping), by status
+- Drag planned bar → reschedule task (triggers DEADLINE_CHANGE warning)
+- Click bar → TaskDetailDrawer
+- Hover → tooltip with planned dates, actual %, EAC, assignees

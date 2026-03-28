@@ -61,7 +61,7 @@ Planning meetings where you need to allocate people across tasks are painful:
 
 ### Resource Assignment Engine
 
-- **Workforce Unit (WFU)** system: junior staff work at 80% capacity (learning time), seniors can boost to 1.2× or 1.5× on matching tech stacks
+- **Workforce Unit (WFU)** system: `[intern, fresher, junior_1]` work at 80% capacity (learning time); senior levels can boost to 1.2× (fast mode) or 1.5× (quality mode) on matching tech stacks
 - Multi-project allocation: one person can be 60% on Project A, 40% on Project B — system tracks the total
 - **Non-linear scaling**: adding people to a task doesn't always make it faster (Brooks' Law enforced)
 
@@ -242,9 +242,9 @@ gamified_resource_planning/
 | M0 — Foundation (DB, COCOMO, shell) | 22 Mar 2026    | 🔄 In progress |
 | M1 — Core Planning Board            | 30 Mar 2026    | ⬜ Planned     |
 | **M2 — MVP: AI Planning**           | **1 Apr 2026** | ⬜ Planned     |
-| M3 — Optimization & Views           | 20 Apr 2026    | ⬜ Planned     |
-| M4 — Execution Mode                 | 30 Apr 2026    | ⬜ Planned     |
-| M5 — XP System                      | 15 May 2026    | ⬜ Planned     |
+| M3 — Full Views + Execution Mode    | 20 Apr 2026    | ⬜ Planned     |
+| M4 — XP System                      | 30 Apr 2026    | ⬜ Planned     |
+| M5 — XP System (full)               | 15 May 2026    | ⬜ Planned     |
 | M6 — Production Ready               | 31 May 2026    | ⬜ Planned     |
 
 ---

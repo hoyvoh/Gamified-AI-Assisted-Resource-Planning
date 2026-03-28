@@ -1,54 +1,70 @@
 # Design — FE-005
 
 ## Files to Create/Modify
-- ui/src/components/StrategicBoard/index.tsx — React wrapper, canvas mount
-- ui/src/components/StrategicBoard/useBoard.ts — Three.js lifecycle hook
-- ui/src/components/StrategicBoard/scene/DesertScene.ts — environment setup
-- ui/src/components/StrategicBoard/objects/CampObject.ts — task camp mesh
-- ui/src/components/StrategicBoard/objects/PersonnelUnit.ts — personnel mesh
-- ui/src/components/StrategicBoard/objects/FortressBackground.ts — background
-- ui/src/components/StrategicBoard/objects/FloatingLabel.ts — CSS2DObject labels
-- ui/package.json — add: three, @types/three
+- `ui/src/components/PlanningBoard/index.tsx` — main board layout (sidebar + lanes)
+- `ui/src/components/PlanningBoard/TaskCard.tsx` — task card with badges + expand
+- `ui/src/components/PlanningBoard/DeveloperCard.tsx` — developer card with availability + match %
+- `ui/src/components/PlanningBoard/TaskLane.tsx` — lane container (status group)
+- `ui/src/components/PlanningBoard/AllocationPopup.tsx` — developer cross-project allocation popup
+- `ui/src/store/boardStore.ts` — selected task/developer, expanded state
 
-## Technical Design
+## Layout
 
-### Scene Setup (useBoard.ts)
-```typescript
-// Scene init in useEffect
-const scene = new THREE.Scene()
-const camera = new THREE.PerspectiveCamera(75, width/height, 0.1, 1000)
-const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
-
-// Lights
-const sun = new THREE.DirectionalLight(0xfff4e0, 1.5)
-const ambient = new THREE.AmbientLight(0x4a3a2a, 0.8)
-
-// Controls
-const controls = new OrbitControls(camera, renderer.domElement)
-controls.enableDamping = true
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│ TopBar: [Project Name] > [Scenario selector ▾]   [Snapshot] [Optimize]│
+├────────────────┬─────────────────────────────────────────────────────┤
+│  Developer     │  Unassigned          In Progress       Done         │
+│  Panel         │  ┌──────────┐        ┌──────────┐      ┌──────────┐│
+│                │  │TaskCard  │        │TaskCard  │      │TaskCard  ││
+│  ┌──────────┐  │  │          │        │          │      │          ││
+│  │Dev Card  │  │  │ 3.5d     │        │ 8d ████  │      │ 2d  ✅   ││
+│  │Nguyen V. │  │  │ [React]  │        │ [Java]   │      │ [SQL]    ││
+│  │████ 60%  │  │  │ 🟢 92%   │        │ 🟡 71%   │      │          ││
+│  │Match: 87%│  │  └──────────┘        └──────────┘      └──────────┘│
+│  ├──────────┤  │                                                     │
+│  │Dev Card  │  │                                                     │
+│  │Tran T.   │  │                                                     │
+│  │████ 40%  │  │                                                     │
+│  │Match: 72%│  │                                                     │
+│  └──────────┘  │                                                     │
+└────────────────┴─────────────────────────────────────────────────────┘
 ```
 
-### Camp Sizing
-```typescript
-// Size proportional to effort_total_days (capped at max)
-const size = Math.min(0.5 + task.effort_total_days * 0.15, 3)
-const geometry = new THREE.BoxGeometry(size, size * 0.6, size)
+## Task Card Design
 
-// Colors by status
-const STATUS_COLORS = {
-  draft: 0x888888, todo: 0xc2956a,
-  in_progress: 0xd4a843, review: 0x4f8ef7, done: 0x34d399
-}
+```tsx
+// Badges
+<EffortBadge days={task.effort_total_days} />          // "3.5d"
+<TechstackChips stacks={task.techstacks} />             // [React] [TypeScript]
+<StatusBadge status={task.status} />
+<POnTimeBadge value={task.p_on_time} />                 // 🟢 92% | 🟡 71% | 🔴 48%
+<AssigneeAvatarStack assignments={task.assignments} />
+
+// Expanded (click to toggle)
+<EffortBreakdown phases={task.effort_breakdown} />      // investigate/design/implement/...
+<DependencyList deps={task.dependencies} />
+<WarningList warnings={task.active_warnings} />
 ```
 
-### Auto Layout
-Tasks auto-positioned in a grid/spiral pattern based on index. Position stored in task.position_x / task.position_z.
+## Developer Card Design
+
+```tsx
+<Avatar name={dev.name} />
+<AvailabilityBar
+  used={dev.daily_hours_used}    // across all projects
+  max={7}
+  colorScale={{ green: 5, amber: 6, red: 7 }}
+/>
+<SkillMatchBadge score={dev.match_score} />  // from Pillar 2, null if unavailable → "N/A"
+<WfuEffectiveBadge wfu={dev.wfu_effective} />
+```
 
 ## Acceptance Criteria
-- [ ] Scene renders: desert ground, sky gradient, fortress silhouette
-- [ ] All scenario tasks appear as camps with correct size proportions
-- [ ] Assigned personnel appear as units near their camp
-- [ ] Camp color matches task status
-- [ ] Camera orbit/zoom works via mouse
-- [ ] 20 tasks + 10 personnel: stable 60fps
+- [ ] Task cards render với đúng effort, techstack, status, P(on_time) từ API
+- [ ] Developer cards render với availability bar và match % (hoặc "N/A" nếu chưa có Pillar 2)
+- [ ] Lanes group tasks đúng theo status
+- [ ] Click task card → expand shows effort breakdown + warnings
+- [ ] Click developer card → popup hiện allocation cross-project
 - [ ] pnpm type-check passes
+- [ ] No Three.js / canvas dependencies

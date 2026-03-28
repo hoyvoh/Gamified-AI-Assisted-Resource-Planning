@@ -7,7 +7,7 @@
 **Prerequisites:** FE-009, BE-007, FE-005
 
 ## Goal
-Full end-to-end integration: enter a project proposal → AI generates tasks → tasks appear on Three.js board. This completes the MVP milestone (target: 1/4/2026).
+Full end-to-end integration: enter a project proposal → AI generates tasks → tasks appear on the Planning Board (kanban). This completes the MVP milestone.
 
 ## Scope
 - Verify complete data flow from proposal text to board visualization

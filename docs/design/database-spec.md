@@ -33,6 +33,7 @@ projects ──< project_tool_licenses ──< tool_seat_assignments >── per
 | `id` | UUID PK | |
 | `name` | VARCHAR(200) | |
 | `slug` | VARCHAR(100) UNIQUE | URL-safe identifier |
+| `default_phase_ratios` | JSONB NULLABLE | Org-level default phase breakdown `{investigate, design, implement, testing, review, support}` — each a float, must sum to 1.0. Null = use system default from `PhaseRatios()`. |
 | `created_at` | TIMESTAMPTZ | |
 
 ### `users`
@@ -54,7 +55,7 @@ Nhân sự trong tổ chức — đây là "quân cờ" trên bàn cờ.
 | `org_id` | UUID FK → organizations | |
 | `user_id` | UUID FK → users NULLABLE | Có thể là nhân sự chưa có tài khoản |
 | `display_name` | VARCHAR(200) | |
-| `seniority` | ENUM(intern, junior, mid, senior, lead) | |
+| `seniority` | ENUM(intern, fresher, junior_1, junior_2, senior_1, senior_2) | Xem business-spec §2a cho định nghĩa từng level |
 | `years_experience` | DECIMAL(4,1) | |
 | `base_wfu` | DECIMAL(4,2) DEFAULT 1.0 | Base Workforce Unit |
 | `daily_capacity_hours` | DECIMAL(4,1) DEFAULT 7.0 | |
@@ -101,6 +102,7 @@ Ngôn ngữ làm việc của nhân sự — dùng cho LANGUAGE_BARRIER warning.
 | `budget_total` | DECIMAL(15,2) NULLABLE | |
 | `budget_currency` | VARCHAR(10) DEFAULT 'USD' | |
 | `active_scenario_id` | UUID FK → scenarios NULLABLE | |
+| `phase_ratios_override` | JSONB NULLABLE | Project-level phase breakdown override. Same shape as `organizations.default_phase_ratios`. Overrides org default for all tasks in this project. Null = inherit from org. |
 | `raw_proposal` | TEXT | Input gốc từ PM |
 | `evaluation_id` | UUID FK → project_evaluations NULLABLE | Link tới kết quả Project Analysis |
 | `evaluation_status` | ENUM(not_started, in_progress, complete, waived) DEFAULT not_started | |
@@ -135,6 +137,9 @@ Mỗi kế hoạch phân bổ = 1 scenario. Một dự án có thể có nhiều
 | `parent_scenario_id` | UUID FK → scenarios NULLABLE | Fork từ scenario khác |
 | `created_by` | UUID FK → users | |
 | `created_at` | TIMESTAMPTZ | |
+| `scenario_type` | ENUM(planning, contingency, what_if) DEFAULT planning | Intent label — xem business-spec §4.7 |
+| `archived_at` | TIMESTAMPTZ NULLABLE | Set khi scenario bị archive |
+| `archive_reason` | VARCHAR(100) NULLABLE | Trigger: MEMBER_DEPARTURE, SCOPE_CHANGE, DEADLINE_CHANGE, BUDGET_CUT, RISK_ESCALATION, MANUAL |
 | `metadata` | JSONB | Risk notes, optimizer settings, etc. |
 
 ### `tasks`
@@ -174,8 +179,8 @@ Mỗi kế hoạch phân bổ = 1 scenario. Một dự án có thể có nhiều
 | `id` | UUID PK | |
 | `task_id` | UUID FK → tasks | Task phụ thuộc (phải đợi) |
 | `depends_on_task_id` | UUID FK → tasks | Task phải xong trước |
-| `dependency_type` | ENUM(finish_to_start, start_to_start, finish_to_finish) | Default: finish_to_start |
-| `lag_days` | DECIMAL(4,1) DEFAULT 0 | Độ trễ sau khi dependency hoàn thành |
+| `dependency_type` | ENUM(finish_to_start, start_to_start, finish_to_finish) DEFAULT finish_to_start | **finish_to_start:** B không bắt đầu cho đến khi A xong (phổ biến nhất). **start_to_start:** B không bắt đầu cho đến khi A bắt đầu. **finish_to_finish:** B không kết thúc cho đến khi A kết thúc. CriticalPathService xử lý cả 3 loại. PM chọn type trong TaskDependencyModal trên board. |
+| `lag_days` | DECIMAL(4,1) DEFAULT 0 | Độ trễ sau khi dependency condition được thỏa mãn |
 
 ### `resource_assignments`
 Phân bổ nhân sự vào task với tỷ lệ WFU.

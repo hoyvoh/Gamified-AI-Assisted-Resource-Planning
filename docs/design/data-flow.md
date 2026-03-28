@@ -46,7 +46,17 @@ POST /scenarios/{id}/assignments  →  { task_id, personnel_id, allocation_pct, 
   │
   ▼
 Assignment Service
-  ├── Tính effective_wfu = base_wfu × skill_multiplier × allocation_pct
+  ├── Tính effective_wfu:
+  │     Nếu có HR profile (từ Pillar 2):
+  │       effective_wfu = base_wfu
+  │                     × project_familiarity_factor  (0.7–1.2)
+  │                     × technology_match_factor      (0.8–1.5)
+  │                     × quality_history_factor        (0.9–1.1)
+  │                     × delivery_reliability_factor   (0.8–1.1)
+  │                     × wfu_mode_multiplier           (1.0/1.2/1.5)
+  │                     × (allocation_pct / 100)
+  │     Nếu chưa có HR profile:
+  │       effective_wfu = base_wfu × wfu_mode_multiplier × (allocation_pct / 100)
   ├── Cập nhật planned_end của task
   └── Trigger Warning Engine
          │
@@ -104,7 +114,7 @@ POST /scenarios/{id}/snapshot  →  { name: "Plan A" }
   │
   ▼
 Backend: deep copy scenario + tasks + assignments
-  is_snapshot=true  →  immutable, không thể edit
+  is_snapshot=true  →  snapshot (có thể edit, có thể activate sau)
   │
   ▼
 Response: { new_scenario_id }
@@ -218,8 +228,14 @@ CompletionProbabilityService.compute(scenario_id)
   ├── Get SPI + SPI variance (last 7 days velocity logs)
   ├── Get critical path float (CriticalPathService)
   ├── Get active warnings + risk weights:
-  │     CAPACITY: -0.15  JUNIOR_ALONE: -0.12
-  │     LANGUAGE_BARRIER: -0.10  SKILL_MISMATCH: -0.08
+  │     CAPACITY:          -0.15  (trực tiếp ảnh hưởng throughput)
+  │     JUNIOR_ALONE:      -0.12  (quality risk trên critical task)
+  │     LANGUAGE_BARRIER:  -0.10  (communication friction)
+  │     SKILL_MISMATCH:    -0.08  (slower execution, more defects)
+  │     DEPENDENCY_RISK:   -0.07  (blocking path risk)
+  │     TIME_RISK:         -0.05  (EAC đã vượt deadline)
+  │     BUDGET:            -0.03  (indirect — resource có thể bị thu hồi)
+  │     LICENSE:           -0.02  (tool access risk)
   ├── Compute: p_on_time = f(SPI, variance, slack, risks)
   ├── Compute: eac_date, days_delta (positive = ahead)
   └── Save to scenario_completion_snapshots

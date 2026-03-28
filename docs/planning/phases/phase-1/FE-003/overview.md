@@ -13,5 +13,5 @@ Left sidebar showing all org personnel as draggable cards with WFU load indicato
 - PersonnelCard: avatar, name, seniority badge, WFU load bar
 - Search + filter by skill/seniority
 - PersonnelDetailDrawer: skill matrix table, allocation doughnut, daily hours
-- Draggable cards (HTML drag API — Three.js drop handled in FE-006)
+- Draggable cards (HTML drag API — drop target handled in FE-006)
 - Data fetched from API via usePersonnel hook

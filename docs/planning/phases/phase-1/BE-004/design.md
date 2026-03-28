@@ -1,84 +1,98 @@
 # Design — BE-004
 
-## Files to Create/Modify
-- be/app/routers/scenarios.py
-- be/app/routers/tasks.py
-- be/app/schemas/scenario.py
-- be/app/schemas/task.py
-- be/app/services/scenario_service.py
-- be/app/services/task_service.py
-- be/app/repositories/scenario_repo.py
-- be/app/repositories/task_repo.py
-- be/tests/test_scenarios.py
-- be/tests/test_tasks.py
+## Components to Develop
 
-## Technical Design
+### Services
+| Service | Responsibility |
+|---------|---------------|
+| `ScenarioService` | State transitions, launch, fork, archive, one-active enforcement |
+| `TaskService` | CRUD, split, merge, effort recalculation |
+| `ExecutionBaselineService` | Create and store frozen baseline snapshot on launch |
 
-### Snapshot Immutability
-
-```python
-# In scenario_service.py
-async def snapshot(db, scenario_id, name) -> Scenario:
-    original = await scenario_repo.get(db, scenario_id)
-    # Deep copy: scenario + all tasks + all assignments
-    new_scenario = Scenario(
-        project_id=original.project_id,
-        name=name,
-        is_snapshot=True,
-        parent_scenario_id=scenario_id,
-    )
-    # Copy tasks with new IDs but same data
-    ...
-
-# In router — guard against editing snapshots
-async def update_task(task_id, ...):
-    task = await task_repo.get(db, task_id)
-    scenario = await scenario_repo.get(db, task.scenario_id)
-    if scenario.is_snapshot:
-        raise HTTPException(403, "Cannot modify a snapshot scenario")
+### Data Flow — Scenario State Machine
+```
+Draft scenario (editable)
+  ↓ PM clicks Launch
+ScenarioService.launch(scenario_id, user_id)
+  → validates: ≥1 task with assignment
+  → sets scenario.status = active
+  → sets project.status = active, project.started_at = now
+  → calls ExecutionBaselineService.create(scenario_id) → frozen copy stored
+  → enforces: all other scenarios for this project remain draft/archived
+  ↓
+Active scenario (tasks locked for edit)
+  ↓ mid-execution: PM triggers switch
+ScenarioService.activate(new_scenario_id, trigger_reason)
+  → sets old active scenario.status = archived, archived_at = now, archive_reason = trigger
+  → sets new scenario.status = active
+  → creates new execution_baseline from new scenario
 ```
 
-### Task Split
-
-```python
-# POST /tasks/{id}/split  body: { into: int, names: list[str] }
-# Creates N subtasks with proportional effort, same techstacks
-# Original task deleted (or archived)
-# Returns: list[Task]
+### Data Flow — Scenario Fork
+```
+ScenarioService.fork(source_scenario_id, name, type)
+  → creates new scenario (status=draft)
+  → deep copies: all tasks (new IDs, same data)
+  → deep copies: all assignments (new IDs, linked to new task IDs)
+  → does NOT copy: ProgressLogs (actual data stays on original tasks)
+  → returns new scenario with tasks
 ```
 
-### Task Merge
-
-```python
-# POST /tasks/merge  body: { task_ids: list[UUID], name: str }
-# Creates 1 new task with summed effort
-# All assignments moved to new task
-# Original tasks deleted
-# Returns: Task
+### Data Flow — Task Split
+```
+TaskService.split(task_id, into_n, names[])
+  → creates N new tasks, effort divided proportionally
+  → original task deleted
+  → assignments: PM re-assigns in Mode 3
+  → returns list of N new tasks
 ```
 
-### Key API Endpoints
+### Data Flow — Task Merge
 ```
-POST   /projects/{id}/scenarios          → 201
-GET    /projects/{id}/scenarios          → 200 list
-GET    /scenarios/{id}                   → 200
-PATCH  /scenarios/{id}                   → 200 (403 if snapshot)
-POST   /scenarios/{id}/snapshot          → 201 (new scenario)
+TaskService.merge(task_ids[], name)
+  → creates 1 new task, effort = sum of merged tasks
+  → all assignments from merged tasks moved to new task
+  → original tasks deleted
+  → returns new task
+```
 
-POST   /scenarios/{id}/tasks             → 201
-POST   /scenarios/{id}/tasks/bulk        → 201 list
-GET    /scenarios/{id}/tasks             → 200 list
-GET    /tasks/{id}                       → 200
-PATCH  /tasks/{id}                       → 200 (403 if snapshot)
-DELETE /tasks/{id}                       → 204 (403 if snapshot)
-POST   /tasks/{id}/split                 → 201 list[Task]
-POST   /tasks/merge                      → 201 Task
+### API Endpoints
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/projects/{id}/scenarios` | Create scenario (name, type) |
+| GET | `/projects/{id}/scenarios` | List all scenarios with status + P(on_time) |
+| GET | `/scenarios/{id}` | Get scenario detail |
+| PATCH | `/scenarios/{id}` | Update name/type (draft only, 403 if active/archived) |
+| POST | `/scenarios/{id}/launch` | Activate scenario, create baseline |
+| POST | `/scenarios/{id}/fork` | Fork into new draft |
+| POST | `/scenarios/{id}/archive` | Archive with reason |
+| POST | `/scenarios/{id}/tasks` | Create task |
+| POST | `/scenarios/{id}/tasks/bulk` | Bulk create tasks |
+| GET | `/scenarios/{id}/tasks` | List tasks |
+| PATCH | `/tasks/{id}` | Update task (draft scenario only, 403 otherwise) |
+| DELETE | `/tasks/{id}` | Delete task (draft only) |
+| POST | `/tasks/{id}/split` | Split into N subtasks |
+| POST | `/tasks/merge` | Merge N tasks into 1 |
+
+## Component Relationships
+```
+ScenarioService
+  → ScenarioRepository (reads/writes scenarios table)
+  → ExecutionBaselineService (called on launch/activate)
+  → TaskService (delegates task operations)
+
+TaskService
+  → TaskRepository (reads/writes tasks table)
+  → AssignmentRepository (moves assignments on merge)
 ```
 
 ## Acceptance Criteria
-- [ ] POST /scenarios/{id}/snapshot creates immutable copy with all tasks
-- [ ] PATCH on snapshot → 403
-- [ ] POST /tasks/merge reduces N tasks to 1 with combined effort
-- [ ] POST /tasks/{id}/split creates N subtasks with proportional effort
-- [ ] Bulk create: POST /scenarios/{id}/tasks/bulk with array → 201 list
-- [ ] uv run pytest tests/test_scenarios.py tests/test_tasks.py passes
+- [ ] POST /scenarios/{id}/launch: scenario → active, project.started_at set, baseline created
+- [ ] Only 1 active scenario per project — launching second auto-archives previous
+- [ ] PATCH on active/archived scenario → 403
+- [ ] POST /scenarios/{id}/fork: returns new draft scenario with deep-copied tasks + assignments
+- [ ] POST /scenarios/{id}/archive: scenario → archived with reason + timestamp
+- [ ] POST /tasks/{id}/split: creates N tasks with proportional effort, original deleted
+- [ ] POST /tasks/merge: 1 task with summed effort, originals deleted
+- [ ] All endpoints require auth, respect org-level multi-tenancy
+- [ ] `uv run pytest tests/test_scenarios.py tests/test_tasks.py` passes
