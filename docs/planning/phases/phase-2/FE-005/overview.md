@@ -1,19 +1,20 @@
-# FE-005 — Three.js Board — Static Scene
+# FE-005 — Planning Board — Static Kanban
 
-**Phase:** 2 — Strategic Board
+**Phase:** 2 — Planning Board
 **Track:** Frontend
-**Branch:** `feature/FE-005-threejs-board-static`
+**Branch:** `feature/FE-005-planning-board-static`
 **Status:** Not started
 **Prerequisites:** INT-001
 
 ## Goal
-Build the desert empire 3D scene using Three.js. Tasks display as camps (boxes), personnel as units (cones), a fortress sits in the background as the deadline symbol. Static display — no interaction yet.
+Build the static planning board UI — a card-game style kanban where task cards are rendered in lanes and developer cards are listed in the left panel. No interaction yet (drag-and-drop in FE-006). Focus: data display, card design, layout.
 
 ## Scope
-- Three.js scene: desert ground, sky, directional sunlight
-- Task camps: BoxGeometry sized by effort, colored by status
-- Personnel units: CylinderGeometry with per-person colors
-- Fortress background mesh
-- Floating text labels above camps
-- OrbitControls for camera pan/zoom/rotate
-- Raycasting foundation for click detection
+- `PlanningBoard` layout: left sidebar (developer cards) + main board (task card lanes)
+- **Task card** component: title, effort badge (man-days), techstack tag chips, status badge, P(on_time) badge, assignee avatars
+- **Developer card** component: name, avatar, availability bar, skill match % (from Pillar 2 if available, else N/A), WFU effective
+- Lanes: `Unassigned` | `In Progress` | `Done` (group by task status)
+- Task card click → expand to show effort breakdown (investigate/design/implement/test/review/release), dependencies list, active warnings
+- Developer card click → popup with allocation summary across all projects
+- Scenario selector (top bar) to switch between scenarios
+- Empty state when no tasks exist

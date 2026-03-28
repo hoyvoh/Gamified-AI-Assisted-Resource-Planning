@@ -1,39 +1,59 @@
 # Design — FE-006
 
 ## Files to Create/Modify
-- ui/src/components/StrategicBoard/interactions/DragDropManager.ts
-- ui/src/components/StrategicBoard/interactions/Raycaster.ts
-- ui/src/components/PersonnelSidebar/PersonnelCard.tsx — add draggable
-- ui/src/store/scenarioStore.ts — assignPersonnel action
-- ui/src/lib/api/assignments.ts
+- `ui/src/components/PlanningBoard/TaskCard.tsx` — add drop target logic
+- `ui/src/components/PlanningBoard/DeveloperCard.tsx` — add drag source logic
+- `ui/src/components/PlanningBoard/AllocationModal.tsx` — % slider + WFU mode selector
+- `ui/src/store/boardStore.ts` — add optimistic assignment actions
+- `ui/src/lib/api/assignments.ts` — POST/DELETE assignment endpoints
 
-## Technical Design
+## Drop Flow
 
-### Drop Flow
 ```
-dragstart on PersonnelCard
-  → dataTransfer.setData('personnelId', id)
+dragstart on DeveloperCard
+  → store developerCard.id in drag context
 
-drop on canvas element (pointer up)
-  → raycaster.intersectObjects(campMeshes)
-  → if hit camp: get taskId from camp.userData.taskId
-  → open AllocationModal (enter %, mode)
-  → optimistic: move PersonnelUnit to camp
-  → POST /scenarios/{id}/assignments
-  → success: keep position, update store
-  → fail: rollback position, show error toast
+dragover TaskCard
+  → highlight task card border (drop indicator)
+
+drop on TaskCard
+  → open AllocationModal(developerId, taskId)
+    → AllocationModal fields:
+       - Allocation %: slider 10–100, default 100
+       - WFU mode: standard (always) | fast | quality (only if skill match)
+    → Confirm:
+       → optimistic: add avatar to TaskCard assignee stack
+       → POST /scenarios/{scenarioId}/assignments
+       → success: keep avatar, invalidate warnings
+       → failure: remove avatar, toast error
+
+click assignee avatar on TaskCard
+  → confirm dialog "Remove [name] from [task]?"
+  → DELETE /scenarios/{scenarioId}/assignments/{id}
+  → remove avatar optimistically
 ```
 
-### Keyboard Fallback
-```typescript
-// Press Space on PersonnelCard → selectedPersonnelId = id
-// Press Enter on camp (focused) → trigger assignment modal
-// TabIndex on camp HTML overlay elements
+## AllocationModal
+
+```tsx
+<AllocationModal>
+  <PercentSlider min={10} max={100} step={5} />
+  <WfuModeSelector
+    options={[
+      { value: 'standard', always: true },
+      { value: 'fast',    disabled: !hasSkillMatch, tooltip: 'Requires skill match' },
+      { value: 'quality', disabled: !hasSkillMatch, tooltip: 'Requires skill match' },
+    ]}
+  />
+  <WfuEffectivePreview />  {/* live preview of effective WFU given selection */}
+</AllocationModal>
 ```
 
 ## Acceptance Criteria
-- [ ] Drag PersonnelCard → camp glows/highlights on hover
-- [ ] Drop → AllocationModal appears (% + mode selector)
-- [ ] Confirm → API called, unit moves to camp position
-- [ ] API failure → unit returns to sidebar, error toast shown
-- [ ] Keyboard: Tab to PersonnelCard → Space → Tab to task → Enter assigns
+- [ ] Drag DeveloperCard → TaskCard border highlights
+- [ ] Drop → AllocationModal appears với % slider + WFU mode
+- [ ] fast/quality mode disabled nếu không có skill match (tooltip giải thích)
+- [ ] Confirm → avatar xuất hiện trên task card, API called
+- [ ] API failure → avatar removed, error toast
+- [ ] Click avatar → remove assignment
+- [ ] Keyboard: Tab/Space/Enter flow hoạt động

@@ -1,6 +1,6 @@
 # Frontend Specification
 
-Stack: **Next.js 15 · React 19 · Three.js · TypeScript strict · Tailwind CSS v4**
+Stack: **Next.js 15 · React 19 · TypeScript strict · Tailwind CSS v4 · React DnD**
 
 ---
 
@@ -160,27 +160,66 @@ Mode 4 locked until Mode 3 has an active scenario.
 
 ---
 
-## Main Screen: Strategic Board (Mode 3)
+## Mode 3: Planning Board Screen
+
+**Route:** `/org/[orgId]/projects/[projectId]/scenarios/[scenarioId]`
+**Access:** PM, Tech Lead
 
 ### Layout
 ```
-┌─────────────────────────────────────────────────────────────┐
-│ TopBar: [Project name] [Scenario selector] [Views] [Actions] │
-├────────────┬─────────────────────────────────┬──────────────┤
-│            │                                 │              │
-│ Personnel  │     Three.js Strategic Board    │  Task Panel  │
-│  Sidebar   │     (Desert Empire Theme)       │  (right)     │
-│  (left)    │                                 │              │
-│            │  [board occupies center 60%]    │              │
-│            │                                 │              │
-├────────────┴─────────────────────────────────┴──────────────┤
-│ Warning Bar (collapsible) — Warning badges                   │
-└─────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────┐
+│ TopBar: [Project Name] > [Scenario selector ▾] [+New] [Compare] [🚀 Launch] │
+├──────────────────┬────────────────────────────────────────────────────┤
+│  Developer Panel │   Task Lanes (Kanban Board)                        │
+│  (left 280px)    │                                                     │
+│                  │  Unassigned      In Progress      Done             │
+│  🔍 Search       │  ┌──────────┐   ┌──────────┐    ┌──────────┐      │
+│                  │  │TaskCard  │   │TaskCard  │    │TaskCard  │      │
+│  [Dev Card]      │  └──────────┘   └──────────┘    └──────────┘      │
+│  [Dev Card]      │  ┌──────────┐   ┌──────────┐                      │
+│  [Dev Card]      │  │TaskCard  │   │TaskCard  │                      │
+│                  │  └──────────┘   └──────────┘                      │
+│  P(on_time):     │                                                     │
+│  🟢 84%          │                                                     │
+├──────────────────┴────────────────────────────────────────────────────┤
+│ Warning Bar (collapsible) — 🔴 2 Critical  🟠 1 Warning               │
+└───────────────────────────────────────────────────────────────────────┘
 ```
 
+### Scenario Selector (TopBar dropdown)
+```
+┌─ Scenarios ──────────────────────────────────────────────┐
+│  ● Plan Normal          [draft]    P(on_time): 84%  ←active│
+│  ○ Plan Full Resource   [draft]    P(on_time): 91%         │
+│  ○ Plan OT              [contingency] P(on_time): 96%      │
+│  ○ If Alice leaves      [what_if]  P(on_time): 67%         │
+│  ────────────────────────────────────────────────────────  │
+│  [+ New Scenario]  [Fork current]                          │
+└────────────────────────────────────────────────────────────┘
+```
+- Switch scenario: board re-renders với assignments từ selected scenario
+- `[+ New Scenario]`: modal → nhập name, type (planning/contingency/what_if)
+- `[Fork current]`: tạo copy editable của scenario hiện tại
+
+### Launch Button (`🚀 Launch`)
+- Chỉ visible nếu: scenario.status = `draft` và ≥1 task có assignment
+- Click → `LaunchConfirmModal`:
+  ```
+  ┌─ Launch Project ─────────────────────────────────────────┐
+  │ Activating: Plan Normal                                    │
+  │ Start date: today (28 Mar 2026)                           │
+  │ Team: Alice, Bob, Carol (3 members assigned)              │
+  │ Tasks: 12 tasks, 8 assigned                               │
+  │                                                           │
+  │ ⚠️  4 tasks unassigned — assign before launch or proceed  │
+  │                                                           │
+  │ [Cancel]                          [Launch & Notify Team]  │
+  └───────────────────────────────────────────────────────────┘
+  ```
+- On confirm: scenario → `active`, project → `active`, team notified
+
 ### Panel Sizes
-- Left sidebar: 280px (resizable, persisted in localStorage)
-- Right panel: 320px (resizable, persisted)
+- Left developer panel: 280px (resizable, min 220px, persisted in localStorage)
 - Center board: fills remaining space
 
 ---
@@ -232,37 +271,56 @@ interface WFUModeSelectorProps {
 // Tooltip khi disabled: "Enable by assigning someone with matching techstack"
 ```
 
-### `StrategicBoard` (Three.js)
-**File:** `src/components/StrategicBoard/`
+### `PlanningBoard`
+**File:** `src/components/PlanningBoard/`
 
-```typescript
-// Core Three.js scene
-- Scene: desert environment (sand ground, sky gradient, distant fortress silhouette)
-- Lights: directional (sunlight), ambient
-- Camera: perspective, orbitable (mouse drag/scroll)
+Card-game kanban layout. No canvas/3D.
 
-// Task objects (camps)
-- Geometry: BoxGeometry (doanh trại) — mỗi task = 1 camp
-- Color coding by status: draft=gray, todo=tan, in_progress=amber, done=green
-- Size: proportional to effort_total_days
-- Label: floating text above camp (task name)
-- Click: select task → highlight + open TaskDetailDrawer
-- Hover: tooltip với key metrics
-
-// Personnel objects (units)
-- Geometry: ConeGeometry or CylinderGeometry (chiến binh)
-- Color: per-person unique color
-- Position: orbiting/standing next to assigned camp
-- Unassigned: standing area on left
-
-// Connections
-- Lines between dependent tasks (glowing path)
-- Lines between personnel and their tasks
-
-// Fortress (deadline marker)
-- Background mesh: distant castle silhouette
-- Animated: glowing pulse based on urgency
 ```
+Components:
+- PlanningBoard/index.tsx       — layout: developer panel + lane board
+- PlanningBoard/TaskCard.tsx    — task card with badges, drag target
+- PlanningBoard/DeveloperCard.tsx — developer card, drag source
+- PlanningBoard/TaskLane.tsx    — lane column (Unassigned/In Progress/Done)
+- PlanningBoard/AllocationModal.tsx — % + WFU mode selector on drop
+- PlanningBoard/ScenarioBar.tsx — scenario selector + P(on_time) + Launch button
+```
+
+**TaskCard badges:**
+- Effort badge: "3.5d"
+- Techstack chips: [React] [TypeScript]
+- Status badge: Unassigned / In Progress / Done
+- P(on_time) badge: 🟢 84% / 🟡 68% / 🔴 43%
+- Assignee avatar stack (click avatar → remove assignment)
+- Warning indicator if task has active warnings
+
+**TaskCard expand (click):**
+- Effort breakdown table (investigate/design/implement/test/review/release) — editable
+- Dependencies list with status icons
+- Active warnings list
+- LLM prompt input: "Split this task into 3 parallel subtasks"
+
+**DeveloperCard:**
+- Avatar + name + seniority badge
+- Availability bar: daily hours used / 7h (green → amber → red)
+- Skill match % (from Pillar 2, or "—" if unavailable)
+- WFU effective multiplier
+
+### `ScenarioSwitchBanner` (Execution Mode)
+**File:** `src/components/ScenarioSwitchBanner/`
+
+Hiển thị khi P(on_time) < 40% trong 3 ngày liên tiếp hoặc khi trigger condition auto-detected:
+
+```
+┌─ ⚠️  P(on_time) Critical (38%) ──────────────────────────────────────────────┐
+│ Project has been at risk for 3 consecutive days.                               │
+│ Trigger: RISK_ESCALATION                                                       │
+│                          [Dismiss]  [Record condition]  [Switch to Plan OT ▾] │
+└────────────────────────────────────────────────────────────────────────────────┘
+```
+
+`[Switch to Plan OT ▾]` dropdown shows all contingency scenarios with P(on_time) preview.
+`[Record condition]` → modal: select trigger type + free text note → auto-fork from current state.
 
 ### `WarningBar`
 - Positioned bottom of screen
@@ -319,18 +377,52 @@ Triggered when `p_on_time < 0.5` or from CompletionProbabilityBadge:
 
 ### `GanttChart`
 **File:** `src/components/GanttChart/`
-- Build custom trên SVG/Canvas (tránh heavy lib dependencies)
-- X-axis: timeline theo ngày
-- Y-axis: tasks (grouped by category)
-- Bars: planned (solid) vs actual (striped overlay)
-- **Deadline marker:** vertical red dashed line tại `project.deadline`
-- **EAC marker:** vertical line tại EAC date:
-  - 🟢 Green nếu EAC < deadline (ahead) — label: "+N days"
-  - 🔴 Red nếu EAC > deadline (behind) — label: "−N days"
-- Milestones: diamond markers
-- Filters: by person, by category, by status
-- Click bar: open TaskDetailDrawer
-- **Realtime update:** khi deadline của task thay đổi trong meeting → bars shift immediately (optimistic)
+
+Custom SVG Gantt — no heavy lib. Used in both Mode 3 (planning) and Mode 4 (execution).
+
+**3-layer bar system:**
+
+| Layer | Visual | Source | When visible |
+|-------|--------|--------|-------------|
+| Baseline | Grey bar (thin, background) | `execution_baseline` snapshot | After project launch |
+| Planned | Blue bar (solid) | Active scenario task dates | Always |
+| Actual | Green/Amber/Red bar (overlay) | `ProgressLogs` % complete | After launch, execution mode |
+
+**Layout:**
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│  Filter: [All] [By Person ▾] [By Milestone ▾] [Status ▾]            │
+├────────────────────┬────────────────────────────────────────────┬────┤
+│ Task name          │ Mar 28   Apr 4   Apr 11   Apr 18   Apr 25  │P% │
+├────────────────────┼────────────────────────────────────────────┼────┤
+│ ▸ Milestone 1      │                  ◆                         │    │
+│   Auth API         │ ████████░░░░     (planned: blue)           │72% │
+│                    │ ▓▓▓▓▓▓▓▓         (actual: green)           │    │
+│                    │ ░░░░░░░░░░░░     (baseline: grey)          │    │
+│   DB Schema        │      ████████                              │100%│
+├────────────────────┼────────────────────────────────────────────┼────┤
+│  Today ──────────────────────────↑──────────────────────────────│    │
+│  Deadline ────────────────────────────────────────────────────→ │    │
+└────────────────────┴────────────────────────────────────────────┴────┘
+```
+
+**Markers:**
+- `Today` — vertical dashed line (dark)
+- `Deadline` — vertical red line with label
+- `EAC` — vertical line: 🟢 green if ahead, 🔴 red if behind, label "±N days"
+- `◆` — milestone diamonds at milestone deadlines
+- `🔀` — scenario switch markers with tooltip (trigger reason + date)
+
+**Interaction:**
+- Drag planned bar → reschedule task (triggers DEADLINE_CHANGE warning)
+- Click bar → `TaskDetailDrawer` opens
+- Hover → tooltip: task name, planned dates, actual %, EAC, assignee(s)
+- Right-click → context menu: "Reassign", "Split task", "View dependencies"
+
+**Filters:**
+- By person: show swimlane per person
+- By milestone: group tasks under milestone headers
+- By status: hide done / show only at-risk
 
 ### `DependencyGraph`
 **File:** `src/components/DependencyGraph/`
@@ -349,20 +441,84 @@ Triggered when `p_on_time < 0.5` or from CompletionProbabilityBadge:
 
 ### `ProgressInputForm`
 **File:** `src/components/ProgressTracking/`
-- Cho execution mode
-- Dropdown: chọn task
-- Slider: completion %
+- Dropdown: chọn task từ assigned tasks của user
+- Slider: completion % (0–100)
 - Input: hours spent today
-- Textarea: notes
-- Submit → realtime update Gantt + warnings
+- Textarea: notes / blockers
+- Submit → realtime update Gantt actual bar + warnings recompute
+
+---
+
+## Mode 4: Execution Screen
+
+**Route:** `/org/[orgId]/projects/[projectId]/execution`
+**Access:** All (PM, TL, Members)
+
+### Layout
+```
+┌───────────────────────────────────────────────────────────────────┐
+│ TopBar: [Project Name] > Execution  [🟢 P(on_time): 84%]  [Switch Plan ▾] │
+├──────────────────────────────────────────────────────────────────┤
+│ [ScenarioSwitchBanner — shown if P(on_time) critical]            │
+├───────────────────┬──────────────────────────────────────────────┤
+│  My Tasks         │  Gantt — Full Team View                      │
+│  (left, 300px)    │                                              │
+│                   │  [Filter ▾] [By Person ▾] [By Milestone ▾]  │
+│  Today's updates: │                                              │
+│  ┌─────────────┐  │  ░░████████░░  Auth API        Alice  72%  │
+│  │Auth API     │  │  ░░░░████████  DB Schema       Bob   100%  │
+│  │ [████░] 72% │  │  ░░░░░░████    Frontend UI     Carol  40%  │
+│  │ [Update]    │  │                                              │
+│  └─────────────┘  │  Today ──────────↑──────────────────────── │
+│  ┌─────────────┐  │  Deadline ──────────────────────────────→  │
+│  │Frontend UI  │  │  🔀 Switched to Plan OT (Apr 2)            │
+│  │ [██░░░] 40% │  │                                              │
+│  │ [Update]    │  │                                              │
+│  └─────────────┘  │                                              │
+└───────────────────┴──────────────────────────────────────────────┘
+```
+
+### `MyTasksPanel` (left)
+- Chỉ hiển thị tasks assigned to current user, trong active scenario
+- Mỗi task: tên, progress bar, [Update] button → mở `ProgressInputForm`
+- Overdue indicator nếu planned_end < today và < 100%
+
+### `ExecutionGantt`
+- Same `GanttChart` component với mode=`execution`
+- Hiện đủ 3 bar layers (baseline, planned, actual)
+- Scenario switch markers visible
+- PM view: full team, all tasks
+- Member view: only their tasks highlighted, others dimmed
+
+### `SwitchPlanDropdown` (TopBar, PM only)
+```
+[Switch Plan ▾]
+  ├─ Fork from current state → plan adjustment flow
+  ├─ Plan Full Resource   (P: 91%) [contingency]
+  ├─ Plan OT              (P: 96%) [contingency]
+  └─ + New contingency plan
+```
+- Chọn plan → `SwitchPlanConfirmModal`:
+  - Hiện trigger reason selector (MEMBER_DEPARTURE / SCOPE_CHANGE / DEADLINE_CHANGE / BUDGET_CUT / RISK_ESCALATION)
+  - Free-text note cho audit trail
+  - Preview: P(on_time) change (old → new)
+  - Confirm → old scenario archived, new scenario activated, Gantt re-renders
+
+### EV Metrics Summary (PM only)
+- Hiển thị sidebar hoặc expandable drawer:
+  - **SPI** (Schedule Performance Index): actual EV / planned EV
+  - **CPI** (Cost Performance Index): earned value / actual cost
+  - **EAC** (Estimate at Completion): projected finish date
+  - **P(on_time)** gauge
+  - Trend chart: P(on_time) over last 14 days
 
 ---
 
 ## Interactions
 
 ### Drag & Drop (Board)
-- Kéo `PersonnelCard` từ sidebar → thả lên `CampObject` trong Three.js
-- Three.js detect drop via raycasting + pointer events
+- Kéo `DeveloperCard` từ panel → thả lên `TaskCard`
+- Highlight drop zone khi hovering valid target
 - Optimistic update → API call → rollback nếu fail
 
 ### Resize Panels

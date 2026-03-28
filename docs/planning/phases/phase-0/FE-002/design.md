@@ -1,59 +1,69 @@
 # Design — FE-002
 
-## Files to Create/Modify
+## Components to Develop
 
-- `ui/src/app/globals.css` — add desert theme tokens
-- `ui/src/components/ui/Button.tsx`
-- `ui/src/components/ui/Badge.tsx`
-- `ui/src/components/ui/Card.tsx`
-- `ui/src/components/ui/Drawer.tsx`
-- `ui/src/components/ui/Modal.tsx`
-- `ui/src/components/ui/Toast.tsx` + `ToastContainer.tsx`
-- `ui/src/components/ui/Tooltip.tsx`
-- `ui/src/components/ui/Spinner.tsx`
-- `ui/src/components/ui/Input.tsx`
-- `ui/src/components/ui/WarningBadge.tsx`
-- `ui/src/hooks/useToast.ts`
-- `ui/src/app/ui-demo/page.tsx`
-- `ui/src/__tests__/components/ui/` — test each component
+### Primitive Layer
+| Component | Purpose | Key Variants/States |
+|-----------|---------|---------------------|
+| `Button` | Primary actions | primary / secondary / ghost / danger; loading; disabled |
+| `Badge` | Inline status labels | color, size |
+| `Card` | Surface container | padding, interactive hover state |
+| `Drawer` | Slide-in side panel | open/close, title, overlay |
+| `Modal` | Blocking dialog | open/close, title, footer actions |
+| `Toast` | Transient notification | success / error / warning / info; auto-dismiss |
+| `Tooltip` | Hover info overlay | content, placement (top/bottom/left/right) |
+| `Avatar` | User portrait with initials fallback | name, src, size (sm/md/lg) |
+| `AvatarStack` | Overlapping avatar group | users array, maxVisible (default 3) + overflow count |
+| `Slider` | Range input | min, max, step, value, label |
+| `Input` | Text input with validation state | error, disabled, placeholder |
+| `Select` | Dropdown selector | options, value, placeholder |
+| `Spinner` | Loading indicator | size |
 
-## Technical Design
+### Domain-Specific Components
+| Component | Purpose | Display Rules |
+|-----------|---------|---------------|
+| `StatusBadge` | Task status | draft=grey, in_progress=blue, done=green, blocked=red |
+| `POnTimeBadge` | Completion probability display | ≥80%=🟢 green, 50-79%=🟡 amber, <50%=🔴 red |
+| `EffortBadge` | Man-days number display | format: "3.5d" |
+| `SeverityBadge` | Warning severity | critical=🔴, warning=🟠, info=🟡 |
+| `AvailabilityBar` | Daily capacity visual | 0-5h=green, 5-6h=amber, 6-7h=red, >7h=critical red |
+| `WarningBadge` | Warning grouped by severity | icon + count |
+| `TechstackChip` | Skill/technology tag | label, category color |
+| `WfuModeBadge` | WFU mode indicator | standard / fast (×1.2) / quality (×1.5) |
 
-### Desert Theme Tokens (globals.css addition)
+## Component Relationships
+```
+Primitive layer:
+  Button, Badge, Card, Modal, Drawer, Toast, Tooltip, Avatar, AvatarStack, Slider, Input, Select
 
-```css
-@theme {
-  --color-desert-sand: #c2956a;
-  --color-desert-gold: #d4a843;
-  --color-fortress-dark: #1a1208;
-  --color-camp-glow: #ff8c42;
-  --color-camp-active: #e07b35;
-  --color-warning-critical: #ff4444;
-  --color-warning-medium: #ff8c00;
-  --color-warning-low: #ffd700;
-}
+Domain components consume primitives:
+  StatusBadge → Badge
+  POnTimeBadge → Badge
+  EffortBadge → Badge
+  AvailabilityBar → (custom progress bar)
+  WarningBadge → Badge + Tooltip
+  TechstackChip → Badge
+  AvatarStack → Avatar × N
 ```
 
-### Component Variants
+## Data Flow
+All components in this ticket are **purely presentational** — no API calls, no state management. They receive data via props and emit callbacks. Data binding to real API happens in INT-001 and later tickets.
 
-```tsx
-// Button
-type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost'
-
-// Badge / WarningBadge
-type Severity = 'critical' | 'warning' | 'info'
-// critical → red, warning → orange, info → yellow
-
-// Toast
-type ToastType = 'success' | 'error' | 'warning' | 'info'
-// Must have aria-live="polite" on container
-```
+## Design Tokens (Tailwind CSS v4)
+Professional neutral palette — no desert empire colors:
+- Base: slate-50 to slate-900 for surfaces and text
+- Accent green: on-track states, success
+- Accent amber: at-risk states, warnings
+- Accent red: critical states, errors
+- Accent blue: primary actions, in-progress states
 
 ## Acceptance Criteria
-
-- [ ] `/ui-demo` page shows all components in all variants
-- [ ] Button: primary, secondary, danger, ghost — all render + click
-- [ ] Toast with `aria-live="polite"` — axe accessibility check passes
-- [ ] WarningBadge renders correct colors for each severity
-- [ ] All components: keyboard navigable, focus-visible ring visible
-- [ ] `pnpm test:unit:run` passes for all component tests
+- [ ] All primitive components render in `/ui-demo` page in all variants
+- [ ] `POnTimeBadge`: 84%=green, 65%=amber, 38%=red
+- [ ] `AvailabilityBar`: 4h=green, 6h=amber, 7h+=red
+- [ ] `StatusBadge` covers: draft, in_progress, done, blocked
+- [ ] `AvatarStack` shows max 3 avatars + "+N" overflow badge
+- [ ] `Toast` has `aria-live="polite"` on container — accessible
+- [ ] All components keyboard-navigable with visible focus ring
+- [ ] `pnpm type-check` passes with zero errors
+- [ ] No desert empire color tokens in codebase

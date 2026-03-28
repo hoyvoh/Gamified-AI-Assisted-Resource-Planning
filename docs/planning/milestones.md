@@ -3,128 +3,107 @@
 ## Timeline Overview
 
 ```
-Mar 22 ── Mar 27 ─── Mar 30 ─── Apr 1 ──── Apr 20 ─── Apr 30 ─── May 15 ─── May 31
-   │          │           │          │           │           │           │          │
-Phase 0    Phase 0.5   Phase 1    🏆 MVP     Phase 3     Phase 4     Phase 5   Phase 6
-Foundation Analysis    Board      Launch     Views+Opt   Execution     XP         QA
-           Modules
+Phase 0    Phase 0.5   Phase 1    Phase 2    🏆 MVP     Phase 4-5   Phase 6    Phase 7   Phase 8
+Foundation  Analysis    Core Data  Board      Launch     Opt+Views   Execution   XP        QA
 ```
+
+> Dates are targets — reset as needed based on actual velocity.
 
 ---
 
 ## M0 — Foundation Ready
-**Target: 22/3/2026**
 
 **Deliverables:**
 - [ ] COCOMO II engine implemented + tested
-- [ ] Database schema deployed (alembic migrations)
+- [ ] Database schema deployed (alembic migrations) — includes scenario states + execution_baseline table
 - [ ] Core CRUD APIs (org, personnel, project)
 - [ ] Next.js app shell running, routes working
-- [ ] CI pipeline green (cả FE + BE)
+- [ ] CI pipeline green (FE + BE)
 
 **Definition of Done:** `uv run pytest` pass, `pnpm build` pass, `alembic upgrade head` pass
 
 ---
 
 ## M0.5 — Analysis Modules
-**Target: 27/3/2026**
 
 **Deliverables:**
-- [ ] DB schema: `project_evaluations`, `personnel_profiles`, `project_team_matches` (migration)
+- [ ] DB schema: `project_evaluations`, `personnel_profiles`, `project_team_matches`
 - [ ] Project Evaluation API: CRUD + verdict computation + AI assist per axis
-- [ ] Personnel Profile API: BOD-only, 5-layer storage + WFU factors
+- [ ] Personnel Profile API: 5-layer storage + WFU factors
+- [ ] **GitHub + Slack Data Pipeline:** ingest commit/PR/Slack data per developer username
 - [ ] Team Match engine: cosine similarity scoring + top-N team recommendation
 - [ ] Project Analysis screen (Mode 1): 10-axis radar, scoring form, risk register, verdict
 - [ ] HR Analysis screen (Mode 2): developer roster, profile drawer, team composition panel
-- [ ] Project hub mode switcher: Analyze → HR → Plan → Execute with lock/unlock logic
 
 **Definition of Done:**
-PM có thể nhập proposal → chạy Project Analysis → xem 10-axis radar + verdict.
-BOD có thể xem developer profiles → chạy team match → nhận team composition recommendations.
-Verdict từ Mode 1 unlock Mode 3 (Strategic Board).
+PM có thể nhập proposal → chạy Project Analysis → xem radar + verdict.
+BOD có thể sync GitHub/Slack data → xem developer profiles → nhận team recommendations.
 
 ---
 
 ## M1 — Core Planning Board
-**Target: 30/3/2026**
 
 **Deliverables:**
-- [ ] Personnel sidebar + Task panel kết nối với BE
-- [ ] Three.js board render tasks + personnel
-- [ ] Drag & drop assignment hoạt động
-- [ ] Warning bar hiển thị capacity/junior warnings
-- [ ] Scenario snapshot + switch
+- [ ] Scenario & Task APIs with **full state machine** (draft/active/archived, launch, fork, archive-with-trigger)
+- [ ] Personnel sidebar + Task panel connected to BE
+- [ ] Planning Board (kanban card-game): task cards + developer cards + lanes
+- [ ] Drag & drop assignment → AllocationModal (%, WFU mode)
+- [ ] Warning bar: capacity/junior/budget/time warnings
+- [ ] **Scenario Management UI:** create, fork, compare, LaunchModal with state indicators
+- [ ] Scenario selector with P(on_time) per scenario
 
-**Definition of Done:** Demo được trong meeting: tạo scenario → assign người → thấy warnings
+**Definition of Done:** Demo trong meeting: tạo 2 scenarios → compare → Launch một scenario → thấy warnings
 
 ---
 
 ## M2 — MVP: AI-Powered Planning
-**Target: 1/4/2026**
 
 **Deliverables:**
-- [ ] Nhập project proposal → LLM generate tasks
-- [ ] Tasks tự động xuất hiện trên board
-- [ ] Risk analysis endpoint hoạt động
-- [ ] AI prompt interface đầy đủ
-- [ ] Full E2E flow: Proposal → Board → Assign → Warnings → Risk Analysis
+- [ ] Project proposal → LLM generate tasks → tasks appear on board
+- [ ] Risk analysis endpoint + AI prompt interface
+- [ ] **Full E2E launch flow:** Proposal → Analysis (Pillar 1) → HR Match (Pillar 2) → Board → Assign → Launch → Execution Mode unlocked
+- [ ] Optimization (GA): Makespan + Budget modes, top 3 solutions
 
 **Definition of Done:**
-PM có thể ngồi trước màn hình, nhập đề bài dự án thực, nhận task list, phân người, thấy cảnh báo, prompt AI phân tích rủi ro — tất cả trong 1 session.
+PM có thể ngồi trước màn hình, nhập đề bài dự án thực, nhận task list, phân người, launch dự án, unlock Execution Mode — tất cả trong 1 session.
 
 ---
 
-## M3 — Optimization & Full Views
-**Target: 20/4/2026**
+## M3 — Full Views + Execution Mode
 
 **Deliverables:**
-- [ ] Genetic algorithm optimizer chạy được
-- [ ] Optimization results UI với comparison
-- [ ] Gantt chart đầy đủ (planned vs actual, filters)
+- [ ] **Gantt Chart (3-layer):** Baseline / Planned / Actual bars, scenario switch markers, drag-to-reschedule
 - [ ] Dependency graph với critical path highlight
 - [ ] Calendar view
+- [ ] **Execution Mode screen:** MyTasksPanel + ExecutionGantt + EV metrics (SPI/CPI/EAC)
+- [ ] Daily progress input → P(on_time) updates
+- [ ] **Scenario switch mid-execution:** SwitchPlanBanner + SwitchPlanConfirmModal + auto-fork + archive-with-trigger
+- [ ] ProgressLogs preserved across scenario switches
 
-**Definition of Done:** Cả 3 views render đúng từ scenario data. Optimizer đề xuất phân bổ tốt hơn baseline.
-
----
-
-## M4 — Execution Mode & Progress Tracking
-**Target: 30/4/2026**
-
-**Deliverables:**
-- [ ] Chuyển từ Planning sang Execution mode
-- [ ] Daily progress input cho members
-- [ ] Earned Value metrics (SPI, CPI, EAC)
-- [ ] Burndown chart
-- [ ] At-risk warnings dựa trên actual vs planned
-
-**Definition of Done:** Team có thể track tiến độ hàng ngày, hệ thống tự cảnh báo khi có nguy cơ trễ.
+**Definition of Done:**
+Project đang chạy → P(on_time) giảm → banner xuất hiện → PM switch plan → Gantt hiển thị switch marker → progress data không bị mất.
 
 ---
 
-## M5 — XP System & Full Feature
-**Target: 15/5/2026**
+## M4 — XP System & Full Feature
 
 **Deliverables:**
-- [ ] XP calculation khi kết thúc dự án
+- [ ] XP calculation khi finalize project
 - [ ] Skill level up system
-- [ ] End-of-project review screen
 - [ ] XP reflected trong personnel profile cho dự án tiếp theo
 
 **Definition of Done:** Finalize project → mỗi member xem XP + skill progress.
 
 ---
 
-## M6 — Production Ready
-**Target: 31/5/2026**
+## M5 — Production Ready
 
 **Deliverables:**
-- [ ] E2E test suite pass
-- [ ] Acceptance checklist (tất cả 30 tickets) verified
-- [ ] Performance: board với 50 tasks + 20 người ≤ 60fps
+- [ ] E2E test suite pass (QA-001)
+- [ ] Acceptance checklist (79 items) all verified
+- [ ] Performance: 50 tasks + 20 people — board không lag, Gantt renders <1s
 - [ ] Security review: multi-tenant isolation tested
-- [ ] User guide hoàn chỉnh
-- [ ] Deployment runbook
+- [ ] Deployment runbook hoàn chỉnh
 
 ---
 
@@ -133,7 +112,8 @@ PM có thể ngồi trước màn hình, nhập đề bài dự án thực, nh�
 | Risk | Probability | Impact | Mitigation |
 |------|------------|--------|-----------|
 | LLM API downtime ảnh hưởng MVP | Medium | High | Fallback to manual task creation mode |
-| Three.js performance trên low-end devices | Medium | Medium | LOD + instancing + 50-task limit |
-| COCOMO II complexity exceed timeline | Low | High | Start BE-001 trước tất cả, timebox 3 ngày |
-| Multi-dev conflicts trên database schema | Medium | Medium | Feature branches, migrations versioned |
+| GitHub/Slack API rate limits | Medium | Medium | Cache responses, batch requests, token rotation |
+| React DnD performance với nhiều cards (>50 tasks) | Low | Medium | Virtualize list, throttle drag events |
+| COCOMO II complexity exceed timeline | Low | High | Start BE-001 sớm, timebox |
 | GA optimizer chạy chậm (>30s) | Low | Medium | Async job + WebSocket progress |
+| Scenario fork data integrity | Low | High | Integration tests on fork + switch + progress persistence |

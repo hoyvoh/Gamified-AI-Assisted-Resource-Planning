@@ -33,6 +33,7 @@ projects ──< project_tool_licenses ──< tool_seat_assignments >── per
 | `id` | UUID PK | |
 | `name` | VARCHAR(200) | |
 | `slug` | VARCHAR(100) UNIQUE | URL-safe identifier |
+| `default_phase_ratios` | JSONB NULLABLE | Org-level default phase breakdown `{investigate, design, implement, testing, review, support}` — each a float, must sum to 1.0. Null = use system default from `PhaseRatios()`. |
 | `created_at` | TIMESTAMPTZ | |
 
 ### `users`
@@ -101,6 +102,7 @@ Ngôn ngữ làm việc của nhân sự — dùng cho LANGUAGE_BARRIER warning.
 | `budget_total` | DECIMAL(15,2) NULLABLE | |
 | `budget_currency` | VARCHAR(10) DEFAULT 'USD' | |
 | `active_scenario_id` | UUID FK → scenarios NULLABLE | |
+| `phase_ratios_override` | JSONB NULLABLE | Project-level phase breakdown override. Same shape as `organizations.default_phase_ratios`. Overrides org default for all tasks in this project. Null = inherit from org. |
 | `raw_proposal` | TEXT | Input gốc từ PM |
 | `evaluation_id` | UUID FK → project_evaluations NULLABLE | Link tới kết quả Project Analysis |
 | `evaluation_status` | ENUM(not_started, in_progress, complete, waived) DEFAULT not_started | |
