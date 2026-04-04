@@ -114,7 +114,7 @@
 | B4.9 | Scoring engine: confidence score (4-component formula) | ✅ | Blended with P3 LLM confidence |
 | B4.10 | Scoring engine: delta computation vs previous run | ✅ | From personal baseline |
 | B4.11 | Scoring engine: category score (weighted average of valid dimensions) | ✅ | Role-aware weights |
-| B4.12 | Scoring version tracking on analysis_runs | ⬜ | Deferred — no scoring_version column yet |
+| B4.12 | Scoring version tracking on analysis_runs | ✅ | `SCORING_VERSION = "1.0"` constant; column in migration 0005; stamped after scoring |
 | B4.13 | `PUT /members/:id/baseline` — create/update personal baseline | ✅ | |
 
 ---
@@ -127,16 +127,16 @@
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| B5.1 | `kpt_items` table + migration | ⬜ | |
-| B5.2 | `case_feedbacks` table + migration | ⬜ | |
-| B5.3 | `milestones` table + migration | ⬜ | |
-| B5.4 | `analysis_snapshots` table + migration | ⬜ | |
-| B5.5 | P4 prompt: dimension UI summary (per dimension) | ⬜ | Stores to `dimension_scores.ui_summary` |
-| B5.6 | P5 prompt: KPT generation | ⬜ | 3–5 keep/problem/try items |
-| B5.7 | P6 prompt: case-based feedback generation | ⬜ | 3–8 cases |
-| B5.8 | P7 prompt: overview + journey summary | ⬜ | Profile summary + growth journey text |
-| B5.9 | Milestone derivation logic (threshold-based from event clusters) | ⬜ | Append-only to milestones |
-| B5.10 | Assemble and persist AnalysisSnapshot | ⬜ | |
+| B5.1 | `kpt_items` table + migration | ✅ | Migration 0005 |
+| B5.2 | `case_feedbacks` table + migration | ✅ | Migration 0005 |
+| B5.3 | `milestones` table + migration | ✅ | Migration 0005 |
+| B5.4 | `analysis_snapshots` table + migration | ✅ | Migration 0005 |
+| B5.5 | P4 prompt: dimension UI summary (per dimension) | ✅ | Parallel via asyncio.Semaphore(4); writes to `dimension_scores.ui_summary` |
+| B5.6 | P5 prompt: KPT generation | ✅ | 3-5 keep/problem/try items |
+| B5.7 | P6 prompt: case-based feedback generation | ✅ | 3-8 cases |
+| B5.8 | P7 prompt: overview + journey summary | ✅ | Profile summary + growth journey text + growth path label |
+| B5.9 | Milestone derivation logic (threshold-based from event clusters) | ✅ | High-impact positive events with confidence >= 0.65; append-only |
+| B5.10 | Assemble and persist AnalysisSnapshot | ✅ | Upsert with fairness notes; p8_approved=false pending M6 |
 
 ---
 
@@ -148,11 +148,11 @@
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| B6.1 | P8 prompt: self-critique / overclaim check | ⬜ | |
-| B6.2 | Patch logic: apply `recommended_fix` to affected summaries | ⬜ | |
-| B6.3 | P8 retry once on `approved = false` | ⬜ | |
-| B6.4 | Store `p8_approved` + `p8_issues` in `analysis_snapshots` | ⬜ | |
-| B6.5 | Run status transitions: `analyzing` → `completed` / `failed` | ⬜ | |
+| B6.1 | P8 prompt: self-critique / overclaim check | ✅ | p8_critique.py |
+| B6.2 | Patch logic: apply `recommended_fix` to affected summaries | ✅ | Patches ui_summary / profile_summary / growth_journey_summary |
+| B6.3 | P8 retry once on `approved = false` | ✅ | _call_p8 called twice on failure |
+| B6.4 | Store `p8_approved` + `p8_issues` in `analysis_snapshots` | ✅ | Via snapshot_repo.upsert after gate |
+| B6.5 | Run status transitions: `analyzing` → `completed` / `failed` | ✅ | self_checking stage → completed; outer try/except → failed |
 
 ---
 
@@ -237,9 +237,9 @@
 | M1 — Skeleton | 12 | 10 | ✅ Done |
 | M2 — Analysis Run Infra | 8 | 8 | ✅ BE done · FE ⬜ |
 | M3 — Evidence Extraction | 8 | 0 | ✅ Done |
-| M4 — Dimension Scoring | 13 | 0 | ✅ BE done (B4.12 deferred) |
-| M5 — Human Output Gen | 10 | 0 | ⬜ |
-| M6 — P8 Gate | 5 | 0 | ⬜ |
+| M4 — Dimension Scoring | 13 | 0 | ✅ BE done |
+| M5 — Human Output Gen | 10 | 0 | ✅ BE done |
+| M6 — P8 Gate | 5 | 0 | ✅ BE done |
 | M7 — Profile UI | 9 BE | 19 FE | ⬜ |
 | M8 — Validation & Trust | 3 BE | 6 FE | ⬜ |
 | M9 — Integration & Polish | 4 BE | 3 FE | ⬜ |

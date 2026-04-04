@@ -1,10 +1,8 @@
-"""Background analysis runner — M4: full pipeline through dimension scoring.
+"""Background analysis runner — full pipeline through P8 self-critique gate.
 
 State machine:
-  pending → collecting → analyzing (extracting_evidence → inferring_dimensions → scoring)
-  → completed / failed
-
-P5-P8 (output generation + self-critique) continue in M5+.
+  pending → collecting → analyzing (extracting_evidence → inferring_dimensions →
+  scoring → generating_kpt → self_checking) → completed / failed
 """
 
 import json
@@ -19,6 +17,7 @@ from app.domain.analysis.repositories import IAnalysisRunRepository
 from app.infrastructure.analysis.pipeline.output_runner import run_output_generation
 from app.infrastructure.analysis.pipeline.p1_runner import run_p1
 from app.infrastructure.analysis.pipeline.p2_runner import run_p2
+from app.infrastructure.analysis.pipeline.p8_runner import run_p8
 from app.infrastructure.analysis.pipeline.scoring_runner import run_scoring
 from app.infrastructure.collectors.base import (
     CollectionResult,
@@ -260,8 +259,14 @@ async def _run_pipeline(
         llm_settings=llm_settings,
     )
 
-    # M5 ends here — M6 (P8 self-critique gate) continues
-    # Mark completed for now; P8 will update p8_approved in M6
+    # ── Phase 5: P8 Self-Critique Gate ────────────────────────────────────────
+    run.progress_stage = "self_checking"
+    await run_repo.update(run)
+    await session.commit()
+
+    await run_p8(run=run, session=session, llm_settings=llm_settings)
+
+    # ── Completed ─────────────────────────────────────────────────────────────
     run.status = "completed"
     run.progress_stage = None
     run.completed_at = utcnow()
