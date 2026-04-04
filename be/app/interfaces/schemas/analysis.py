@@ -24,6 +24,7 @@ class AnalysisRunResponse(BaseResponse):
     status: str
     progress_stage: str | None
     error_message: str | None
+    scoring_version: str | None
     created_at: str
     updated_at: str
     completed_at: str | None

@@ -5,6 +5,9 @@ ANALYSIS_RUN_ACTIVE_STATUSES = frozenset({"pending", "collecting", "analyzing"})
 ANALYSIS_RUN_TERMINAL_STATUSES = frozenset({"completed", "failed"})
 
 
+SCORING_VERSION = "1.0"  # bump when scoring formula changes
+
+
 @dataclass
 class AnalysisRun:
     analysis_run_id: str
@@ -15,6 +18,7 @@ class AnalysisRun:
     status: str  # "pending" | "collecting" | "analyzing" | "completed" | "failed"
     progress_stage: str | None  # see PROGRESS_STAGES below
     error_message: str | None
+    scoring_version: str | None  # set at scoring time; matches SCORING_VERSION
     created_at: str  # ISO 8601 UTC
     updated_at: str
     completed_at: str | None
@@ -118,6 +122,8 @@ class DimensionScore:
     top_counter_evidence_ids: list[str]
     # P3 LLM inference output (stored as JSON)
     p3_inference: dict[str, object] | None
+    # P4 generated human-readable summary (populated after P4 pass)
+    ui_summary: str | None
     created_at: str
 
 
@@ -143,6 +149,78 @@ class PersonalBaseline:
     baseline_dimensions: dict[str, object]  # {dimension_id: {baseline_score, ...}}
     created_at: str
     updated_at: str
+
+
+@dataclass
+class KptItem:
+    kpt_id: str
+    analysis_run_id: str
+    member_id: str
+    item_type: str  # "keep" | "problem" | "try"
+    title: str
+    summary: str | None
+    linked_dimension_ids: list[str]
+    linked_evidence_ids: list[str]
+    linked_problem_ids: list[str]  # for Try items
+    display_order: int
+    created_at: str
+
+
+@dataclass
+class CaseFeedback:
+    case_id: str
+    analysis_run_id: str
+    member_id: str
+    title: str
+    category: str | None
+    impact_level: str | None  # "low" | "medium" | "high"
+    summary: str | None
+    why_it_matters: str | None
+    observed_pattern: str | None
+    better_alternative: str | None
+    next_time_guidance: str | None
+    linked_dimension_ids: list[str]
+    supporting_event_ids: list[str]
+    confidence_score: float | None
+    display_order: int
+    created_at: str
+
+
+@dataclass
+class Milestone:
+    milestone_id: str
+    member_id: str
+    source_analysis_run_id: str | None
+    timestamp: str
+    milestone_type: str
+    title: str
+    summary: str | None
+    impact_score: float | None
+    supporting_event_ids: list[str]
+    supporting_evidence_ids: list[str]
+    retained: bool  # soft-delete flag
+    created_at: str
+
+
+@dataclass
+class AnalysisSnapshot:
+    snapshot_id: str
+    analysis_run_id: str  # UNIQUE
+    member_id: str
+    period_start: str
+    period_end: str
+    generated_at: str
+    overall_confidence: float | None
+    profile_summary: str | None
+    growth_journey_summary: str | None
+    top_strength_dimension_ids: list[str]
+    top_growth_dimension_ids: list[str]
+    current_growth_path: str | None
+    fairness_notes: list[str]
+    insufficient_dimensions: list[str]
+    flagged_items_count: int
+    p8_approved: bool
+    p8_issues: list[dict[str, object]]
 
 
 @dataclass

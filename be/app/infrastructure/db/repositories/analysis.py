@@ -6,22 +6,30 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.domain.analysis.entities import (
     ANALYSIS_RUN_ACTIVE_STATUSES,
     AnalysisRun,
+    AnalysisSnapshot,
     BehavioralEvent,
+    CaseFeedback,
     CategoryScore,
     DimensionScore,
     DimensionSignal,
     EvidenceUnit,
+    KptItem,
+    Milestone,
     PersonalBaseline,
     SourcePayload,
 )
 from app.infrastructure.db.base import utcnow
 from app.infrastructure.db.models.analysis import (
     AnalysisRunModel,
+    AnalysisSnapshotModel,
     BehavioralEventModel,
+    CaseFeedbackModel,
     CategoryScoreModel,
     DimensionScoreModel,
     DimensionSignalModel,
     EvidenceUnitModel,
+    KptItemModel,
+    MilestoneModel,
     PersonalBaselineModel,
     SourcePayloadModel,
 )
@@ -41,6 +49,7 @@ class SqlAnalysisRunRepository:
             status=run.status,
             progress_stage=run.progress_stage,
             error_message=run.error_message,
+            scoring_version=run.scoring_version,
             created_at=run.created_at,
             updated_at=run.updated_at,
             completed_at=run.completed_at,
@@ -94,6 +103,7 @@ class SqlAnalysisRunRepository:
             model.status = run.status
             model.progress_stage = run.progress_stage
             model.error_message = run.error_message
+            model.scoring_version = run.scoring_version
             model.completed_at = run.completed_at
             model.updated_at = utcnow()
             await self._session.flush()
@@ -137,6 +147,7 @@ def _run_to_entity(model: AnalysisRunModel) -> AnalysisRun:
         status=model.status,
         progress_stage=model.progress_stage,
         error_message=model.error_message,
+        scoring_version=model.scoring_version,
         created_at=model.created_at,
         updated_at=model.updated_at,
         completed_at=model.completed_at,
@@ -311,6 +322,17 @@ class SqlDimensionScoreRepository:
         model = result.scalar_one_or_none()
         return _dim_score_to_entity(model) if model else None
 
+    async def update_ui_summary(self, run_id: str, dimension_id: str, ui_summary: str) -> None:
+        stmt = select(DimensionScoreModel).where(
+            DimensionScoreModel.analysis_run_id == run_id,
+            DimensionScoreModel.dimension_id == dimension_id,
+        )
+        result = await self._session.execute(stmt)
+        model = result.scalar_one_or_none()
+        if model is not None:
+            model.ui_summary = ui_summary
+            await self._session.flush()
+
 
 class SqlCategoryScoreRepository:
     def __init__(self, session: AsyncSession) -> None:
@@ -457,6 +479,7 @@ def _dim_score_to_entity(model: DimensionScoreModel) -> DimensionScore:
         top_supporting_evidence_ids=json.loads(model.top_supporting_evidence_ids or "[]"),
         top_counter_evidence_ids=json.loads(model.top_counter_evidence_ids or "[]"),
         p3_inference=json.loads(model.p3_inference) if model.p3_inference else None,
+        ui_summary=model.ui_summary,
         created_at=model.created_at,
     )
 
@@ -484,4 +507,248 @@ def _baseline_to_entity(model: PersonalBaselineModel) -> PersonalBaseline:
         baseline_dimensions=json.loads(model.baseline_dimensions or "{}"),
         created_at=model.created_at,
         updated_at=model.updated_at,
+    )
+
+
+class SqlKptItemRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def replace_for_run(self, run_id: str, items: list[KptItem]) -> None:
+        from sqlalchemy import delete
+
+        await self._session.execute(
+            delete(KptItemModel).where(KptItemModel.analysis_run_id == run_id)
+        )
+        for item in items:
+            self._session.add(
+                KptItemModel(
+                    kpt_id=item.kpt_id,
+                    analysis_run_id=item.analysis_run_id,
+                    member_id=item.member_id,
+                    item_type=item.item_type,
+                    title=item.title,
+                    summary=item.summary,
+                    linked_dimension_ids=json.dumps(item.linked_dimension_ids),
+                    linked_evidence_ids=json.dumps(item.linked_evidence_ids),
+                    linked_problem_ids=json.dumps(item.linked_problem_ids),
+                    display_order=item.display_order,
+                    created_at=item.created_at,
+                )
+            )
+        await self._session.flush()
+
+    async def list_by_run(self, run_id: str) -> list[KptItem]:
+        stmt = (
+            select(KptItemModel)
+            .where(KptItemModel.analysis_run_id == run_id)
+            .order_by(KptItemModel.item_type, KptItemModel.display_order)
+        )
+        result = await self._session.execute(stmt)
+        return [_kpt_to_entity(m) for m in result.scalars().all()]
+
+
+class SqlCaseFeedbackRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def replace_for_run(self, run_id: str, cases: list[CaseFeedback]) -> None:
+        from sqlalchemy import delete
+
+        await self._session.execute(
+            delete(CaseFeedbackModel).where(CaseFeedbackModel.analysis_run_id == run_id)
+        )
+        for case in cases:
+            self._session.add(
+                CaseFeedbackModel(
+                    case_id=case.case_id,
+                    analysis_run_id=case.analysis_run_id,
+                    member_id=case.member_id,
+                    title=case.title,
+                    category=case.category,
+                    impact_level=case.impact_level,
+                    summary=case.summary,
+                    why_it_matters=case.why_it_matters,
+                    observed_pattern=case.observed_pattern,
+                    better_alternative=case.better_alternative,
+                    next_time_guidance=case.next_time_guidance,
+                    linked_dimension_ids=json.dumps(case.linked_dimension_ids),
+                    supporting_event_ids=json.dumps(case.supporting_event_ids),
+                    confidence_score=case.confidence_score,
+                    display_order=case.display_order,
+                    created_at=case.created_at,
+                )
+            )
+        await self._session.flush()
+
+    async def list_by_run(self, run_id: str) -> list[CaseFeedback]:
+        stmt = (
+            select(CaseFeedbackModel)
+            .where(CaseFeedbackModel.analysis_run_id == run_id)
+            .order_by(CaseFeedbackModel.display_order)
+        )
+        result = await self._session.execute(stmt)
+        return [_case_to_entity(m) for m in result.scalars().all()]
+
+
+class SqlMilestoneRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def append(self, milestones: list[Milestone]) -> None:
+        for m in milestones:
+            self._session.add(
+                MilestoneModel(
+                    milestone_id=m.milestone_id,
+                    member_id=m.member_id,
+                    source_analysis_run_id=m.source_analysis_run_id,
+                    timestamp=m.timestamp,
+                    milestone_type=m.milestone_type,
+                    title=m.title,
+                    summary=m.summary,
+                    impact_score=m.impact_score,
+                    supporting_event_ids=json.dumps(m.supporting_event_ids),
+                    supporting_evidence_ids=json.dumps(m.supporting_evidence_ids),
+                    retained=1 if m.retained else 0,
+                    created_at=m.created_at,
+                )
+            )
+        await self._session.flush()
+
+    async def list_by_member(self, member_id: str) -> list[Milestone]:
+        stmt = (
+            select(MilestoneModel)
+            .where(MilestoneModel.member_id == member_id, MilestoneModel.retained == 1)
+            .order_by(MilestoneModel.timestamp)
+        )
+        result = await self._session.execute(stmt)
+        return [_milestone_to_entity(m) for m in result.scalars().all()]
+
+
+class SqlAnalysisSnapshotRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def upsert(self, snapshot: AnalysisSnapshot) -> None:
+        stmt = select(AnalysisSnapshotModel).where(
+            AnalysisSnapshotModel.analysis_run_id == snapshot.analysis_run_id
+        )
+        result = await self._session.execute(stmt)
+        existing = result.scalar_one_or_none()
+        if existing:
+            existing.overall_confidence = snapshot.overall_confidence
+            existing.profile_summary = snapshot.profile_summary
+            existing.growth_journey_summary = snapshot.growth_journey_summary
+            existing.top_strength_dimension_ids = json.dumps(snapshot.top_strength_dimension_ids)
+            existing.top_growth_dimension_ids = json.dumps(snapshot.top_growth_dimension_ids)
+            existing.current_growth_path = snapshot.current_growth_path
+            existing.fairness_notes = json.dumps(snapshot.fairness_notes)
+            existing.insufficient_dimensions = json.dumps(snapshot.insufficient_dimensions)
+            existing.flagged_items_count = snapshot.flagged_items_count
+            existing.p8_approved = 1 if snapshot.p8_approved else 0
+            existing.p8_issues = json.dumps(snapshot.p8_issues)
+        else:
+            self._session.add(
+                AnalysisSnapshotModel(
+                    snapshot_id=snapshot.snapshot_id,
+                    analysis_run_id=snapshot.analysis_run_id,
+                    member_id=snapshot.member_id,
+                    period_start=snapshot.period_start,
+                    period_end=snapshot.period_end,
+                    generated_at=snapshot.generated_at,
+                    overall_confidence=snapshot.overall_confidence,
+                    profile_summary=snapshot.profile_summary,
+                    growth_journey_summary=snapshot.growth_journey_summary,
+                    top_strength_dimension_ids=json.dumps(snapshot.top_strength_dimension_ids),
+                    top_growth_dimension_ids=json.dumps(snapshot.top_growth_dimension_ids),
+                    current_growth_path=snapshot.current_growth_path,
+                    fairness_notes=json.dumps(snapshot.fairness_notes),
+                    insufficient_dimensions=json.dumps(snapshot.insufficient_dimensions),
+                    flagged_items_count=snapshot.flagged_items_count,
+                    p8_approved=1 if snapshot.p8_approved else 0,
+                    p8_issues=json.dumps(snapshot.p8_issues),
+                )
+            )
+        await self._session.flush()
+
+    async def get_by_run(self, run_id: str) -> AnalysisSnapshot | None:
+        stmt = select(AnalysisSnapshotModel).where(AnalysisSnapshotModel.analysis_run_id == run_id)
+        result = await self._session.execute(stmt)
+        model = result.scalar_one_or_none()
+        return _snapshot_to_entity(model) if model else None
+
+
+def _kpt_to_entity(model: KptItemModel) -> KptItem:
+    return KptItem(
+        kpt_id=model.kpt_id,
+        analysis_run_id=model.analysis_run_id,
+        member_id=model.member_id,
+        item_type=model.item_type,
+        title=model.title,
+        summary=model.summary,
+        linked_dimension_ids=json.loads(model.linked_dimension_ids or "[]"),
+        linked_evidence_ids=json.loads(model.linked_evidence_ids or "[]"),
+        linked_problem_ids=json.loads(model.linked_problem_ids or "[]"),
+        display_order=model.display_order,
+        created_at=model.created_at,
+    )
+
+
+def _case_to_entity(model: CaseFeedbackModel) -> CaseFeedback:
+    return CaseFeedback(
+        case_id=model.case_id,
+        analysis_run_id=model.analysis_run_id,
+        member_id=model.member_id,
+        title=model.title,
+        category=model.category,
+        impact_level=model.impact_level,
+        summary=model.summary,
+        why_it_matters=model.why_it_matters,
+        observed_pattern=model.observed_pattern,
+        better_alternative=model.better_alternative,
+        next_time_guidance=model.next_time_guidance,
+        linked_dimension_ids=json.loads(model.linked_dimension_ids or "[]"),
+        supporting_event_ids=json.loads(model.supporting_event_ids or "[]"),
+        confidence_score=model.confidence_score,
+        display_order=model.display_order,
+        created_at=model.created_at,
+    )
+
+
+def _milestone_to_entity(model: MilestoneModel) -> Milestone:
+    return Milestone(
+        milestone_id=model.milestone_id,
+        member_id=model.member_id,
+        source_analysis_run_id=model.source_analysis_run_id,
+        timestamp=model.timestamp,
+        milestone_type=model.milestone_type,
+        title=model.title,
+        summary=model.summary,
+        impact_score=model.impact_score,
+        supporting_event_ids=json.loads(model.supporting_event_ids or "[]"),
+        supporting_evidence_ids=json.loads(model.supporting_evidence_ids or "[]"),
+        retained=bool(model.retained),
+        created_at=model.created_at,
+    )
+
+
+def _snapshot_to_entity(model: AnalysisSnapshotModel) -> AnalysisSnapshot:
+    return AnalysisSnapshot(
+        snapshot_id=model.snapshot_id,
+        analysis_run_id=model.analysis_run_id,
+        member_id=model.member_id,
+        period_start=model.period_start,
+        period_end=model.period_end,
+        generated_at=model.generated_at,
+        overall_confidence=model.overall_confidence,
+        profile_summary=model.profile_summary,
+        growth_journey_summary=model.growth_journey_summary,
+        top_strength_dimension_ids=json.loads(model.top_strength_dimension_ids or "[]"),
+        top_growth_dimension_ids=json.loads(model.top_growth_dimension_ids or "[]"),
+        current_growth_path=model.current_growth_path,
+        fairness_notes=json.loads(model.fairness_notes or "[]"),
+        insufficient_dimensions=json.loads(model.insufficient_dimensions or "[]"),
+        flagged_items_count=model.flagged_items_count,
+        p8_approved=bool(model.p8_approved),
+        p8_issues=json.loads(model.p8_issues or "[]"),
     )

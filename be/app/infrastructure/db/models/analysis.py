@@ -118,6 +118,7 @@ class DimensionScoreModel(Base):
     top_supporting_evidence_ids: Mapped[str] = mapped_column(sa.Text, nullable=False, default="[]")
     top_counter_evidence_ids: Mapped[str] = mapped_column(sa.Text, nullable=False, default="[]")
     p3_inference: Mapped[str | None] = mapped_column(sa.Text, nullable=True)
+    ui_summary: Mapped[str | None] = mapped_column(sa.Text, nullable=True)
     created_at: Mapped[str] = mapped_column(sa.String, nullable=False)
 
 
@@ -156,6 +157,113 @@ class PersonalBaselineModel(Base):
     updated_at: Mapped[str] = mapped_column(sa.String, nullable=False)
 
 
+class KptItemModel(Base):
+    __tablename__ = "kpt_items"
+    __table_args__ = (sa.Index("idx_kpt_items_run_type", "analysis_run_id", "item_type"),)
+
+    kpt_id: Mapped[str] = mapped_column(sa.String, primary_key=True)
+    analysis_run_id: Mapped[str] = mapped_column(
+        sa.String,
+        sa.ForeignKey("analysis_runs.analysis_run_id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    member_id: Mapped[str] = mapped_column(sa.String, nullable=False)
+    item_type: Mapped[str] = mapped_column(sa.String(20), nullable=False)
+    title: Mapped[str] = mapped_column(sa.Text, nullable=False)
+    summary: Mapped[str | None] = mapped_column(sa.Text, nullable=True)
+    linked_dimension_ids: Mapped[str] = mapped_column(sa.Text, nullable=False, default="[]")
+    linked_evidence_ids: Mapped[str] = mapped_column(sa.Text, nullable=False, default="[]")
+    linked_problem_ids: Mapped[str] = mapped_column(sa.Text, nullable=False, default="[]")
+    display_order: Mapped[int] = mapped_column(sa.Integer, nullable=False, default=0)
+    created_at: Mapped[str] = mapped_column(sa.String, nullable=False)
+
+
+class CaseFeedbackModel(Base):
+    __tablename__ = "case_feedbacks"
+    __table_args__ = (sa.Index("idx_case_feedbacks_run", "analysis_run_id"),)
+
+    case_id: Mapped[str] = mapped_column(sa.String, primary_key=True)
+    analysis_run_id: Mapped[str] = mapped_column(
+        sa.String,
+        sa.ForeignKey("analysis_runs.analysis_run_id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    member_id: Mapped[str] = mapped_column(sa.String, nullable=False)
+    title: Mapped[str] = mapped_column(sa.Text, nullable=False)
+    category: Mapped[str | None] = mapped_column(sa.String(100), nullable=True)
+    impact_level: Mapped[str | None] = mapped_column(sa.String(20), nullable=True)
+    summary: Mapped[str | None] = mapped_column(sa.Text, nullable=True)
+    why_it_matters: Mapped[str | None] = mapped_column(sa.Text, nullable=True)
+    observed_pattern: Mapped[str | None] = mapped_column(sa.Text, nullable=True)
+    better_alternative: Mapped[str | None] = mapped_column(sa.Text, nullable=True)
+    next_time_guidance: Mapped[str | None] = mapped_column(sa.Text, nullable=True)
+    linked_dimension_ids: Mapped[str] = mapped_column(sa.Text, nullable=False, default="[]")
+    supporting_event_ids: Mapped[str] = mapped_column(sa.Text, nullable=False, default="[]")
+    confidence_score: Mapped[float | None] = mapped_column(sa.Float, nullable=True)
+    display_order: Mapped[int] = mapped_column(sa.Integer, nullable=False, default=0)
+    created_at: Mapped[str] = mapped_column(sa.String, nullable=False)
+
+
+class MilestoneModel(Base):
+    __tablename__ = "milestones"
+    __table_args__ = (
+        sa.Index("idx_milestones_member", "member_id"),
+        sa.Index("idx_milestones_member_ts", "member_id", "timestamp"),
+    )
+
+    milestone_id: Mapped[str] = mapped_column(sa.String, primary_key=True)
+    member_id: Mapped[str] = mapped_column(
+        sa.String,
+        sa.ForeignKey("members.member_id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    source_analysis_run_id: Mapped[str | None] = mapped_column(
+        sa.String,
+        sa.ForeignKey("analysis_runs.analysis_run_id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    timestamp: Mapped[str] = mapped_column(sa.String, nullable=False)
+    milestone_type: Mapped[str] = mapped_column(sa.String(100), nullable=False)
+    title: Mapped[str] = mapped_column(sa.Text, nullable=False)
+    summary: Mapped[str | None] = mapped_column(sa.Text, nullable=True)
+    impact_score: Mapped[float | None] = mapped_column(sa.Float, nullable=True)
+    supporting_event_ids: Mapped[str] = mapped_column(sa.Text, nullable=False, default="[]")
+    supporting_evidence_ids: Mapped[str] = mapped_column(sa.Text, nullable=False, default="[]")
+    retained: Mapped[int] = mapped_column(sa.Integer, nullable=False, default=1)
+    created_at: Mapped[str] = mapped_column(sa.String, nullable=False)
+
+
+class AnalysisSnapshotModel(Base):
+    __tablename__ = "analysis_snapshots"
+    __table_args__ = (
+        sa.Index("idx_analysis_snapshots_member", "member_id"),
+        sa.UniqueConstraint("analysis_run_id", name="uq_snapshots_run"),
+    )
+
+    snapshot_id: Mapped[str] = mapped_column(sa.String, primary_key=True)
+    analysis_run_id: Mapped[str] = mapped_column(
+        sa.String,
+        sa.ForeignKey("analysis_runs.analysis_run_id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+    )
+    member_id: Mapped[str] = mapped_column(sa.String, nullable=False)
+    period_start: Mapped[str] = mapped_column(sa.String(10), nullable=False)
+    period_end: Mapped[str] = mapped_column(sa.String(10), nullable=False)
+    generated_at: Mapped[str] = mapped_column(sa.String, nullable=False)
+    overall_confidence: Mapped[float | None] = mapped_column(sa.Float, nullable=True)
+    profile_summary: Mapped[str | None] = mapped_column(sa.Text, nullable=True)
+    growth_journey_summary: Mapped[str | None] = mapped_column(sa.Text, nullable=True)
+    top_strength_dimension_ids: Mapped[str] = mapped_column(sa.Text, nullable=False, default="[]")
+    top_growth_dimension_ids: Mapped[str] = mapped_column(sa.Text, nullable=False, default="[]")
+    current_growth_path: Mapped[str | None] = mapped_column(sa.Text, nullable=True)
+    fairness_notes: Mapped[str] = mapped_column(sa.Text, nullable=False, default="[]")
+    insufficient_dimensions: Mapped[str] = mapped_column(sa.Text, nullable=False, default="[]")
+    flagged_items_count: Mapped[int] = mapped_column(sa.Integer, nullable=False, default=0)
+    p8_approved: Mapped[int] = mapped_column(sa.Integer, nullable=False, default=0)
+    p8_issues: Mapped[str] = mapped_column(sa.Text, nullable=False, default="[]")
+
+
 class AnalysisRunModel(Base):
     __tablename__ = "analysis_runs"
     __table_args__ = (
@@ -175,6 +283,7 @@ class AnalysisRunModel(Base):
     status: Mapped[str] = mapped_column(sa.String(20), nullable=False, default="pending")
     progress_stage: Mapped[str | None] = mapped_column(sa.String(50), nullable=True)
     error_message: Mapped[str | None] = mapped_column(sa.Text, nullable=True)
+    scoring_version: Mapped[str | None] = mapped_column(sa.String(20), nullable=True)
     created_at: Mapped[str] = mapped_column(sa.String, nullable=False)
     updated_at: Mapped[str] = mapped_column(sa.String, nullable=False)
     completed_at: Mapped[str | None] = mapped_column(sa.String, nullable=True)

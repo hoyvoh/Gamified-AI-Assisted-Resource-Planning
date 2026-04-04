@@ -5,7 +5,7 @@ import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import LLMSettings
-from app.domain.analysis.entities import AnalysisRun, BehavioralEvent
+from app.domain.analysis.entities import SCORING_VERSION, AnalysisRun, BehavioralEvent
 from app.domain.analysis.scoring_engine import (
     ScoringInput,
     compute_category_scores,
@@ -14,6 +14,7 @@ from app.domain.analysis.scoring_engine import (
 from app.infrastructure.analysis.pipeline.p3_runner import run_p3
 from app.infrastructure.db.base import utcnow
 from app.infrastructure.db.repositories.analysis import (
+    SqlAnalysisRunRepository,
     SqlCategoryScoreRepository,
     SqlDimensionScoreRepository,
     SqlPersonalBaselineRepository,
@@ -34,6 +35,7 @@ async def run_scoring(
     Writes DimensionScore and CategoryScore rows to DB.
     Updates run.progress_stage as it advances.
     """
+    run_repo = SqlAnalysisRunRepository(session)
     member_repo = SqlMemberRepository(session)
     role_profile_repo = SqlRoleProfileRepository(session)
     dim_score_repo = SqlDimensionScoreRepository(session)
@@ -118,11 +120,17 @@ async def run_scoring(
         await cat_score_repo.bulk_create(category_scores)
         await session.commit()
 
+    # Stamp scoring version on the run
+    run.scoring_version = SCORING_VERSION
+    await run_repo.update(run)
+    await session.commit()
+
     logger.info(
-        "Scoring complete: run_id=%s dimensions=%d categories=%d",
+        "Scoring complete: run_id=%s dimensions=%d categories=%d scoring_version=%s",
         run.analysis_run_id,
         len(dimension_scores),
         len(category_scores),
+        SCORING_VERSION,
     )
 
 

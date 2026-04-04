@@ -288,6 +288,7 @@ def _make_score(
         top_supporting_evidence_ids=_list_field(inference, "top_supporting_event_ids"),
         top_counter_evidence_ids=_list_field(inference, "top_counter_event_ids"),
         p3_inference=inference,
+        ui_summary=None,
         created_at=inp.now,
     )
 

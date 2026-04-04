@@ -2,11 +2,15 @@ from typing import Protocol
 
 from app.domain.analysis.entities import (
     AnalysisRun,
+    AnalysisSnapshot,
     BehavioralEvent,
+    CaseFeedback,
     CategoryScore,
     DimensionScore,
     DimensionSignal,
     EvidenceUnit,
+    KptItem,
+    Milestone,
     PersonalBaseline,
     SourcePayload,
 )
@@ -80,3 +84,39 @@ class IPersonalBaselineRepository(Protocol):
     async def get_by_member(self, member_id: str) -> PersonalBaseline | None: ...
 
     async def upsert(self, baseline: PersonalBaseline) -> None: ...
+
+
+class IDimensionScoreWriteRepository(Protocol):
+    """Extended write access for updating ui_summary after P4."""
+
+    async def update_ui_summary(self, run_id: str, dimension_id: str, ui_summary: str) -> None: ...
+
+
+class IKptItemRepository(Protocol):
+    async def replace_for_run(self, run_id: str, items: list[KptItem]) -> None:
+        """Delete existing KPT items for this run, then insert new ones."""
+        ...
+
+    async def list_by_run(self, run_id: str) -> list[KptItem]: ...
+
+
+class ICaseFeedbackRepository(Protocol):
+    async def replace_for_run(self, run_id: str, cases: list[CaseFeedback]) -> None:
+        """Delete existing cases for this run, then insert new ones."""
+        ...
+
+    async def list_by_run(self, run_id: str) -> list[CaseFeedback]: ...
+
+
+class IMilestoneRepository(Protocol):
+    async def append(self, milestones: list[Milestone]) -> None:
+        """Append-only — never overwrite existing milestones."""
+        ...
+
+    async def list_by_member(self, member_id: str) -> list[Milestone]: ...
+
+
+class IAnalysisSnapshotRepository(Protocol):
+    async def upsert(self, snapshot: AnalysisSnapshot) -> None: ...
+
+    async def get_by_run(self, run_id: str) -> AnalysisSnapshot | None: ...

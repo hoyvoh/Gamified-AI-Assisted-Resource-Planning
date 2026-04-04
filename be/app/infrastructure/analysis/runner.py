@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import AnalysisSettings, LLMSettings
 from app.domain.analysis.entities import AnalysisRun, SourcePayload
 from app.domain.analysis.repositories import IAnalysisRunRepository
+from app.infrastructure.analysis.pipeline.output_runner import run_output_generation
 from app.infrastructure.analysis.pipeline.p1_runner import run_p1
 from app.infrastructure.analysis.pipeline.p2_runner import run_p2
 from app.infrastructure.analysis.pipeline.scoring_runner import run_scoring
@@ -30,6 +31,7 @@ from app.infrastructure.db.base import utcnow
 from app.infrastructure.db.repositories.analysis import (
     SqlAnalysisRunRepository,
     SqlBehavioralEventRepository,
+    SqlDimensionScoreRepository,
     SqlEvidenceUnitRepository,
     SqlSourcePayloadRepository,
 )
@@ -69,6 +71,7 @@ async def _run_pipeline(
     member_repo = SqlMemberRepository(session)
     evidence_repo = SqlEvidenceUnitRepository(session)
     event_repo = SqlBehavioralEventRepository(session)
+    dim_score_repo = SqlDimensionScoreRepository(session)
 
     run = await run_repo.get_by_id(run_id)
     if run is None:
@@ -242,8 +245,23 @@ async def _run_pipeline(
     await run_repo.update(run)
     await session.commit()
 
-    # M4 ends here — M5 (output generation) adds P5-P8
-    # Mark completed for now; M5 will extend this pipeline
+    # ── Phase 4: Human Output Generation (P4 + P5 + P6 + P7) ─────────────────
+    run.progress_stage = "generating_kpt"
+    await run_repo.update(run)
+    await session.commit()
+
+    dimension_scores = await dim_score_repo.list_by_run(run_id)
+
+    await run_output_generation(
+        run=run,
+        dimension_scores=dimension_scores,
+        behavioral_events=behavioral_events,
+        session=session,
+        llm_settings=llm_settings,
+    )
+
+    # M5 ends here — M6 (P8 self-critique gate) continues
+    # Mark completed for now; P8 will update p8_approved in M6
     run.status = "completed"
     run.progress_stage = None
     run.completed_at = utcnow()
