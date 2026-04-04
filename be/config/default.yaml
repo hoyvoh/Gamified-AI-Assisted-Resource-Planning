@@ -1,0 +1,3 @@
+database_url: "sqlite+aiosqlite:///./dev.db"
+secret_key: "change-me-in-production"
+debug: false
