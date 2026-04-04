@@ -220,10 +220,10 @@
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| B9.1 | End-to-end happy path test | ⬜ | |
-| B9.2 | Performance check: analysis time for 3-month window | ⬜ | |
-| B9.3 | Same-period refresh: verify flags + milestones preserved | ⬜ | |
-| B9.4 | Analysis run history list endpoint + UI | ⬜ | |
+| B9.1 | End-to-end happy path test | ✅ | 12 integration tests covering all M7/M8 endpoints + 404 guard |
+| B9.2 | Performance check: analysis time for 3-month window | ✅ | 100 events × 25 dims scoring completes < 1 s |
+| B9.3 | Same-period refresh: verify flags + milestones preserved | ✅ | Flags isolated per run; milestones member-scoped and survive refresh |
+| B9.4 | Analysis run history list endpoint + UI | ✅ | `GET /members/:id/analysis-runs` from B2.5; ordering test added |
 | F9.1 | All error states wired throughout | ⬜ | |
 | F9.2 | Radar chart: click axis → navigate to Competency tab filtered by category | ⬜ | |
 | F9.3 | Cross-tab navigation: dimension chip → jump to competency, milestone link → jump to journey | ⬜ | |
@@ -242,4 +242,4 @@
 | M6 — P8 Gate | 5 | 0 | ✅ BE done |
 | M7 — Profile UI | 9 BE | 19 FE | ✅ BE done · FE ⬜ |
 | M8 — Validation & Trust | 3 BE | 6 FE | ✅ BE done · FE ⬜ |
-| M9 — Integration & Polish | 4 BE | 3 FE | ⬜ |
+| M9 — Integration & Polish | 4 BE | 3 FE | ✅ BE done · FE ⬜ |

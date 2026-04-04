@@ -328,6 +328,7 @@ class SqlDimensionScoreRepository:
                     top_supporting_evidence_ids=json.dumps(sc.top_supporting_evidence_ids),
                     top_counter_evidence_ids=json.dumps(sc.top_counter_evidence_ids),
                     p3_inference=json.dumps(sc.p3_inference) if sc.p3_inference else None,
+                    ui_summary=sc.ui_summary,
                     created_at=sc.created_at,
                 )
             )
