@@ -65,20 +65,61 @@ User triggers analysis
 
 **Status update:** `collecting`
 
+#### Data Collection Architecture — CLI-First
+
+The backend **never makes direct HTTP connections to external services** (GitHub, Slack, Confluence, Jira). All data is collected via CLI tools that the operator has already authenticated. This eliminates token management inside the application.
+
+**GitHub** — via `gh` CLI:
+```
+gh api /users/{handle}/events --paginate
+gh api /users/{handle}/repos --paginate
+```
+The `gh` CLI must be authenticated on the host machine (`gh auth login`). The backend calls it as a subprocess. If `gh auth status` fails, the GitHub source is skipped with a logged warning.
+
+**Slack / Confluence / Jira / other** — via LLM CLI + MCP:
+The backend calls the LLM CLI (e.g. `claude -p "..."`) and instructs it to use its configured MCP servers to fetch activity for the member within the period. The LLM handles the actual MCP tool calls and returns structured JSON. The backend never holds Slack/Confluence/Jira tokens — the LLM CLI's MCP configuration does.
+
+**MCP probe** (at collection start):
+```bash
+claude mcp list          # lists configured MCP server names
+```
+The runner reads this output to know which sources are available before constructing the collection prompt.
+
+**Collection prompt sent to LLM CLI:**
+```
+Collect developer activity for:
+  Name: {display_name}
+  GitHub: {external_id}
+  Period: {period_start} to {period_end}
+
+Using your available MCP tools, collect messages, documents, and tickets
+for this person in this period. Return ONLY a JSON object:
+{
+  "sources_queried": [...],
+  "records": [{"source": "...", "type": "...", "content": "...", "timestamp": "...", "metadata": {...}}],
+  "unavailable_sources": [...],
+  "notes": "..."
+}
+```
+
 **Process:**
-1. Load member context (role profile, personal baseline, previous run refs)
-2. Query configured integrations for the member within the period
-3. Normalize raw data into `RawSourceRecord` format
-4. Group into `SourcePayload` batches by source type
-5. Store `SourcePayload` records
+1. Load member context (role profile, previous run refs)
+2. Probe available CLI tools: `gh auth status`, `claude mcp list`
+3. **GitHub source**: run `gh api` subprocesses; parse JSON output into records
+4. **MCP sources**: send structured prompt to `claude -p "..."`; parse JSON response
+5. Normalize raw data into `RawSourceRecord` format
+6. Group into `SourcePayload` batches by source type
+7. Store `SourcePayload` records
 
 **Output:**
-- `SourcePayload` records persisted
+- `SourcePayload` records persisted (one per source type)
 - Batched `RawSourceRecord` objects ready for P1
 
 **Failure behavior:**
-- If a source times out (>30s): log warning, proceed with available sources
-- If no sources available: set `status = 'failed'` with message
+- `gh` not authenticated: skip GitHub, log `"GitHub CLI not authenticated — skipping"`
+- LLM CLI not found: skip MCP sources, log `"LLM CLI unavailable — skipping MCP sources"`
+- Individual source timeout (>60s): log warning, proceed with remaining sources
+- If no sources return any records: set `status = 'failed'` with descriptive message
 
 ---
 

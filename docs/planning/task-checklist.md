@@ -14,33 +14,33 @@
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| B1.1 | Create SQLite DB + Alembic setup (`PRAGMA foreign_keys = ON`) | ⬜ | |
-| B1.2 | `organizations` table + migration | ⬜ | |
-| B1.3 | `teams` table + migration | ⬜ | |
-| B1.4 | `members` table + migration | ⬜ | |
-| B1.5 | `role_profiles` table + seed data | ⬜ | Standard roles: Junior BE, Mid BE, Senior BE, Junior FE, Mid FE, Senior FE, Senior Fullstack, Tech Lead, DevOps |
-| B1.6 | `POST /organizations` endpoint | ⬜ | |
-| B1.7 | `GET /organizations` and `GET /organizations/:id` (with tree) | ⬜ | |
-| B1.8 | `PATCH /organizations/:id` and `DELETE /organizations/:id` | ⬜ | |
-| B1.9 | `POST /organizations/:id/teams` + PATCH + DELETE | ⬜ | |
-| B1.10 | `POST /organizations/:id/teams/:id/members` + PATCH + DELETE | ⬜ | |
-| B1.11 | `GET /members/:id` endpoint | ⬜ | Include analysis_status derived from latest run |
-| B1.12 | `GET /role-profiles` + `GET /role-profiles/:id` | ⬜ | |
+| B1.1 | Create SQLite DB + Alembic setup (`PRAGMA foreign_keys = ON`) | ✅ | |
+| B1.2 | `organizations` table + migration | ✅ | |
+| B1.3 | `teams` table + migration | ✅ | |
+| B1.4 | `members` table + migration | ✅ | |
+| B1.5 | `role_profiles` table + seed data | ✅ | 9 standard roles seeded on startup (idempotent) |
+| B1.6 | `POST /organizations` endpoint | ✅ | |
+| B1.7 | `GET /organizations` and `GET /organizations/:id` (with tree) | ✅ | |
+| B1.8 | `PATCH /organizations/:id` and `DELETE /organizations/:id` | ✅ | |
+| B1.9 | `POST /organizations/:id/teams` + PATCH + DELETE | ✅ | |
+| B1.10 | `POST /organizations/:id/teams/:id/members` + PATCH + DELETE | ✅ | |
+| B1.11 | `GET /members/:id` endpoint | ✅ | analysis_status derived from analysis_runs (M2) |
+| B1.12 | `GET /role-profiles` + `GET /role-profiles/:id` | ✅ | |
 
 ### Frontend
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| F1.1 | App shell layout (top header + left sidebar + main content) | ⬜ | |
-| F1.2 | Left sidebar: org tree with expand/collapse | ⬜ | |
-| F1.3 | Sidebar: org node with Create Team context menu | ⬜ | |
-| F1.4 | Sidebar: team node with Add Member context menu + member count | ⬜ | |
-| F1.5 | Sidebar: member node with status icon (not_analyzed / loading / ready / error) | ⬜ | |
-| F1.6 | Create Organization modal | ⬜ | |
-| F1.7 | Create Team modal | ⬜ | |
-| F1.8 | Add Member modal (display name, external ID, role dropdown) | ⬜ | |
-| F1.9 | Dashboard (empty state when no member selected) | ⬜ | |
-| F1.10 | Click member → open empty profile workspace stub | ⬜ | |
+| F1.1 | App shell layout (top header + left sidebar + main content) | ✅ | War room theme |
+| F1.2 | Left sidebar: org tree with expand/collapse | ✅ | |
+| F1.3 | Sidebar: org node with Create Team context menu | ✅ | |
+| F1.4 | Sidebar: team node with Add Member context menu + member count | ✅ | |
+| F1.5 | Sidebar: member node with status icon (not_analyzed / loading / ready / error) | ✅ | |
+| F1.6 | Create Organization modal | ✅ | |
+| F1.7 | Create Team modal | ✅ | |
+| F1.8 | Add Member modal (display name, external ID, role dropdown) | ✅ | |
+| F1.9 | Dashboard (empty state when no member selected) | ✅ | |
+| F1.10 | Click member → open empty profile workspace stub | ✅ | |
 
 ---
 
@@ -52,14 +52,14 @@
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| B2.1 | `analysis_runs` table + migration | ⬜ | |
-| B2.2 | `POST /analysis-runs` — validate period ≤ 365 days, no duplicate active run | ⬜ | |
-| B2.3 | Auto-correct period >365 days + return warning in response | ⬜ | |
-| B2.4 | `GET /analysis-runs/:id` — polling endpoint | ⬜ | Include `progress_stage` field |
-| B2.5 | `GET /members/:id/analysis-runs` — history list | ⬜ | |
-| B2.6 | `POST /members/:id/refresh` — shortcut for same-period refresh | ⬜ | |
-| B2.7 | Background job runner (async task queue or simple async worker) | ⬜ | Stub: immediately set status=analyzing then completed |
-| B2.8 | `source_payloads` table + migration | ⬜ | |
+| B2.1 | `analysis_runs` table + migration | ✅ | Migration 0002 |
+| B2.2 | `POST /analysis-runs` — validate period ≤ 365 days, no duplicate active run | ✅ | 422 on period, 409 on conflict |
+| B2.3 | Auto-correct period >365 days + return warning in response | ⬜ | Currently raises 422; auto-correct deferred |
+| B2.4 | `GET /analysis-runs/:id` — polling endpoint | ✅ | Includes `progress_stage` |
+| B2.5 | `GET /members/:id/analysis-runs` — history list | ✅ | Paginated (limit/offset) |
+| B2.6 | `POST /members/:id/refresh` — shortcut for same-period refresh | ✅ | |
+| B2.7 | Background job runner (async task queue or simple async worker) | ✅ | FastAPI BackgroundTasks; CLI-first data collection |
+| B2.8 | `source_payloads` table + migration | ✅ | One row per source type per run |
 
 ### Frontend
 
@@ -84,14 +84,14 @@
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| B3.1 | `evidence_units` table + migration | ⬜ | |
-| B3.2 | `behavioral_events` table + migration | ⬜ | |
-| B3.3 | P1 prompt implementation (chunked extraction) | ⬜ | See `prompt-pipeline-spec.md` |
-| B3.4 | P1 chunk grouping strategy (by thread / artifact / time slice) | ⬜ | |
-| B3.5 | P2 prompt implementation (event consolidation / dedup) | ⬜ | |
-| B3.6 | Persist evidence_units and behavioral_events to DB | ⬜ | |
-| B3.7 | Analysis run status update: `collecting` → `analyzing` | ⬜ | |
-| B3.8 | Error handling: partial collection on source timeout | ⬜ | Log warning, proceed |
+| B3.1 | `evidence_units` table + migration | ✅ | Migration 0003 |
+| B3.2 | `behavioral_events` table + migration | ✅ | Migration 0003 |
+| B3.3 | P1 prompt implementation (chunked extraction) | ✅ | p1_extraction.py + p1_runner.py |
+| B3.4 | P1 chunk grouping strategy (by thread / artifact / time slice) | ✅ | chunker.py — by source_type then fixed-size slices |
+| B3.5 | P2 prompt implementation (event consolidation / dedup) | ✅ | p2_consolidation.py + p2_runner.py (falls back to P1 output on failure) |
+| B3.6 | Persist evidence_units and behavioral_events to DB | ✅ | Bulk insert after P1/P2 |
+| B3.7 | Analysis run status update: `collecting` → `analyzing` | ✅ | progress_stage advances through extracting_evidence → inferring_dimensions |
+| B3.8 | Error handling: partial collection on source timeout | ✅ | Each chunk failure logged and skipped; P2 falls back to P1 output |
 
 ---
 
@@ -103,19 +103,19 @@
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| B4.1 | `dimension_signals` table + migration | ⬜ | |
-| B4.2 | `dimension_scores` table + migration | ⬜ | |
-| B4.3 | `category_scores` table + migration | ⬜ | |
-| B4.4 | `personal_baselines` table + migration | ⬜ | |
-| B4.5 | P3 prompt implementation (per-dimension inference) | ⬜ | Parallel execution |
-| B4.6 | Scoring engine: signal mass formula | ⬜ | See `prompt-pipeline-spec.md` §scoring |
-| B4.7 | Scoring engine: dimension score + maturity level mapping | ⬜ | tanh normalization |
-| B4.8 | Scoring engine: opportunity gate (OpportunityScore < 0.25 → insufficient_opportunity) | ⬜ | |
-| B4.9 | Scoring engine: confidence score (4-component formula) | ⬜ | |
-| B4.10 | Scoring engine: delta computation vs previous run | ⬜ | |
-| B4.11 | Scoring engine: category score (weighted average of valid dimensions) | ⬜ | Role-aware weights |
-| B4.12 | Scoring version tracking on analysis_runs | ⬜ | |
-| B4.13 | `PUT /members/:id/baseline` — create/update personal baseline | ⬜ | |
+| B4.1 | `dimension_signals` table + migration | ✅ | Migration 0004 |
+| B4.2 | `dimension_scores` table + migration | ✅ | Migration 0004 |
+| B4.3 | `category_scores` table + migration | ✅ | Migration 0004 |
+| B4.4 | `personal_baselines` table + migration | ✅ | Migration 0004 |
+| B4.5 | P3 prompt implementation (per-dimension inference) | ✅ | p3_inference.py + p3_runner.py; parallel via asyncio.Semaphore(4) |
+| B4.6 | Scoring engine: signal mass formula | ✅ | 8-factor product in scoring_engine.py |
+| B4.7 | Scoring engine: dimension score + maturity level mapping | ✅ | tanh: 3 + 2*tanh(balance), clamp [1,5] |
+| B4.8 | Scoring engine: opportunity gate (OpportunityScore < 0.25 → insufficient_opportunity) | ✅ | |
+| B4.9 | Scoring engine: confidence score (4-component formula) | ✅ | Blended with P3 LLM confidence |
+| B4.10 | Scoring engine: delta computation vs previous run | ✅ | From personal baseline |
+| B4.11 | Scoring engine: category score (weighted average of valid dimensions) | ✅ | Role-aware weights |
+| B4.12 | Scoring version tracking on analysis_runs | ⬜ | Deferred — no scoring_version column yet |
+| B4.13 | `PUT /members/:id/baseline` — create/update personal baseline | ✅ | |
 
 ---
 
@@ -234,10 +234,10 @@
 
 | Milestone | BE tasks | FE tasks | Status |
 |-----------|---------|---------|--------|
-| M1 — Skeleton | 12 | 10 | ⬜ |
-| M2 — Analysis Run Infra | 8 | 8 | ⬜ |
-| M3 — Evidence Extraction | 8 | 0 | ⬜ |
-| M4 — Dimension Scoring | 13 | 0 | ⬜ |
+| M1 — Skeleton | 12 | 10 | ✅ Done |
+| M2 — Analysis Run Infra | 8 | 8 | ✅ BE done · FE ⬜ |
+| M3 — Evidence Extraction | 8 | 0 | ✅ Done |
+| M4 — Dimension Scoring | 13 | 0 | ✅ BE done (B4.12 deferred) |
 | M5 — Human Output Gen | 10 | 0 | ⬜ |
 | M6 — P8 Gate | 5 | 0 | ⬜ |
 | M7 — Profile UI | 9 BE | 19 FE | ⬜ |

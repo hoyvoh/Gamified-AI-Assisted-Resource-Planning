@@ -1,5 +1,6 @@
 import uuid
 
+from app.domain.analysis.repositories import IAnalysisRunRepository
 from app.domain.org.entities import Member, Organization, Team
 from app.domain.org.repositories import IMemberRepository, IOrganizationRepository, ITeamRepository
 from app.domain.shared.exceptions import NotFoundError
@@ -176,13 +177,43 @@ class CreateMemberUseCase:
 
 
 class GetMemberUseCase:
-    def __init__(self, member_repo: IMemberRepository) -> None:
+    def __init__(
+        self,
+        member_repo: IMemberRepository,
+        run_repo: IAnalysisRunRepository | None = None,
+    ) -> None:
         self._member_repo = member_repo
+        self._run_repo = run_repo
 
     async def execute(self, member_id: str) -> Member:
         member = await self._member_repo.get_by_id(member_id)
         if member is None:
             raise NotFoundError("Member", member_id)
+
+        if self._run_repo is not None:
+            member = await self._enrich_analysis_status(member)
+
+        return member
+
+    async def _enrich_analysis_status(self, member: Member) -> Member:
+        assert self._run_repo is not None
+        active = await self._run_repo.get_active_for_member(member.member_id)
+        if active is not None:
+            member.analysis_status = "analyzing"
+            return member
+        latest = await self._run_repo.get_latest_for_member(member.member_id)
+        if latest is None:
+            member.analysis_status = "not_analyzed"
+            member.last_analysis_at = None
+        elif latest.status == "completed":
+            member.analysis_status = "completed"
+            member.last_analysis_at = latest.completed_at
+        elif latest.status == "failed":
+            member.analysis_status = "failed"
+            member.last_analysis_at = latest.updated_at
+        else:
+            member.analysis_status = "not_analyzed"
+            member.last_analysis_at = None
         return member
 
 
