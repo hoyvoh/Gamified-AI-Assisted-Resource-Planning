@@ -1,6 +1,17 @@
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.application.analysis.profile_use_cases import (
+    GetCaseDetailUseCase,
+    GetDimensionDetailUseCase,
+    GetEvidenceTraceUseCase,
+    GetMemberMilestonesUseCase,
+    GetProfileCasesUseCase,
+    GetProfileCompetencyUseCase,
+    GetProfileJourneyUseCase,
+    GetProfileKptUseCase,
+    GetProfileOverviewUseCase,
+)
 from app.application.analysis.use_cases import (
     GetAnalysisRunUseCase,
     ListMemberAnalysisRunsUseCase,
@@ -29,6 +40,14 @@ from app.application.org.use_cases import (
 from app.config import AnalysisSettings, get_settings
 from app.infrastructure.db.repositories.analysis import (
     SqlAnalysisRunRepository,
+    SqlAnalysisSnapshotRepository,
+    SqlBehavioralEventRepository,
+    SqlCaseFeedbackRepository,
+    SqlCategoryScoreRepository,
+    SqlDimensionScoreRepository,
+    SqlEvidenceUnitRepository,
+    SqlKptItemRepository,
+    SqlMilestoneRepository,
     SqlPersonalBaselineRepository,
 )
 from app.infrastructure.db.repositories.org import (
@@ -202,4 +221,93 @@ def get_upsert_baseline_use_case(
     return UpsertBaselineUseCase(
         member_repo=SqlMemberRepository(session),
         baseline_repo=SqlPersonalBaselineRepository(session),
+    )
+
+
+# ── Profile (M7) ──────────────────────────────────────────────────────────────
+
+
+def get_profile_overview_use_case(
+    session: AsyncSession = Depends(get_session),
+) -> GetProfileOverviewUseCase:
+    return GetProfileOverviewUseCase(
+        member_repo=SqlMemberRepository(session),
+        run_repo=SqlAnalysisRunRepository(session),
+        snapshot_repo=SqlAnalysisSnapshotRepository(session),
+        cat_score_repo=SqlCategoryScoreRepository(session),
+    )
+
+
+def get_profile_competency_use_case(
+    session: AsyncSession = Depends(get_session),
+) -> GetProfileCompetencyUseCase:
+    return GetProfileCompetencyUseCase(
+        member_repo=SqlMemberRepository(session),
+        run_repo=SqlAnalysisRunRepository(session),
+        dim_score_repo=SqlDimensionScoreRepository(session),
+        cat_score_repo=SqlCategoryScoreRepository(session),
+    )
+
+
+def get_dimension_detail_use_case(
+    session: AsyncSession = Depends(get_session),
+) -> GetDimensionDetailUseCase:
+    return GetDimensionDetailUseCase(
+        member_repo=SqlMemberRepository(session),
+        run_repo=SqlAnalysisRunRepository(session),
+        dim_score_repo=SqlDimensionScoreRepository(session),
+        evidence_repo=SqlEvidenceUnitRepository(session),
+        event_repo=SqlBehavioralEventRepository(session),
+    )
+
+
+def get_profile_kpt_use_case(
+    session: AsyncSession = Depends(get_session),
+) -> GetProfileKptUseCase:
+    return GetProfileKptUseCase(
+        member_repo=SqlMemberRepository(session),
+        run_repo=SqlAnalysisRunRepository(session),
+        kpt_repo=SqlKptItemRepository(session),
+    )
+
+
+def get_profile_cases_use_case(
+    session: AsyncSession = Depends(get_session),
+) -> GetProfileCasesUseCase:
+    return GetProfileCasesUseCase(
+        member_repo=SqlMemberRepository(session),
+        run_repo=SqlAnalysisRunRepository(session),
+        case_repo=SqlCaseFeedbackRepository(session),
+    )
+
+
+def get_case_detail_use_case(
+    session: AsyncSession = Depends(get_session),
+) -> GetCaseDetailUseCase:
+    return GetCaseDetailUseCase(case_repo=SqlCaseFeedbackRepository(session))
+
+
+def get_profile_journey_use_case(
+    session: AsyncSession = Depends(get_session),
+) -> GetProfileJourneyUseCase:
+    return GetProfileJourneyUseCase(
+        member_repo=SqlMemberRepository(session),
+        run_repo=SqlAnalysisRunRepository(session),
+        snapshot_repo=SqlAnalysisSnapshotRepository(session),
+        milestone_repo=SqlMilestoneRepository(session),
+    )
+
+
+def get_evidence_trace_use_case(
+    session: AsyncSession = Depends(get_session),
+) -> GetEvidenceTraceUseCase:
+    return GetEvidenceTraceUseCase(evidence_repo=SqlEvidenceUnitRepository(session))
+
+
+def get_member_milestones_use_case(
+    session: AsyncSession = Depends(get_session),
+) -> GetMemberMilestonesUseCase:
+    return GetMemberMilestonesUseCase(
+        member_repo=SqlMemberRepository(session),
+        milestone_repo=SqlMilestoneRepository(session),
     )

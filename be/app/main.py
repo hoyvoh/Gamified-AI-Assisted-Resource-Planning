@@ -8,6 +8,7 @@ from app.infrastructure.db.seed import seed_role_profiles
 from app.infrastructure.db.session import _session_factory
 from app.interfaces.routers.analysis import router as analysis_router
 from app.interfaces.routers.org import router as org_router
+from app.interfaces.routers.profile import router as profile_router
 from app.interfaces.routers.role_profiles import router as role_profiles_router
 
 
@@ -35,6 +36,7 @@ app.add_middleware(
 app.include_router(org_router)
 app.include_router(role_profiles_router)
 app.include_router(analysis_router)
+app.include_router(profile_router)
 
 
 @app.get("/health")

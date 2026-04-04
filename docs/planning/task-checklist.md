@@ -164,15 +164,15 @@
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| B7.1 | `GET /members/:id/profile/overview` | ⬜ | |
-| B7.2 | `GET /members/:id/profile/competency` (all dimensions, with filter params) | ⬜ | |
-| B7.3 | `GET /members/:id/profile/competency/:dimensionId` (detail + evidence list) | ⬜ | |
-| B7.4 | `GET /members/:id/profile/kpt` | ⬜ | |
-| B7.5 | `GET /members/:id/profile/cases` | ⬜ | |
-| B7.6 | `GET /members/:id/profile/cases/:caseId` | ⬜ | |
-| B7.7 | `GET /members/:id/profile/journey` | ⬜ | |
-| B7.8 | `GET /evidence/:evidenceId` (trace detail) | ⬜ | |
-| B7.9 | `GET /members/:id/milestones` | ⬜ | |
+| B7.1 | `GET /members/:id/profile/overview` | ✅ | snapshot + category scores |
+| B7.2 | `GET /members/:id/profile/competency` (all dimensions, with filter params) | ✅ | `?category=` + `?maturity=` filters |
+| B7.3 | `GET /members/:id/profile/competency/:dimensionId` (detail + evidence list) | ✅ | dim score + supporting/counter evidence + related events |
+| B7.4 | `GET /members/:id/profile/kpt` | ✅ | keep/problem/try grouped |
+| B7.5 | `GET /members/:id/profile/cases` | ✅ | |
+| B7.6 | `GET /members/:id/profile/cases/:caseId` | ✅ | |
+| B7.7 | `GET /members/:id/profile/journey` | ✅ | snapshot journey text + milestones |
+| B7.8 | `GET /evidence/:evidenceId` (trace detail) | ✅ | |
+| B7.9 | `GET /members/:id/milestones` | ✅ | retained milestones only |
 
 ### Frontend
 
@@ -240,6 +240,6 @@
 | M4 — Dimension Scoring | 13 | 0 | ✅ BE done |
 | M5 — Human Output Gen | 10 | 0 | ✅ BE done |
 | M6 — P8 Gate | 5 | 0 | ✅ BE done |
-| M7 — Profile UI | 9 BE | 19 FE | ⬜ |
+| M7 — Profile UI | 9 BE | 19 FE | ✅ BE done · FE ⬜ |
 | M8 — Validation & Trust | 3 BE | 6 FE | ⬜ |
 | M9 — Integration & Polish | 4 BE | 3 FE | ⬜ |

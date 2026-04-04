@@ -86,6 +86,20 @@ class SqlAnalysisRunRepository:
         model = result.scalar_one_or_none()
         return _run_to_entity(model) if model else None
 
+    async def get_latest_completed_for_member(self, member_id: str) -> AnalysisRun | None:
+        stmt = (
+            select(AnalysisRunModel)
+            .where(
+                AnalysisRunModel.member_id == member_id,
+                AnalysisRunModel.status == "completed",
+            )
+            .order_by(AnalysisRunModel.completed_at.desc())
+            .limit(1)
+        )
+        result = await self._session.execute(stmt)
+        model = result.scalar_one_or_none()
+        return _run_to_entity(model) if model else None
+
     async def list_by_member(self, member_id: str, limit: int, offset: int) -> list[AnalysisRun]:
         stmt = (
             select(AnalysisRunModel)
@@ -190,6 +204,17 @@ class SqlEvidenceUnitRepository:
                 )
             )
         await self._session.flush()
+
+    async def get_by_id(self, evidence_id: str) -> EvidenceUnit | None:
+        model = await self._session.get(EvidenceUnitModel, evidence_id)
+        return _evidence_to_entity(model) if model else None
+
+    async def list_by_ids(self, evidence_ids: list[str]) -> list[EvidenceUnit]:
+        if not evidence_ids:
+            return []
+        stmt = select(EvidenceUnitModel).where(EvidenceUnitModel.evidence_id.in_(evidence_ids))
+        result = await self._session.execute(stmt)
+        return [_evidence_to_entity(m) for m in result.scalars().all()]
 
     async def list_by_run(self, run_id: str) -> list[EvidenceUnit]:
         stmt = select(EvidenceUnitModel).where(EvidenceUnitModel.analysis_run_id == run_id)
@@ -580,6 +605,10 @@ class SqlCaseFeedbackRepository:
                 )
             )
         await self._session.flush()
+
+    async def get_by_id(self, case_id: str) -> CaseFeedback | None:
+        model = await self._session.get(CaseFeedbackModel, case_id)
+        return _case_to_entity(model) if model else None
 
     async def list_by_run(self, run_id: str) -> list[CaseFeedback]:
         stmt = (
