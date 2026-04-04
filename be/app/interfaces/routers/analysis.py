@@ -4,16 +4,20 @@ from fastapi.responses import JSONResponse
 from app.application.analysis.use_cases import (
     GetAnalysisRunUseCase,
     ListMemberAnalysisRunsUseCase,
+    ListRunValidationFlagsUseCase,
     RefreshAnalysisUseCase,
     TriggerAnalysisUseCase,
     UpsertBaselineUseCase,
+    UpsertValidationFlagUseCase,
 )
 from app.dependencies import (
     get_get_analysis_run_use_case,
     get_list_member_analysis_runs_use_case,
+    get_list_run_validation_flags_use_case,
     get_refresh_analysis_use_case,
     get_trigger_analysis_use_case,
     get_upsert_baseline_use_case,
+    get_upsert_validation_flag_use_case,
 )
 from app.domain.shared.exceptions import ConflictError, NotFoundError, ValidationError
 from app.infrastructure.analysis.runner import run_analysis_job
@@ -23,6 +27,8 @@ from app.interfaces.schemas.analysis import (
     RefreshAnalysisRequest,
     TriggerAnalysisRequest,
     UpsertBaselineRequest,
+    UpsertValidationFlagRequest,
+    ValidationFlagResponse,
 )
 from app.interfaces.schemas.base import DataEnvelope
 
@@ -212,4 +218,64 @@ async def upsert_member_baseline(
             created_at=baseline.created_at,
             updated_at=baseline.updated_at,
         )
+    )
+
+
+# ── B8.2 ─────────────────────────────────────────────────────────────────────
+
+
+@router.post("/validation-flags", status_code=201)
+async def upsert_validation_flag(
+    body: UpsertValidationFlagRequest,
+    use_case: UpsertValidationFlagUseCase = Depends(get_upsert_validation_flag_use_case),
+) -> DataEnvelope[ValidationFlagResponse]:
+    try:
+        flag = await use_case.execute(
+            analysis_run_id=body.analysis_run_id,
+            dimension_id=body.dimension_id,
+            verdict=body.verdict,
+            note=body.note,
+        )
+    except NotFoundError as exc:
+        return JSONResponse(status_code=404, content={"detail": str(exc)})  # type: ignore[return-value]
+    except ValidationError as exc:
+        return JSONResponse(status_code=422, content={"detail": str(exc)})  # type: ignore[return-value]
+
+    return DataEnvelope[ValidationFlagResponse](
+        data=ValidationFlagResponse(
+            flag_id=flag.flag_id,
+            analysis_run_id=flag.analysis_run_id,
+            dimension_id=flag.dimension_id,
+            verdict=flag.verdict,
+            note=flag.note,
+            flagged_at=flag.flagged_at,
+        )
+    )
+
+
+# ── B8.3 ─────────────────────────────────────────────────────────────────────
+
+
+@router.get("/analysis-runs/{run_id}/validation-flags")
+async def list_run_validation_flags(
+    run_id: str,
+    use_case: ListRunValidationFlagsUseCase = Depends(get_list_run_validation_flags_use_case),
+) -> DataEnvelope[list[ValidationFlagResponse]]:
+    try:
+        flags = await use_case.execute(run_id)
+    except NotFoundError as exc:
+        return JSONResponse(status_code=404, content={"detail": str(exc)})  # type: ignore[return-value]
+
+    return DataEnvelope[list[ValidationFlagResponse]](
+        data=[
+            ValidationFlagResponse(
+                flag_id=f.flag_id,
+                analysis_run_id=f.analysis_run_id,
+                dimension_id=f.dimension_id,
+                verdict=f.verdict,
+                note=f.note,
+                flagged_at=f.flagged_at,
+            )
+            for f in flags
+        ]
     )

@@ -15,9 +15,11 @@ from app.application.analysis.profile_use_cases import (
 from app.application.analysis.use_cases import (
     GetAnalysisRunUseCase,
     ListMemberAnalysisRunsUseCase,
+    ListRunValidationFlagsUseCase,
     RefreshAnalysisUseCase,
     TriggerAnalysisUseCase,
     UpsertBaselineUseCase,
+    UpsertValidationFlagUseCase,
 )
 from app.application.org.role_profile_use_cases import (
     GetRoleProfileUseCase,
@@ -49,6 +51,7 @@ from app.infrastructure.db.repositories.analysis import (
     SqlKptItemRepository,
     SqlMilestoneRepository,
     SqlPersonalBaselineRepository,
+    SqlValidationFlagRepository,
 )
 from app.infrastructure.db.repositories.org import (
     SqlMemberRepository,
@@ -310,4 +313,26 @@ def get_member_milestones_use_case(
     return GetMemberMilestonesUseCase(
         member_repo=SqlMemberRepository(session),
         milestone_repo=SqlMilestoneRepository(session),
+    )
+
+
+# ── Validation flags (M8) ─────────────────────────────────────────────────────
+
+
+def get_upsert_validation_flag_use_case(
+    session: AsyncSession = Depends(get_session),
+) -> UpsertValidationFlagUseCase:
+    return UpsertValidationFlagUseCase(
+        run_repo=SqlAnalysisRunRepository(session),
+        flag_repo=SqlValidationFlagRepository(session),
+        snapshot_repo=SqlAnalysisSnapshotRepository(session),
+    )
+
+
+def get_list_run_validation_flags_use_case(
+    session: AsyncSession = Depends(get_session),
+) -> ListRunValidationFlagsUseCase:
+    return ListRunValidationFlagsUseCase(
+        run_repo=SqlAnalysisRunRepository(session),
+        flag_repo=SqlValidationFlagRepository(session),
     )

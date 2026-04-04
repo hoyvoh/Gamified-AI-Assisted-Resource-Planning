@@ -264,6 +264,25 @@ class AnalysisSnapshotModel(Base):
     p8_issues: Mapped[str] = mapped_column(sa.Text, nullable=False, default="[]")
 
 
+class ValidationFlagModel(Base):
+    __tablename__ = "validation_flags"
+    __table_args__ = (
+        sa.Index("idx_validation_flags_run", "analysis_run_id"),
+        sa.UniqueConstraint("analysis_run_id", "dimension_id", name="uq_validation_flags_run_dim"),
+    )
+
+    flag_id: Mapped[str] = mapped_column(sa.String, primary_key=True)
+    analysis_run_id: Mapped[str] = mapped_column(
+        sa.String,
+        sa.ForeignKey("analysis_runs.analysis_run_id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    dimension_id: Mapped[str] = mapped_column(sa.String(100), nullable=False)
+    verdict: Mapped[str] = mapped_column(sa.String(20), nullable=False)
+    note: Mapped[str | None] = mapped_column(sa.Text, nullable=True)
+    flagged_at: Mapped[str] = mapped_column(sa.String, nullable=False)
+
+
 class AnalysisRunModel(Base):
     __tablename__ = "analysis_runs"
     __table_args__ = (

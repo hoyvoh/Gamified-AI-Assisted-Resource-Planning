@@ -11,6 +11,7 @@ from app.infrastructure.db.models.analysis import (
     MilestoneModel,
     PersonalBaselineModel,
     SourcePayloadModel,
+    ValidationFlagModel,
 )
 from app.infrastructure.db.models.org import (
     MemberModel,
@@ -36,4 +37,5 @@ __all__ = [
     "RoleProfileModel",
     "SourcePayloadModel",
     "TeamModel",
+    "ValidationFlagModel",
 ]

@@ -2,11 +2,20 @@ import uuid
 from datetime import date, timedelta
 
 from app.config import AnalysisSettings
-from app.domain.analysis.entities import AnalysisRun, PersonalBaseline
+from app.domain.analysis.entities import (
+    VALID_VERDICTS,
+    AnalysisRun,
+    PersonalBaseline,
+    ValidationFlag,
+)
 from app.domain.analysis.repositories import IAnalysisRunRepository, IPersonalBaselineRepository
 from app.domain.org.repositories import IMemberRepository
 from app.domain.shared.exceptions import ConflictError, NotFoundError, ValidationError
 from app.infrastructure.db.base import utcnow
+from app.infrastructure.db.repositories.analysis import (
+    SqlAnalysisSnapshotRepository,
+    SqlValidationFlagRepository,
+)
 
 
 class TriggerAnalysisUseCase:
@@ -124,6 +133,73 @@ class RefreshAnalysisUseCase:
             period_end=period_end,
             run_type="refresh_same_period",
         )
+
+
+class UpsertValidationFlagUseCase:
+    """Create or update a validation flag for a dimension within an analysis run.
+
+    Also syncs analysis_snapshots.flagged_items_count after upsert.
+    """
+
+    def __init__(
+        self,
+        run_repo: IAnalysisRunRepository,
+        flag_repo: SqlValidationFlagRepository,
+        snapshot_repo: SqlAnalysisSnapshotRepository,
+    ) -> None:
+        self._runs = run_repo
+        self._flags = flag_repo
+        self._snapshots = snapshot_repo
+
+    async def execute(
+        self,
+        analysis_run_id: str,
+        dimension_id: str,
+        verdict: str,
+        note: str | None,
+    ) -> ValidationFlag:
+        if verdict not in VALID_VERDICTS:
+            raise ValidationError(f"verdict must be one of: {', '.join(sorted(VALID_VERDICTS))}")
+
+        run = await self._runs.get_by_id(analysis_run_id)
+        if run is None:
+            raise NotFoundError("AnalysisRun", analysis_run_id)
+
+        now = utcnow()
+        flag = ValidationFlag(
+            flag_id=str(uuid.uuid4()),
+            analysis_run_id=analysis_run_id,
+            dimension_id=dimension_id,
+            verdict=verdict,
+            note=note,
+            flagged_at=now,
+        )
+        await self._flags.upsert(flag)
+
+        # Sync flagged_items_count in snapshot
+        count = await self._flags.count_by_run(analysis_run_id)
+        snapshot = await self._snapshots.get_by_run(analysis_run_id)
+        if snapshot is not None:
+            snapshot.flagged_items_count = count
+            await self._snapshots.upsert(snapshot)
+
+        return flag
+
+
+class ListRunValidationFlagsUseCase:
+    def __init__(
+        self,
+        run_repo: IAnalysisRunRepository,
+        flag_repo: SqlValidationFlagRepository,
+    ) -> None:
+        self._runs = run_repo
+        self._flags = flag_repo
+
+    async def execute(self, run_id: str) -> list[ValidationFlag]:
+        run = await self._runs.get_by_id(run_id)
+        if run is None:
+            raise NotFoundError("AnalysisRun", run_id)
+        return await self._flags.list_by_run(run_id)
 
 
 class UpsertBaselineUseCase:

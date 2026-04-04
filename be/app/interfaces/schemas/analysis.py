@@ -47,3 +47,19 @@ class PersonalBaselineResponse(BaseResponse):
     baseline_dimensions: dict  # type: ignore[type-arg]
     created_at: str
     updated_at: str
+
+
+class UpsertValidationFlagRequest(BaseResponse):
+    analysis_run_id: str
+    dimension_id: str
+    verdict: str = Field(..., pattern=r"^(accurate|questionable|incorrect)$")
+    note: str | None = None
+
+
+class ValidationFlagResponse(BaseResponse):
+    flag_id: str
+    analysis_run_id: str
+    dimension_id: str
+    verdict: str
+    note: str | None
+    flagged_at: str

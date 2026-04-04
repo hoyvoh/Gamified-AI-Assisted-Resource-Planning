@@ -204,9 +204,9 @@
 
 | # | Task | Status | Notes |
 |---|------|--------|-------|
-| B8.1 | `validation_flags` table + migration | ⬜ | |
-| B8.2 | `POST /validation-flags` endpoint | ⬜ | |
-| B8.3 | `GET /analysis-runs/:id/validation-flags` endpoint | ⬜ | |
+| B8.1 | `validation_flags` table + migration | ✅ | Migration 0006; UNIQUE(run_id, dimension_id) |
+| B8.2 | `POST /validation-flags` endpoint | ✅ | Upsert semantics; syncs snapshot.flagged_items_count |
+| B8.3 | `GET /analysis-runs/:id/validation-flags` endpoint | ✅ | |
 | F8.1 | Flag form (accurate / questionable / incorrect + optional note) | ⬜ | Opens from any dimension card |
 | F8.2 | Flag icon on flagged dimension cards | ⬜ | |
 | F8.3 | Flagged count in Competency summary header | ⬜ | |
@@ -241,5 +241,5 @@
 | M5 — Human Output Gen | 10 | 0 | ✅ BE done |
 | M6 — P8 Gate | 5 | 0 | ✅ BE done |
 | M7 — Profile UI | 9 BE | 19 FE | ✅ BE done · FE ⬜ |
-| M8 — Validation & Trust | 3 BE | 6 FE | ⬜ |
+| M8 — Validation & Trust | 3 BE | 6 FE | ✅ BE done · FE ⬜ |
 | M9 — Integration & Polish | 4 BE | 3 FE | ⬜ |

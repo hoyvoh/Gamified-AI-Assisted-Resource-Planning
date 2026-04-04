@@ -17,6 +17,7 @@ from app.domain.analysis.entities import (
     Milestone,
     PersonalBaseline,
     SourcePayload,
+    ValidationFlag,
 )
 from app.infrastructure.db.base import utcnow
 from app.infrastructure.db.models.analysis import (
@@ -32,6 +33,7 @@ from app.infrastructure.db.models.analysis import (
     MilestoneModel,
     PersonalBaselineModel,
     SourcePayloadModel,
+    ValidationFlagModel,
 )
 
 
@@ -780,4 +782,61 @@ def _snapshot_to_entity(model: AnalysisSnapshotModel) -> AnalysisSnapshot:
         flagged_items_count=model.flagged_items_count,
         p8_approved=bool(model.p8_approved),
         p8_issues=json.loads(model.p8_issues or "[]"),
+    )
+
+
+class SqlValidationFlagRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def upsert(self, flag: ValidationFlag) -> None:
+        """Insert or update flag keyed on (analysis_run_id, dimension_id)."""
+        stmt = select(ValidationFlagModel).where(
+            ValidationFlagModel.analysis_run_id == flag.analysis_run_id,
+            ValidationFlagModel.dimension_id == flag.dimension_id,
+        )
+        result = await self._session.execute(stmt)
+        existing = result.scalar_one_or_none()
+        if existing:
+            existing.verdict = flag.verdict
+            existing.note = flag.note
+            existing.flagged_at = flag.flagged_at
+        else:
+            self._session.add(
+                ValidationFlagModel(
+                    flag_id=flag.flag_id,
+                    analysis_run_id=flag.analysis_run_id,
+                    dimension_id=flag.dimension_id,
+                    verdict=flag.verdict,
+                    note=flag.note,
+                    flagged_at=flag.flagged_at,
+                )
+            )
+        await self._session.flush()
+
+    async def list_by_run(self, run_id: str) -> list[ValidationFlag]:
+        stmt = (
+            select(ValidationFlagModel)
+            .where(ValidationFlagModel.analysis_run_id == run_id)
+            .order_by(ValidationFlagModel.flagged_at)
+        )
+        result = await self._session.execute(stmt)
+        return [_flag_to_entity(m) for m in result.scalars().all()]
+
+    async def count_by_run(self, run_id: str) -> int:
+        from sqlalchemy import func
+
+        stmt = select(func.count()).where(ValidationFlagModel.analysis_run_id == run_id)
+        result = await self._session.execute(stmt)
+        return result.scalar_one()
+
+
+def _flag_to_entity(model: ValidationFlagModel) -> ValidationFlag:
+    return ValidationFlag(
+        flag_id=model.flag_id,
+        analysis_run_id=model.analysis_run_id,
+        dimension_id=model.dimension_id,
+        verdict=model.verdict,
+        note=model.note,
+        flagged_at=model.flagged_at,
     )

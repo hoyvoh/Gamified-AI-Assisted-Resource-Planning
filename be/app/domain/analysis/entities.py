@@ -224,6 +224,19 @@ class AnalysisSnapshot:
 
 
 @dataclass
+class ValidationFlag:
+    flag_id: str
+    analysis_run_id: str
+    dimension_id: str
+    verdict: str  # "accurate" | "questionable" | "incorrect"
+    note: str | None
+    flagged_at: str  # ISO 8601 UTC
+
+
+VALID_VERDICTS: frozenset[str] = frozenset({"accurate", "questionable", "incorrect"})
+
+
+@dataclass
 class SourcePayload:
     source_payload_id: str
     analysis_run_id: str

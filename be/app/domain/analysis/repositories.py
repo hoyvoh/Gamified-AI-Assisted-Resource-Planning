@@ -13,6 +13,7 @@ from app.domain.analysis.entities import (
     Milestone,
     PersonalBaseline,
     SourcePayload,
+    ValidationFlag,
 )
 
 
@@ -120,3 +121,13 @@ class IAnalysisSnapshotRepository(Protocol):
     async def upsert(self, snapshot: AnalysisSnapshot) -> None: ...
 
     async def get_by_run(self, run_id: str) -> AnalysisSnapshot | None: ...
+
+
+class IValidationFlagRepository(Protocol):
+    async def upsert(self, flag: ValidationFlag) -> None:
+        """Insert or update the flag for (analysis_run_id, dimension_id)."""
+        ...
+
+    async def list_by_run(self, run_id: str) -> list[ValidationFlag]: ...
+
+    async def count_by_run(self, run_id: str) -> int: ...
