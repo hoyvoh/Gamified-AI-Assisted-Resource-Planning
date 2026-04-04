@@ -73,7 +73,7 @@ class LLMMCPCollector:
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
-            stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=15)
+            stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=5)
             output = stdout.decode(errors="replace").lower()
             found = [src for src in _KNOWN_MCP_SOURCES if src in output]
             return found

@@ -50,6 +50,7 @@ class SqlAnalysisRunRepository:
             run_type=run.run_type,
             status=run.status,
             progress_stage=run.progress_stage,
+            progress_pct=run.progress_pct,
             error_message=run.error_message,
             scoring_version=run.scoring_version,
             created_at=run.created_at,
@@ -118,11 +119,20 @@ class SqlAnalysisRunRepository:
         if model is not None:
             model.status = run.status
             model.progress_stage = run.progress_stage
+            model.progress_pct = run.progress_pct
             model.error_message = run.error_message
             model.scoring_version = run.scoring_version
             model.completed_at = run.completed_at
             model.updated_at = utcnow()
             await self._session.flush()
+
+    async def list_all_active(self) -> list[AnalysisRun]:
+        """Return all runs not in a terminal state (used for startup orphan cleanup)."""
+        stmt = select(AnalysisRunModel).where(
+            AnalysisRunModel.status.in_(list(ANALYSIS_RUN_ACTIVE_STATUSES))
+        )
+        result = await self._session.execute(stmt)
+        return [_run_to_entity(m) for m in result.scalars().all()]
 
 
 class SqlSourcePayloadRepository:
@@ -162,6 +172,7 @@ def _run_to_entity(model: AnalysisRunModel) -> AnalysisRun:
         run_type=model.run_type,
         status=model.status,
         progress_stage=model.progress_stage,
+        progress_pct=model.progress_pct,
         error_message=model.error_message,
         scoring_version=model.scoring_version,
         created_at=model.created_at,

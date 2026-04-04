@@ -1,5 +1,6 @@
 from fastapi import APIRouter, BackgroundTasks, Depends, Query
 from fastapi.responses import JSONResponse
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.analysis.use_cases import (
     GetAnalysisRunUseCase,
@@ -21,6 +22,7 @@ from app.dependencies import (
 )
 from app.domain.shared.exceptions import ConflictError, NotFoundError, ValidationError
 from app.infrastructure.analysis.runner import run_analysis_job
+from app.infrastructure.db.session import get_session
 from app.interfaces.schemas.analysis import (
     AnalysisRunResponse,
     PersonalBaselineResponse,
@@ -40,6 +42,7 @@ async def trigger_analysis(
     body: TriggerAnalysisRequest,
     background_tasks: BackgroundTasks,
     use_case: TriggerAnalysisUseCase = Depends(get_trigger_analysis_use_case),
+    session: AsyncSession = Depends(get_session),
 ) -> JSONResponse:
     try:
         run = await use_case.execute(
@@ -54,6 +57,11 @@ async def trigger_analysis(
         return JSONResponse(status_code=409, content={"detail": str(exc)})
     except ValidationError as exc:
         return JSONResponse(status_code=422, content={"detail": str(exc)})
+
+    # Commit the run record NOW so the background task can find it.
+    # FastAPI runs background tasks before the dependency cleanup (session.commit),
+    # causing a race where get_by_id returns None.
+    await session.commit()
 
     from app.config import get_settings
 
@@ -73,6 +81,7 @@ async def trigger_analysis(
         run_type=run.run_type,
         status=run.status,
         progress_stage=run.progress_stage,
+        progress_pct=run.progress_pct,
         error_message=run.error_message,
         scoring_version=run.scoring_version,
         created_at=run.created_at,
@@ -104,6 +113,7 @@ async def get_analysis_run(
             run_type=run.run_type,
             status=run.status,
             progress_stage=run.progress_stage,
+            progress_pct=run.progress_pct,
             error_message=run.error_message,
             scoring_version=run.scoring_version,
             created_at=run.created_at,
@@ -135,6 +145,7 @@ async def list_member_analysis_runs(
                 run_type=r.run_type,
                 status=r.status,
                 progress_stage=r.progress_stage,
+                progress_pct=r.progress_pct,
                 error_message=r.error_message,
                 scoring_version=r.scoring_version,
                 created_at=r.created_at,
@@ -152,6 +163,7 @@ async def refresh_analysis(
     body: RefreshAnalysisRequest,
     background_tasks: BackgroundTasks,
     use_case: RefreshAnalysisUseCase = Depends(get_refresh_analysis_use_case),
+    session: AsyncSession = Depends(get_session),
 ) -> JSONResponse:
     try:
         run = await use_case.execute(
@@ -165,6 +177,8 @@ async def refresh_analysis(
         return JSONResponse(status_code=409, content={"detail": str(exc)})
     except ValidationError as exc:
         return JSONResponse(status_code=422, content={"detail": str(exc)})
+
+    await session.commit()
 
     from app.config import get_settings
 
@@ -184,6 +198,7 @@ async def refresh_analysis(
         run_type=run.run_type,
         status=run.status,
         progress_stage=run.progress_stage,
+        progress_pct=run.progress_pct,
         error_message=run.error_message,
         scoring_version=run.scoring_version,
         created_at=run.created_at,

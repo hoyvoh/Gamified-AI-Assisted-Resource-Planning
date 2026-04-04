@@ -23,6 +23,7 @@ class AnalysisSettings(BaseModel):
     scoring_version: str = "1.0"
     taxonomy_version: str = "1.0"
     github_timeout_seconds: int = 60
+    max_job_timeout_seconds: int = 3600  # kill a run if it takes longer than this
 
 
 class Settings(BaseSettings):

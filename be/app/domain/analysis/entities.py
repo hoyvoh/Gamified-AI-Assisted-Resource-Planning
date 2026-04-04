@@ -17,6 +17,7 @@ class AnalysisRun:
     run_type: str  # "fresh" | "refresh_same_period"
     status: str  # "pending" | "collecting" | "analyzing" | "completed" | "failed"
     progress_stage: str | None  # see PROGRESS_STAGES below
+    progress_pct: int  # 0-100
     error_message: str | None
     scoring_version: str | None  # set at scoring time; matches SCORING_VERSION
     created_at: str  # ISO 8601 UTC

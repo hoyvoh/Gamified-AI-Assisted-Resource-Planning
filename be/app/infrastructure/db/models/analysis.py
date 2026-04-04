@@ -301,6 +301,7 @@ class AnalysisRunModel(Base):
     run_type: Mapped[str] = mapped_column(sa.String(50), nullable=False)
     status: Mapped[str] = mapped_column(sa.String(20), nullable=False, default="pending")
     progress_stage: Mapped[str | None] = mapped_column(sa.String(50), nullable=True)
+    progress_pct: Mapped[int] = mapped_column(sa.Integer, nullable=False, default=0)
     error_message: Mapped[str | None] = mapped_column(sa.Text, nullable=True)
     scoring_version: Mapped[str | None] = mapped_column(sa.String(20), nullable=True)
     created_at: Mapped[str] = mapped_column(sa.String, nullable=False)

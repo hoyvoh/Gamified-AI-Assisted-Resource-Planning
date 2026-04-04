@@ -23,6 +23,7 @@ class AnalysisRunResponse(BaseResponse):
     run_type: str
     status: str
     progress_stage: str | None
+    progress_pct: int = 0
     error_message: str | None
     scoring_version: str | None
     created_at: str

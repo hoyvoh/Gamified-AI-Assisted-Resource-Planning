@@ -67,6 +67,7 @@ class TriggerAnalysisUseCase:
             run_type=run_type,
             status="pending",
             progress_stage=None,
+            progress_pct=0,
             error_message=None,
             scoring_version=None,
             created_at=now,

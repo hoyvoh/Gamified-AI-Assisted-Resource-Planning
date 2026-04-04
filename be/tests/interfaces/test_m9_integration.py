@@ -86,6 +86,7 @@ async def _seed_completed_run(
             run_type="fresh",
             status="completed",
             progress_stage=None,
+            progress_pct=100,
             error_message=None,
             scoring_version="1.0",
             created_at=now,
