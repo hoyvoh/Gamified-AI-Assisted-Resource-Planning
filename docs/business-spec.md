@@ -6,7 +6,9 @@ Ngôn ngữ: EN-VN (bilingual)
 
 ## 1. Vision
 
-**Gamified Resource Planning** biến quá trình họp phân bổ nhân sự dự án thành một **bàn cờ chiến lược Desert Empire**. Background: một thành trì sừng sững ở chân trời — đó là deadline/mục tiêu dự án. Bạn là tướng lĩnh, nhân sự là quân cờ, các task là doanh trại chiến thuật. Hệ thống kết hợp COCOMO II, Genetic Algorithm, và LLM để hỗ trợ ra quyết định real-time trong phòng họp.
+**Gamified Resource Planning** biến quá trình họp phân bổ nhân sự dự án thành một **phòng tác chiến holographic** — tướng lĩnh đứng trước bàn chiến thuật phát sáng, điều phối quân cờ nhân sự trên sa bàn 3D trực quan. Background: một thành trì sừng sững ở chân trời — đó là deadline/mục tiêu dự án. Các task là doanh trại chiến thuật. Các số liệu dự án hiển thị dạng màn hình holographic nổi xung quanh.
+
+Hệ thống kết hợp COCOMO II, Genetic Algorithm, và LLM để hỗ trợ ra quyết định real-time trong phòng họp.
 
 **Mục tiêu cốt lõi:** Khi dự án có nguy cơ trễ và bạn cần tìm cách cứu dự án — bạn sẽ nhìn thấy ngay liệu có thể cứu được hay không mà không cần take risk để thử.
 
@@ -319,3 +321,17 @@ Organization
 - P(on_time) compute <1s (sau EV update)
 - Multi-tenant isolation giữa orgs
 - Concurrent planning session (WebSocket cho realtime deadline/effort changes)
+- Database: SQLite (local dev, zero server dependency); upgrade to PostgreSQL by changing `DATABASE_URL`
+
+---
+
+## 9. UI Concept — Holographic War Room
+
+Toàn bộ UI được thiết kế theo concept **holographic war room**:
+
+- **Bàn chiến thuật trung tâm (Three.js):** Sa bàn 3D phát sáng — nhân sự là các holograms, task là các điểm chiến lược trên bàn cờ. Các đường kết nối phát sáng hiển thị dependency.
+- **Màn hình holographic nổi (xung quanh):** Các panel số liệu hiển thị dạng hình chiếu 3D — Skill Trees, Timeline, Project Status, P(on_time), Risk Register.
+- **Tone màu:** Deep amber + electric blue + stone grey — cảm giác thần bí nhưng công nghệ cao.
+- **Không gian:** Kiến trúc cổ đại (vòm đá, ánh nến) kết hợp với overlay công nghệ holographic.
+
+**Tham chiếu:** `wallpaper.png` trong thư mục gốc là concept art chủ đạo.
