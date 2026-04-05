@@ -190,3 +190,57 @@ describe('ResourceCard', () => {
 - **No `// @ts-ignore`** — fix the root cause
 - Prefer `interface` for object shapes, `type` for unions/aliases
 - Server Components are `async function` — no `'use client'` unless interactive
+
+---
+
+## Task Acceptance Criteria (Must Verify After Every Task)
+
+After completing any frontend task — before marking it done — verify every applicable point below. If you are working as an agent, self-verify what you can (type safety, tests, code quality) and explicitly present the **[User verify]** checklist to the user so they can confirm UI/UX correctness.
+
+### Code quality
+
+- [ ] `pnpm lint` — 0 errors
+- [ ] `pnpm typecheck` — passes (no `any`, no `@ts-ignore`)
+- [ ] `pnpm test` — all tests pass
+- [ ] No hardcoded strings that should come from the API response
+- [ ] API types generated from OpenAPI (not hand-written): `npx openapi-typescript http://localhost:8000/openapi.json -o ui/src/types/api.ts`
+
+### Component behavior
+
+- [ ] Component handles loading state (skeleton or spinner visible during fetch)
+- [ ] Component handles empty state (meaningful message, not blank screen)
+- [ ] Component handles error state (user-friendly message, not raw error object)
+- [ ] All interactive elements have appropriate `aria-label` or associated `<label>`
+- [ ] Modals have `role="dialog"`, `aria-modal="true"`, and focus trap
+
+### API integration
+
+- [ ] Fetch uses the typed API client (`lib/api/`) — not raw `fetch` with `any` types
+- [ ] Error responses (4xx, 5xx) are handled gracefully in the UI
+- [ ] Loading state is shown while request is in flight
+- [ ] Success response updates UI state correctly (no stale data)
+
+### User-facing verification (present to user)
+
+After completing the task, prompt the user with:
+
+> "Please verify the following in the browser:
+> - [ ] [Specific visual behavior from the task]
+> - [ ] Empty state looks correct
+> - [ ] Loading state shows correctly
+> - [ ] Error handling shows a user-friendly message
+> - [ ] No console errors in the browser developer tools"
+
+Refer to `planning/acceptance-criteria.md` for the full task-specific checklist.
+
+---
+
+## Before Every Commit (Must Pass)
+
+```bash
+pnpm lint        # 0 errors
+pnpm typecheck   # passes
+pnpm test        # all tests pass
+pnpm build       # no build errors (run before PRs)
+```
+

@@ -1,6 +1,10 @@
 # Architecture Overview
 
-**Gamified Resource Planning** — Biến quá trình họp phân bổ nhân sự thành bàn cờ chiến lược Desert Empire. Kết hợp COCOMO II, Genetic Algorithm, và LLM để tối ưu resource planning.
+**Gamified Resource Planning** — A holographic war room for strategic resource allocation. The commander stands at a glowing tactical table, moving personnel units across a 3D battlefield of projects and tasks. Powered by COCOMO II, Genetic Algorithm, and LLM to support real-time decision-making.
+
+The system is built in two integrated pillars:
+- **Pillar 1 — Resource Allocation War Room:** Strategic board, scenario planning, warnings engine, optimization
+- **Pillar 2 — Human Analysis MVP:** Evidence-based developer growth and performance insight platform
 
 ---
 
@@ -8,20 +12,22 @@
 
 ```
 gamified_resource_planning/
-├── ui/          # Next.js 15 frontend (App Router + Three.js)
+├── ui/          # Next.js 15 frontend (App Router + Three.js holographic board)
 ├── be/          # Python FastAPI backend (Clean Architecture)
-├── docs/        # Documentation ← bạn đang ở đây
-│   ├── architecture-overview.md  ← this file
-│   ├── business-spec.md          ← what the system does (business view)
-│   ├── guides/                   ← how to work with the codebase
-│   ├── design/                   ← technical design documents
-│   └── planning/                 ← phases, tickets, milestones
+├── docs/        # Documentation ← you are here
+│   ├── architecture-overview.md    ← this file
+│   ├── business-spec.md            ← what the system does (full product)
+│   ├── guides/                     ← how to work with the codebase
+│   │   ├── backend-guide.md
+│   │   └── frontend-guide.md
+│   ├── design/                     ← technical design documents
+│   │   └── human-analysis-MVP-specs/  ← Pillar 2 specs
+│   └── planning/                   ← task checklist, acceptance criteria, dependencies
 ├── .github/
 │   ├── workflows/ci.yml
 │   └── pull_request_template.md
 ├── .gitignore
-├── .lintstagedrc.cjs
-└── package.json   # root: simple-git-hooks + commitlint
+└── package.json
 ```
 
 ---
@@ -32,24 +38,43 @@ gamified_resource_planning/
 Browser
   │
   ▼
-Next.js (ui/)            Port 3000 (dev)
-  │  App Router: Server Components + Client Components
-  │  Three.js: 3D Desert Empire board
+Next.js (ui/)                    Port 3000 (dev)
+  │  App Router: Server + Client Components
+  │  Three.js: Holographic war room — 3D tactical board
   │  Tailwind CSS v4 · TypeScript strict
   │
-  │ HTTP/REST + WebSocket (progress updates)
+  │  HTTP/REST + WebSocket (progress updates)
   ▼
-FastAPI (be/)            Port 8000 (dev)
-  │  Routers → Services → Repositories (Clean Architecture)
-  │  Pydantic v2 · Python 3.12 · SQLAlchemy 2.x
+FastAPI (be/)                    Port 8000 (dev)
+  │  Clean Architecture: Presentation → Application → Infrastructure → Domain
+  │  Pydantic v2 · Python 3.12 · SQLAlchemy 2.x · SQLite
   │
-  ├─── LLM API (Anthropic/Claude)  — task analysis, risk analysis
-  ├─── Genetic Algorithm           — resource optimization
-  ├─── COCOMO II engine            — effort estimation
+  ├─── Claude API (Anthropic)    — task analysis, risk analysis, developer profiling
+  ├─── Genetic Algorithm         — resource optimization
+  ├─── COCOMO II engine          — effort estimation
+  ├─── Scoring Engine            — developer dimension scoring (Pillar 2)
   │
   ▼
-PostgreSQL               Port 5432 (dev)
+SQLite (be/dev.db)               Local file — no server required
 ```
+
+---
+
+## Clean Architecture (Backend)
+
+```
+┌─────────────────────────────────────────────────────┐
+│  Presentation Layer   (interfaces/)                  │  ← FastAPI routers, Pydantic schemas
+├─────────────────────────────────────────────────────┤
+│  Application Layer    (application/)                 │  ← Use cases, business workflows
+├─────────────────────────────────────────────────────┤
+│  Infrastructure Layer (infrastructure/)              │  ← SQLite, Alembic, LLM clients
+├─────────────────────────────────────────────────────┤
+│  Domain Layer         (domain/)                      │  ← Entities, business logic, interfaces
+└─────────────────────────────────────────────────────┘
+```
+
+Inner layers never import from outer layers. Bounded contexts are used to group related logic (e.g., `estimation/`, `personnel/`, `scenario/`, `profiling/`).
 
 ---
 
@@ -58,59 +83,98 @@ PostgreSQL               Port 5432 (dev)
 | Concern | Choice | Reason |
 |---------|--------|--------|
 | UI Framework | Next.js 15 App Router | SSR/SSG, React 19, file-based routing |
-| 3D Visualization | Three.js | Desert empire board, camp objects, personnel units |
+| 3D Visualization | Three.js | Holographic war room board, personnel units, tactical camps |
 | Styling | Tailwind CSS v4 | Design tokens via `@theme`, zero runtime |
 | API | FastAPI + Pydantic v2 | OpenAPI auto-docs, async, type-safe |
 | Package manager (FE) | pnpm 10 | Fast, strict, monorepo-friendly |
 | Package manager (BE) | uv | Rust-based, fastest Python installer |
-| Formatter (FE) | Oxfmt | Single-pass formatter |
-| Linter (FE) | Oxlint → ESLint | Oxlint (fast) first, ESLint for advanced rules |
 | Formatter/Linter (BE) | Ruff | Replaces black + isort + flake8 |
 | Type checking (BE) | Mypy strict | Catches runtime bugs at dev time |
 | Testing (FE) | Vitest + Testing Library | Vite-native, fast |
 | Testing (BE) | Pytest + httpx | Async-native, ASGI transport |
 | ORM | SQLAlchemy 2.x | Async sessions, type-safe queries |
 | Migrations | Alembic | Version-controlled schema changes |
-| Git hooks | simple-git-hooks + lint-staged | Lightweight, no Husky overhead |
+| Database | SQLite | Zero-dependency local dev; migrate to PostgreSQL later by changing `DATABASE_URL` |
 | Commit convention | Conventional Commits | Enforced via commitlint |
 | Estimation | COCOMO II | Industry-standard software effort model |
-| Optimization | Genetic Algorithm | Multi-constraint, NP-hard scheduling problem |
-| AI | Claude (Anthropic) | Task generation, risk analysis, suggestions |
+| Optimization | Genetic Algorithm | Multi-constraint, NP-hard scheduling |
+| AI | Claude (Anthropic) | Task generation, risk analysis, developer profiling pipeline |
 
 ---
 
 ## Core Data Flow
 
 ```
-User action
-  → Next.js client component (board/panel)
+User action (drag personnel unit onto camp)
+  → Next.js client component (board / panel)
   → fetch / Server Action
-  → FastAPI endpoint (router)
+  → FastAPI endpoint (Presentation Layer)
   → Pydantic validation
-  → Service layer (business logic: COCOMO, Warning Engine)
-  → Repository layer (SQLAlchemy → PostgreSQL)
+  → Application Layer (use case — AssignmentUseCase)
+  → Domain Layer (business logic — WFU calculation, capacity check)
+  → Infrastructure Layer (SQLite via SQLAlchemy)
   → Pydantic response
-  → JSON → Next.js renders updated UI
+  → JSON → Next.js renders updated holographic board
   → Warning Engine recomputes → WebSocket push (if warnings changed)
+```
+
+---
+
+## Pillar 2 — Analysis Pipeline Data Flow
+
+```
+User triggers analysis for a member
+  → FastAPI endpoint
+  → RunAnalysisUseCase (Application Layer)
+  → LLM prompt pipeline (P1→P2→P3→P4→P5→P6→P7→P8) via Infrastructure
+  → Scoring Engine (Domain Layer)
+  → AnalysisSnapshot persisted to SQLite
+  → WebSocket / polling status update to UI
+  → Frontend renders 5-tab member profile
 ```
 
 ---
 
 ## Domain Model
 
+### Pillar 1 — Resource Planning
+
 ```
 Organization
-  └── has many Projects
-        └── has many Scenarios (planning alternatives)
-              └── has many Tasks (camps on the board)
-                    ├── has many ResourceAssignments → Personnel
-                    ├── has many TaskDependencies
-                    └── has many ProgressLogs
+  └── Projects
+        ├── ProjectMembers → Personnel
+        └── Scenarios
+              └── Tasks
+                    ├── ResourceAssignments → Personnel (wfu_mode)
+                    ├── TaskDependencies
+                    └── ProgressLogs
 
 Organization
-  └── has many Personnel
-        ├── has SkillMatrix (skill → level → WFU multiplier)
-        └── participates in Projects via ProjectMembership (allocation %)
+  └── Personnel
+        ├── SkillMatrix (skill → level → wfu_multipliers)
+        ├── Languages
+        └── XPHistory
+```
+
+### Pillar 2 — Human Analysis
+
+```
+Organization
+  └── Teams
+        └── Members
+              ├── RoleProfile
+              ├── PersonalBaseline
+              └── AnalysisRuns
+                    ├── EvidenceUnits
+                    ├── BehavioralEvents
+                    ├── DimensionScores
+                    ├── CategoryScores
+                    ├── KPTItems
+                    ├── CaseFeedbacks
+                    └── AnalysisSnapshot
+
+Members (long-term)
+  └── Milestones (up to 5 years, cross-run)
 ```
 
 ---
@@ -119,7 +183,7 @@ Organization
 
 | Var | Location | Purpose |
 |-----|----------|---------|
-| `DATABASE_URL` | `be/.env` | PostgreSQL connection string |
+| `DATABASE_URL` | `be/.env` | SQLite path (default: `sqlite+aiosqlite:///./dev.db`) |
 | `SECRET_KEY` | `be/.env` | JWT signing key |
 | `ANTHROPIC_API_KEY` | `be/.env` | Claude LLM access |
 | `NEXT_PUBLIC_API_URL` | `ui/.env.local` | Backend base URL (default: `http://localhost:8000`) |
@@ -146,16 +210,10 @@ npx openapi-typescript http://localhost:8000/openapi.json -o ui/src/types/api.ts
 
 | Need | Document |
 |------|----------|
-| What the system does (features, WFU rules, warnings) | [business-spec.md](business-spec.md) |
-| How to set up & run | [guides/contributing.md](guides/contributing.md) |
-| How to work a ticket | [guides/ticket-workflow.md](guides/ticket-workflow.md) |
-| BE code patterns | [guides/backend-guide.md](guides/backend-guide.md) |
+| Full product features and business rules | [business-spec.md](business-spec.md) |
+| Pillar 2 MVP specs (human analysis) | [design/human-analysis-MVP-specs/](design/human-analysis-MVP-specs/) |
+| BE code patterns and architecture rules | [guides/backend-guide.md](guides/backend-guide.md) |
 | FE code patterns | [guides/frontend-guide.md](guides/frontend-guide.md) |
-| Data flow diagrams | [design/data-flow.md](design/data-flow.md) |
-| Database schema | [design/database-spec.md](design/database-spec.md) |
-| Backend services & APIs | [design/backend-spec.md](design/backend-spec.md) |
-| Frontend screens & components | [design/frontend-spec.md](design/frontend-spec.md) |
-| All tickets (phases 0-8) | [planning/phases/](planning/phases/) |
-| Progress tracking | [planning/general-ledger.md](planning/general-ledger.md) |
-| Timeline & milestones | [planning/milestones.md](planning/milestones.md) |
-| Final acceptance test | [planning/acceptance-checklist.md](planning/acceptance-checklist.md) |
+| Development task checklist | [planning/task-checklist.md](planning/task-checklist.md) |
+| Acceptance criteria per task | [planning/acceptance-criteria.md](planning/acceptance-criteria.md) |
+| Task dependency diagram | [planning/task-dependency-diagram.md](planning/task-dependency-diagram.md) |
