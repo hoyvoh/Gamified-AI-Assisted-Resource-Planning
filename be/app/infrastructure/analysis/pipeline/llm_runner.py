@@ -77,10 +77,21 @@ async def call_llm(
                 "LLM attempt %d/%d timed out after %ds", attempt, max_retries + 1, timeout_seconds
             )
         except FileNotFoundError:
-            raise LLMCallError(
-                f"LLM CLI `{cli_tool}` not found on PATH. "
-                "Install and authenticate it to enable analysis pipeline."
-            ) from None
+            # On Windows, concurrent subprocess spawns can transiently fail with
+            # FileNotFoundError even when the executable exists on PATH.
+            # Retry on all attempts except the last; only then treat it as permanent.
+            if attempt == max_retries + 1:
+                raise LLMCallError(
+                    f"LLM CLI `{cli_tool}` not found on PATH. "
+                    "Install and authenticate it to enable analysis pipeline."
+                ) from None
+            last_error = f"CLI `{cli_tool}` not found (transient, will retry)"
+            logger.warning(
+                "LLM attempt %d/%d FileNotFoundError for '%s' — likely transient on Windows, retrying",
+                attempt,
+                max_retries + 1,
+                cli_tool,
+            )
         except Exception as exc:
             last_error = str(exc)
             logger.warning("LLM attempt %d/%d failed: %s", attempt, max_retries + 1, exc)
@@ -116,13 +127,45 @@ async def _run_subprocess(
 
 
 def _parse_json(raw: str) -> dict | list | None:  # type: ignore[type-arg]
-    """Strip markdown fences and parse JSON. Returns None on failure."""
+    """Extract and parse JSON from LLM output. Returns None on failure.
+
+    Handles:
+    - Bare JSON
+    - JSON wrapped in ```json ... ``` fences
+    - Preamble text before the code block (e.g. "Here is the result:\\n\\n```json")
+    """
     if not raw:
         return None
-    stripped = re.sub(r"^```(?:json)?\s*", "", raw.strip(), flags=re.MULTILINE)
-    stripped = re.sub(r"\s*```$", "", stripped.strip(), flags=re.MULTILINE)
+
+    # 1. Try direct parse first (bare JSON output)
     try:
-        result = json.loads(stripped)
-        return result if isinstance(result, (dict, list)) else None
+        result = json.loads(raw.strip())
+        if isinstance(result, (dict, list)):
+            return result
     except json.JSONDecodeError:
-        return None
+        pass
+
+    # 2. Extract the innermost ```json ... ``` block (handles preamble text)
+    fence_match = re.search(r"```(?:json)?\s*\n(.*?)\n\s*```", raw, flags=re.DOTALL)
+    if fence_match:
+        try:
+            result = json.loads(fence_match.group(1).strip())
+            if isinstance(result, (dict, list)):
+                return result
+        except json.JSONDecodeError:
+            pass
+
+    # 3. Fallback: find the first { or [ and try to parse from there
+    for start_char, end_char in (("{", "}"), ("[", "]")):
+        idx = raw.find(start_char)
+        if idx != -1:
+            ridx = raw.rfind(end_char)
+            if ridx > idx:
+                try:
+                    result = json.loads(raw[idx : ridx + 1])
+                    if isinstance(result, (dict, list)):
+                        return result
+                except json.JSONDecodeError:
+                    pass
+
+    return None

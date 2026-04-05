@@ -597,6 +597,66 @@ with op.batch_alter_table('projects', schema=None) as batch_op:
 
 ---
 
+## Analysis Pipeline Patterns
+
+### Subprocess calls — always `asyncio.to_thread`, never `asyncio.create_subprocess_exec`
+
+`asyncio.create_subprocess_exec` requires `ProactorEventLoop` on Windows. The dev server (`uvicorn --reload`) uses `SelectorEventLoop`, which raises `NotImplementedError` — silently absorbed by broad `except Exception` handlers.
+
+**Always use `run_subprocess` from `app.infrastructure.collectors.base` (collectors) or `asyncio.to_thread(subprocess.run, ...)` directly (LLM runner).**
+
+See `bug_logs/win32-asyncio-subprocess-in-reload-mode.md` for full root cause trace.
+
+### Concurrent subprocess spawning on Windows — expect transient FileNotFoundError
+
+When 3 or more LLM subprocess calls fire simultaneously via `asyncio.gather` (e.g. P5 + P6 + P7), Windows `CreateProcess` can transiently fail with `FileNotFoundError` even when the executable is valid. This is **not** "CLI not installed" — it is a Windows process creation race under load.
+
+**Rule:** Retry `FileNotFoundError` in `call_llm`. Only treat it as permanent on the final attempt. See `llm_runner.py`.
+
+### LLM JSON parsing — never rely on line-anchored regex alone
+
+The LLM sometimes adds preamble text before a JSON code block:
+
+```
+Here is the result:
+
+```json
+{"key": "value"}
+```
+```
+
+A regex that only strips ``` ` ` ` ``` fences fails here. Use `re.search(r"```(?:json)?\s*\n(.*?)\n\s*```", raw, flags=re.DOTALL)` to extract the inner block, with a `{...}` scan fallback. See `_parse_json` in `llm_runner.py`.
+
+See `bug_logs/llm-pipeline-silent-failures-p5-p6-p7.md` for the full incident.
+
+### asyncio.gather exceptions must always be materialised
+
+When using `asyncio.gather(return_exceptions=True)`, every result must be handled. An exception that is logged but not materialised into a domain object disappears from the DB and makes post-hoc investigation impossible.
+
+```python
+# Correct — materialise as a domain object so it's stored and visible
+for label, batch in zip(labels, batches):
+    if isinstance(batch, list):
+        results.extend(batch)
+    elif isinstance(batch, BaseException):
+        logger.exception(..., exc_info=batch)
+        results.append(CollectionResult(status="failed", error_message=f"{type(batch).__name__}: {batch!r}"))
+```
+
+### Broad except clauses — always log type name AND repr
+
+```python
+# Wrong — NotImplementedError() has an empty message; this logs nothing
+except Exception as exc:
+    logger.warning("check failed: %s", exc)
+
+# Correct
+except Exception as exc:
+    logger.warning("check failed (%s: %r)", type(exc).__name__, exc)
+```
+
+---
+
 ## Hard Rules
 
 | Rule | Why |
@@ -614,6 +674,9 @@ with op.batch_alter_table('projects', schema=None) as batch_op:
 | `async def` for all route handlers and repo methods | Async first — unblocks I/O under load |
 | All four quality gates pass before every commit (see below) | Keeps CI green and enforces consistent formatting, types, and test coverage |
 | Domain logic tested without HTTP/DB fixtures | Fast pure unit tests catch regressions in milliseconds |
+| Never use `asyncio.create_subprocess_exec` — use `asyncio.to_thread(subprocess.run, ...)` | `create_subprocess_exec` breaks on `SelectorEventLoop` (uvicorn `--reload` on Windows) |
+| Retry `FileNotFoundError` in LLM subprocess calls | Transient on Windows under concurrent subprocess load — not always "CLI missing" |
+| Parse LLM JSON with `re.search(DOTALL)`, not line-anchored `re.sub` | LLMs add preamble text; anchored regex fails when JSON is not at line 1 |
 
 ---
 
