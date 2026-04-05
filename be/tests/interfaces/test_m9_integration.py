@@ -105,6 +105,7 @@ async def _seed_completed_run(
                 member_id=member_id,
                 timestamp=now,
                 source_type="github",
+                record_type="pr_reviewed",
                 record_id="pr-1",
                 content_excerpt="Reviewed PR with thorough feedback.",
                 content_summary="Code review feedback",

@@ -202,11 +202,28 @@ async def _run_pipeline(
     )
 
     results: list[CollectionResult] = []
-    for batch in [gh_results, mcp_results]:
+    labels = ["github", "mcp"]
+    for label, batch in zip(labels, [gh_results, mcp_results], strict=False):
         if isinstance(batch, list):
             results.extend(batch)
-        elif isinstance(batch, Exception):
-            logger.warning("Collector raised unexpected error: %s", batch)
+        elif isinstance(batch, BaseException):
+            logger.exception(
+                "Collector '%s' raised unexpected %s: %r",
+                label,
+                type(batch).__name__,
+                batch,
+                exc_info=batch,
+            )
+            # Materialise as a failed CollectionResult so it's stored + visible in error
+            results.append(
+                CollectionResult(
+                    source_type=label,
+                    source_handle=member.external_id or member.display_name,
+                    records=[],
+                    status="failed",
+                    error_message=f"{type(batch).__name__}: {batch!r}",
+                )
+            )
 
     run.progress_pct = 30
     await run_repo.update(run)

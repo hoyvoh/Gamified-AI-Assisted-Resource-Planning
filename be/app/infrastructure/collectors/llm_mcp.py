@@ -5,7 +5,6 @@ The backend never holds Slack/Confluence/Jira tokens. Instead it calls the LLM C
 fetch and return structured JSON. The LLM's own MCP configuration handles auth.
 """
 
-import asyncio
 import json
 import re
 
@@ -13,6 +12,7 @@ from app.infrastructure.collectors.base import (
     CollectionResult,
     CollectorTimeoutError,
     CollectorUnavailableError,
+    run_subprocess,
 )
 from app.logger import get_logger
 
@@ -66,23 +66,16 @@ class LLMMCPCollector:
     async def probe_mcp_sources(self) -> list[str]:
         """Detect which MCP servers are configured by running `<cli> mcp list`."""
         try:
-            proc = await asyncio.create_subprocess_exec(
-                self._cli,
-                "mcp",
-                "list",
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-            stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=5)
+            _, stdout, _ = await run_subprocess(self._cli, "mcp", "list", timeout=5)
             output = stdout.decode(errors="replace").lower()
             found = [src for src in _KNOWN_MCP_SOURCES if src in output]
             return found
-        except FileNotFoundError:
+        except CollectorUnavailableError:
             raise CollectorUnavailableError(
                 f"LLM CLI `{self._cli}` not found on PATH. "
                 "Install and authenticate it before running analysis."
             ) from None
-        except TimeoutError:
+        except CollectorTimeoutError:
             logger.warning("MCP probe timed out — assuming no MCP sources available")
             return []
 
@@ -167,31 +160,22 @@ class LLMMCPCollector:
 
     async def _run_llm(self, prompt: str) -> str | None:
         """Invoke the LLM CLI with a prompt and return its stdout."""
-        cmd = [self._cli, "-p", prompt]
         if self._model:
-            cmd = [self._cli, "--model", self._model, "-p", prompt]
+            cmd = (self._cli, "--model", self._model, "-p", prompt)
+        else:
+            cmd = (self._cli, "-p", prompt)
         try:
-            proc = await asyncio.create_subprocess_exec(
-                *cmd,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-            try:
-                stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=self._timeout)
-            except TimeoutError as exc:
-                proc.kill()
-                raise CollectorTimeoutError(f"LLM CLI timed out after {self._timeout}s") from exc
-
-            if proc.returncode != 0:
+            returncode, stdout, stderr = await run_subprocess(*cmd, timeout=self._timeout)
+            if returncode != 0:
                 err = stderr.decode(errors="replace").strip()
-                logger.warning("LLM CLI exited with code %d: %s", proc.returncode, err[:300])
+                logger.warning("LLM CLI exited with code %d: %s", returncode, err[:300])
                 return None
 
             return stdout.decode(errors="replace").strip() or None
 
         except CollectorTimeoutError:
             raise
-        except FileNotFoundError:
+        except CollectorUnavailableError:
             raise CollectorUnavailableError(f"LLM CLI `{self._cli}` not found on PATH.") from None
 
 

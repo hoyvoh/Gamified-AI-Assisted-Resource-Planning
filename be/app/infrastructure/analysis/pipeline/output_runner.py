@@ -98,50 +98,51 @@ async def run_output_generation(
         ds.confidence_score for ds in dimension_scores if ds.normalized_score is not None
     ) / max(1, sum(1 for ds in dimension_scores if ds.normalized_score is not None))
 
-    # ── Phase B: P5 — KPT generation ─────────────────────────────────────────
-    kpt_items = await _run_p5(
-        run=run,
-        role_name=role_name,
-        dim_summaries=dim_summaries,
-        top_strength_ids=top_strength_ids,
-        top_growth_ids=top_growth_ids,
-        llm_settings=llm_settings,
-        now=now,
+    # ── Milestone derivation (pure CPU — no LLM call, compute immediately) ───
+    new_milestones = _derive_milestones(run, behavioral_events, now)
+
+    # ── Phases B + C + D: P5 / P6 / P7 — run in parallel ────────────────────
+    # None of these depend on each other: all only need dim_summaries from P4.
+    # Running sequentially would waste ~30-60 s waiting for three LLM round trips.
+    kpt_items, cases, p7_result = await asyncio.gather(
+        _run_p5(
+            run=run,
+            role_name=role_name,
+            dim_summaries=dim_summaries,
+            top_strength_ids=top_strength_ids,
+            top_growth_ids=top_growth_ids,
+            llm_settings=llm_settings,
+            now=now,
+        ),
+        _run_p6(
+            run=run,
+            role_name=role_name,
+            events_as_dicts=events_as_dicts,
+            dim_summaries=dim_summaries,
+            top_growth_ids=top_growth_ids,
+            llm_settings=llm_settings,
+            now=now,
+        ),
+        _run_p7(
+            run=run,
+            role_name=role_name,
+            top_strength_ids=top_strength_ids,
+            top_growth_ids=top_growth_ids,
+            dimension_scores=dimension_scores,
+            overall_confidence=overall_confidence,
+            llm_settings=llm_settings,
+        ),
     )
+    profile_summary, growth_journey_summary, current_growth_path = p7_result
+
+    # ── Persist all P5/P6 outputs + milestones in one commit ─────────────────
     if kpt_items:
         await kpt_repo.replace_for_run(run.analysis_run_id, kpt_items)
-        await session.commit()
-
-    # ── Phase C: P6 — case feedback generation ────────────────────────────────
-    cases = await _run_p6(
-        run=run,
-        role_name=role_name,
-        events_as_dicts=events_as_dicts,
-        dim_summaries=dim_summaries,
-        top_growth_ids=top_growth_ids,
-        llm_settings=llm_settings,
-        now=now,
-    )
     if cases:
         await case_repo.replace_for_run(run.analysis_run_id, cases)
-        await session.commit()
-
-    # ── Phase D: P7 — overview + journey ─────────────────────────────────────
-    profile_summary, growth_journey_summary, current_growth_path = await _run_p7(
-        run=run,
-        role_name=role_name,
-        top_strength_ids=top_strength_ids,
-        top_growth_ids=top_growth_ids,
-        dimension_scores=dimension_scores,
-        overall_confidence=overall_confidence,
-        llm_settings=llm_settings,
-    )
-
-    # ── Phase E: Milestone derivation ─────────────────────────────────────────
-    new_milestones = _derive_milestones(run, behavioral_events, now)
     if new_milestones:
         await milestone_repo.append(new_milestones)
-        await session.commit()
+    await session.commit()
 
     # ── Phase F: Assemble and persist snapshot ────────────────────────────────
     snapshot = AnalysisSnapshot(

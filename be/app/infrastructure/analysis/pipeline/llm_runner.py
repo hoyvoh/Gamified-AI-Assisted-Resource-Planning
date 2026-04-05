@@ -1,8 +1,14 @@
-"""Shared LLM subprocess runner — call CLI and parse JSON output."""
+"""Shared LLM subprocess runner — call CLI and parse JSON output.
+
+Uses asyncio.to_thread(subprocess.run) instead of asyncio.create_subprocess_exec
+so the call works on any event loop type — including the SelectorEventLoop that
+uvicorn uses in --reload mode on Windows.
+"""
 
 import asyncio
 import json
 import re
+import subprocess
 
 from app.logger import get_logger
 
@@ -91,16 +97,22 @@ async def _run_subprocess(
     timeout_seconds: int,
 ) -> str:
     cmd = [cli_tool, "--model", model, "-p", prompt]
-    proc = await asyncio.create_subprocess_exec(
-        *cmd,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-    )
-    stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout_seconds)
-    if proc.returncode != 0:
-        err = stderr.decode(errors="replace").strip()
-        raise RuntimeError(f"CLI exited {proc.returncode}: {err[:300]}")
-    return stdout.decode(errors="replace").strip()
+
+    def _run() -> str:
+        try:
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                timeout=timeout_seconds,
+            )
+        except subprocess.TimeoutExpired:
+            raise TimeoutError(f"LLM CLI timed out after {timeout_seconds}s") from None
+        if result.returncode != 0:
+            err = result.stderr.decode(errors="replace").strip()
+            raise RuntimeError(f"CLI exited {result.returncode}: {err[:300]}")
+        return result.stdout.decode(errors="replace").strip()
+
+    return await asyncio.to_thread(_run)
 
 
 def _parse_json(raw: str) -> dict | list | None:  # type: ignore[type-arg]

@@ -5,7 +5,7 @@ import uuid
 
 from app.domain.analysis.entities import EvidenceUnit
 from app.domain.analysis.taxonomy import VALID_POLARITIES
-from app.infrastructure.analysis.pipeline.chunker import chunk_records
+from app.infrastructure.analysis.pipeline.chunker import build_content_excerpt, chunk_records
 from app.infrastructure.analysis.pipeline.llm_runner import LLMCallError, call_llm
 from app.infrastructure.analysis.prompts.p1_extraction import build_p1_prompt
 from app.infrastructure.db.base import utcnow
@@ -45,17 +45,23 @@ async def run_p1(
         evidence_id = str(uuid.uuid4())
         rec_id = rec.get("record_id", "")
         record_id_to_evidence_id[rec_id] = evidence_id
-        content = rec.get("content", "")
+        # Build a human-readable content excerpt from all available fields
+        # (handles GitHub-specific shapes: body, message, diff_hunk, etc.)
+        content_excerpt = build_content_excerpt(rec)[:1000]
         evidence_units.append(
             EvidenceUnit(
                 evidence_id=evidence_id,
                 analysis_run_id=run_id,
                 member_id=member_id,
-                timestamp=rec.get("timestamp", now),
+                timestamp=(
+                    rec.get("timestamp") or rec.get("created_at") or rec.get("committed_at") or now
+                ),
                 source_type=rec.get("source_type", "unknown"),
                 record_type=rec.get("type") or None,  # "pr_authored" | "commit" | "message" | etc.
-                record_id=rec_id or None,
-                content_excerpt=content[:500] if content else "",
+                record_id=rec_id
+                or rec.get("sha")
+                or (str(rec["number"]) if rec.get("number") else None),
+                content_excerpt=content_excerpt,
                 content_summary="",  # filled after P1 extracts events
                 extraction_confidence=None,
                 ambiguity_notes=[],
