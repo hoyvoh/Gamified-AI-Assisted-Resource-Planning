@@ -87,6 +87,7 @@ Set `NEXT_PUBLIC_API_URL=http://localhost:8000` in `ui/.env.local` (gitignored).
 | Method | Path | Status |
 |--------|------|--------|
 | `POST` | `/api/v1/organizations/:orgId/teams` | 201 |
+| `GET` | `/api/v1/organizations/:orgId/teams` | 200 |
 | `PATCH` | `/api/v1/organizations/:orgId/teams/:teamId` | 200 |
 | `DELETE` | `/api/v1/organizations/:orgId/teams/:teamId` | 204 |
 
@@ -100,8 +101,8 @@ Body (create or update): `{ name: string }` — 1–255 chars
 |--------|------|--------|
 | `POST` | `/api/v1/organizations/:orgId/teams/:teamId/members` | 201 |
 | `GET` | `/api/v1/members/:memberId` | 200 |
-| `PATCH` | `/api/v1/organizations/:orgId/teams/:teamId/members/:memberId` | 200 |
-| `DELETE` | `/api/v1/organizations/:orgId/teams/:teamId/members/:memberId` | 204 |
+| `PATCH` | `/api/v1/members/:memberId` | 200 |
+| `DELETE` | `/api/v1/members/:memberId` | 204 |
 
 **Create / update body:**
 ```typescript
@@ -330,7 +331,25 @@ GET /api/v1/members/:memberId/profile/journey
 }
 ```
 
-#### Evidence trace
+#### Evidence list
+```
+GET /api/v1/members/:memberId/profile/evidence
+     ?search=<keyword>              // full-text search over content_excerpt
+     ?source=github,mcp             // comma-separated source_type filter
+     ?record_type=pr_authored,commit // comma-separated record_type filter
+     ?limit=50&offset=0             // pagination
+```
+```typescript
+{
+  run_id: string
+  items: EvidenceUnit[]
+  total: number
+  limit: number
+  offset: number
+}
+```
+
+#### Evidence detail
 ```
 GET /api/v1/evidence/:evidenceId
 ```
@@ -387,6 +406,7 @@ interface EvidenceUnit {
   member_id: string
   timestamp: string
   source_type: string | null          // "github" | "mcp"
+  record_type: string | null          // "pr_authored" | "pr_reviewed" | "commit" | ...
   record_id: string | null
   content_excerpt: string
   content_summary: string
@@ -437,7 +457,7 @@ interface Milestone {
 
 ### 3.8 Validation Flags (M8)
 
-Managers / reviewers can flag dimension scores as accurate, disputed, or ignored.
+Managers / reviewers can flag dimension scores as accurate, questionable, or incorrect.
 
 | Method | Path | Status | Notes |
 |--------|------|--------|-------|
@@ -449,7 +469,7 @@ Managers / reviewers can flag dimension scores as accurate, disputed, or ignored
 {
   analysis_run_id: string
   dimension_id: string
-  verdict: 'accurate' | 'disputed' | 'ignore'
+  verdict: 'accurate' | 'questionable' | 'incorrect'
   note?: string
 }
 ```
@@ -502,6 +522,8 @@ The full lifecycle of triggering an analysis and rendering the results:
 | `409` | Member already has an active run | "Analysis already in progress" toast |
 | `422` | Validation error (bad date range, unknown enum) | Field-level or toast message |
 | `500` | Unexpected server error | Generic error banner with retry |
+
+> **P5/P6/P7 silent failure:** A run can complete with `status="completed"` while KPT, Cases, or Overview tabs return empty data. This happens when the LLM subprocess fails for those stages — the pipeline is non-blocking by design and the run still succeeds. Show an empty state with a "Refresh analysis" option rather than an error. Check backend logs for `"PX failed for run"` warnings if this occurs.
 
 ```typescript
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
@@ -625,8 +647,9 @@ Backend interactive docs: [http://localhost:8000/docs](http://localhost:8000/doc
 
 | Document | Why |
 |----------|-----|
-| `docs/guides/backend-guide.md` | Architecture, layer rules, testing patterns |
+| `docs/guides/backend-guide.md` | Architecture, layer rules, pipeline patterns |
 | `docs/guides/frontend-guide.md` | Stack, design tokens, component patterns, quality gates |
-| `docs/design/human-analysis-MVP-specs/frontend-spec.md` | Full UI spec: all 5 profile tabs, states, interactions |
+| `docs/design/human-analysis-MVP-specs/frontend-spec.md` | Full UI spec: all 6 profile tabs, states, interactions |
 | `docs/design/human-analysis-MVP-specs/backend-spec.md` | Authoritative request/response shapes until OpenAPI gen |
-| `docs/design/human-analysis-MVP-specs/entity-data-model.md` | Entity lifecycle and relationships |
+| `docs/design/human-analysis-MVP-specs/database-spec.md` | DB schema reference — all tables and constraints |
+| `docs/design/human-analysis-MVP-specs/prompt-pipeline-spec.md` | P1–P8 pipeline: output schemas, fallbacks, retry rules |
