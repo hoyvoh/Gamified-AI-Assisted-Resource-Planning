@@ -1,518 +1,448 @@
-# Data Flow Spec
+# Analysis Pipeline — End-to-End Data Flow
 
-**Developer Growth & Evidence-Based Performance Insight Platform — MVP**
-
----
-
-## 1. End-to-End Data Flow Overview
-
-```
-User triggers analysis
-        ↓
-[1] Analysis Run created (status: pending)
-        ↓
-[2] Data Collection
-    Raw source records collected from integrations
-        ↓
-[3] Evidence Extraction (P1 + P2)
-    Raw records → EvidenceUnits → BehavioralEvents (deduplicated)
-        ↓
-[4] Dimension Inference (P3)
-    BehavioralEvents → DimensionSignals (per dimension)
-        ↓
-[5] Scoring (Scoring Engine)
-    DimensionSignals → DimensionScores + CategoryScores
-        ↓
-[6] Human Output Generation (P4 + P5 + P6 + P7)
-    Scores → UI summaries, KPT, CaseFeedback, Overview/Journey text
-        ↓
-[7] Self-Critique (P8)
-    Final output → overclaim / hallucination check → patch if needed
-        ↓
-[8] Persist AnalysisSnapshot
-    All outputs stored; status → completed
-        ↓
-[9] UI renders profile tabs
-```
+**Scope:** MVP backend analysis pipeline  
+**Entry point:** `POST /members/:id/analysis`  
+**Implementation:** `be/app/infrastructure/analysis/runner.py`
 
 ---
 
-## 2. Phase-by-Phase Detail
+## Overview
+
+```
+HTTP trigger
+    │
+    ▼
+Phase 1 — Collection          GitHub API + LLM MCP (parallel)
+    │
+    ▼
+Phase 2 — P1 Evidence         LLM × N chunks (parallel, semaphore=4)
+    │
+    ▼
+Phase 3 — P2 Consolidation    LLM × 1 call
+    │
+    ▼
+Phase 4 — Scoring             P3 LLM × N dims (parallel) + scoring engine
+    │
+    ▼
+Phase 5 — Output Generation   P4–P7 LLM calls (KPT, cases, milestones, overview)
+    │
+    ▼
+Phase 6 — P8 Self-Critique    LLM × 1 call (gate)
+    │
+    ▼
+run.status = "completed"
+```
 
 ---
 
-### Phase 1 — Analysis Run Creation
+## Phase 0 — HTTP Trigger
 
-**Trigger:** User clicks Refresh or triggers new analysis.
+```
+POST /members/:id/analysis
+    │
+    ├─ Creates AnalysisRun row (status="pending")
+    ├─ Returns HTTP 202 immediately
+    └─ Registers BackgroundTask → run_analysis_job(run_id)
+                                       │
+                                       └─ runs inside uvicorn worker process
+                                          event loop = SelectorEventLoop (Win32 --reload)
+                                          or ProactorEventLoop (Win32 production / Linux)
+```
 
-**Input:**
-- `member_id`
-- `period_start`, `period_end`
-- `run_type`
-
-**Validation (app layer):**
-- Period must not exceed 365 days
-- No other active run for this member
-
-**Output:**
-- `AnalysisRun` record with `status = 'pending'`
-- 202 Accepted returned to client
-- Job enqueued for background processing
+**Implementation:** `app/interfaces/http/routes/analysis.py` → `runner.run_analysis_job()`
 
 ---
 
-### Phase 2 — Data Collection
+## Phase 1 — Collection
 
-**Status update:** `collecting`
-
-**Process:**
-1. Load member context (role profile, personal baseline, previous run refs)
-2. Query configured integrations for the member within the period
-3. Normalize raw data into `RawSourceRecord` format
-4. Group into `SourcePayload` batches by source type
-5. Store `SourcePayload` records
-
-**Output:**
-- `SourcePayload` records persisted
-- Batched `RawSourceRecord` objects ready for P1
-
-**Failure behavior:**
-- If a source times out (>30s): log warning, proceed with available sources
-- If no sources available: set `status = 'failed'` with message
-
----
-
-### Phase 3 — Evidence Extraction (P1 + P2)
-
-**Status update:** `analyzing` (substage: `extracting_evidence`)
-
-#### P1 — Behavioral Event Extraction
-
-Run **per chunk** (10–40 raw records grouped by thread/artifact/workstream):
-
-**Input:**
-```json
-{
-  "member_id": "...",
-  "role_name": "...",
-  "period": { "start": "...", "end": "..." },
-  "raw_records": [...]
-}
-```
-
-**Process:**
-- LLM extracts behavioral events from each chunk
-- Each event: type, summary, polarity, confidence, related dimensions
-- Zero, one, or multiple events per record
-
-**Output:** `BehavioralEvent` candidates (JSON array)
-
-#### P2 — Event Consolidation / Dedup
-
-Run **once** on the merged P1 output:
-
-**Input:** All P1 candidate events
-
-**Process:**
-- Merge near-duplicate events
-- Remove low-value / overly redundant events
-- Preserve source traceability
-
-**Output:** Cleaned `BehavioralEvent` set → persisted to DB
-
----
-
-### Phase 4 — Dimension Inference (P3)
-
-**Substage:** `inferring_dimensions`
-
-Run **per dimension** (or per small group of 3–5 related dimensions):
-
-**Input per call:**
-```json
-{
-  "dimension_id": "...",
-  "dimension_description": "...",
-  "role_profile_summary": "...",
-  "baseline_summary": "...",
-  "dimension_related_events": [...]
-}
-```
-
-**Process:**
-- LLM infers maturity state, positive/negative patterns, opportunity, confidence
-- Returns structured JSON
-
-**Output per dimension:**
-```json
-{
-  "dimension_id": "...",
-  "observed_pattern_summary": "...",
-  "positive_indicators": [...],
-  "development_indicators": [...],
-  "counter_evidence_or_limitations": [...],
-  "opportunity_assessment": { "label": "...", "reason": "..." },
-  "maturity_state": "reliable",
-  "confidence_label": "moderate",
-  "confidence_score": 0.68,
-  "top_supporting_event_ids": [...],
-  "top_counter_event_ids": [...]
-}
-```
-
-→ Used to compute `DimensionSignal` records
-
----
-
-### Phase 5 — Scoring (Scoring Engine)
-
-**Substage:** `scoring`
-
-Runs deterministically (no LLM calls) on P3 output:
-
-#### 5.1 Signal Mass Computation
-
-For each signal:
-```
-SignalMass =
-  signal_strength × signal_specificity × signal_confidence
-  × event_confidence × evidence_strength × evidence_directness
-  × evidence_specificity × recency_weight × opportunity_adjustment
-```
-
-**Recency weights:**
-- 0–90 days: 1.00
-- 91–180 days: 0.85
-- 181–365 days: 0.65
-
-#### 5.2 Dimension Score Computation
+**Status transition:** `pending → collecting`  
+**Progress:** 5% → 30%
 
 ```
-RawSignalBalance = PositiveMass - NegativeMass
-normalized_score = clamp(3 + 2 * tanh(balance), 1, 5)
-```
-
-Maturity mapping:
-- 1.0–1.9 → emerging
-- 2.0–2.7 → developing
-- 2.8–3.5 → reliable
-- 3.6–4.3 → strong
-- 4.4–5.0 → advanced
-
-#### 5.3 Opportunity Gate
-
-```
-If OpportunityScore < 0.25:
-  maturity_level = "insufficient_opportunity"
-  normalized_score = null
-```
-
-#### 5.4 Confidence Score
-
-```
-ConfidenceScore =
-  0.30 * EvidenceSufficiency
-  + 0.30 * PatternConsistency
-  + 0.20 * ContextDiversity
-  + 0.20 * CrossSignalAgreement
-```
-
-Labels: 0–0.39 = low, 0.40–0.69 = moderate, 0.70–1.00 = high
-
-#### 5.5 Delta Computation
-
-```
-DeltaValue = current_normalized_score - previous_normalized_score
-
->= +0.40 → improved
--0.39 to +0.39 → stable
-no previous, new signal present → emerging
-<= -0.40 → regressing
-no valid comparison → not_enough_comparison
-```
-
-#### 5.6 Category Scoring
-
-```
-CategoryScore = weighted_average(
-  valid_dimension_scores,
-  role_adjusted_dimension_weights
+asyncio.gather(
+    _collect_gh(),    # GitHubCollector
+    _collect_mcp(),   # LLMMCPCollector
 )
 ```
 
-Only includes dimensions with sufficient opportunity and valid scores.
+### GitHubCollector
 
-**Default category weights (adjustable by role):**
+**Source:** `app/infrastructure/collectors/github.py`  
+**Auth:** `gh auth status` (gh CLI must be logged in on the host machine)
 
-| Category | Default Weight |
-|----------|---------------|
-| Core Technical Execution | 30% |
-| Domain Technical Capability | 30% |
-| Technical Mindset | 20% |
-| Professional & Team Effectiveness | 20% |
+```
+Phase 1a — Metadata fetch (3 parallel streams)
+──────────────────────────────────────────────
+gh search issues  →  pr_authored[]   title, body, state, labels, repo
+gh search issues  →  pr_reviewed[]   title, state, pr_author, repo
+gh search commits →  commit[]        sha (full), message, committed_at, repo
 
-**Output:** `DimensionScore` and `CategoryScore` records persisted.
+Phase 1b — Content enrichment (parallel, up to 20 PRs + 25 commits)
+────────────────────────────────────────────────────────────────────
+For each authored PR:
+  GET /repos/{owner}/{repo}/pulls/{n}/reviews    → reviews_received[]
+  GET /repos/{owner}/{repo}/pulls/{n}/comments   → inline_feedback_received[]
+  GET /repos/{owner}/{repo}/pulls/{n}/files      → files_changed[]
+
+For each reviewed PR:
+  GET /repos/{owner}/{repo}/pulls/{n}/reviews    → review_summaries[]
+  GET /repos/{owner}/{repo}/pulls/{n}/comments   → inline_comments[]
+  GET /repos/{owner}/{repo}/pulls/{n}/files      → files_changed[]
+
+For each commit (with known repo):
+  GET /repos/{owner}/{repo}/commits/{sha}        → files_changed[]
+```
+
+**Key fields on inline comments:**
+
+| Field       | Source                     | Meaning                                                             |
+| ----------- | -------------------------- | ------------------------------------------------------------------- |
+| `body`      | comment.body               | The actual text the reviewer wrote                                  |
+| `path`      | comment.path               | File being reviewed                                                 |
+| `diff_hunk` | comment.diff_hunk          | The code block the comment targets                                  |
+| `outdated`  | `comment.position is None` | `true` = code was changed after this comment; feedback was acted on |
+
+The `outdated` flag is one of the strongest behavioural signals: it means the reviewer wrote a comment, the author then edited that exact code, and GitHub marked the comment as superseded. This indicates **actionable peer review**.
+
+**Subprocess pattern (critical):**
+
+All `gh` CLI calls use `asyncio.to_thread(subprocess.run, ...)` via `run_subprocess()` in `base.py`. This is required because `asyncio.create_subprocess_exec` raises `NotImplementedError` on Windows when the event loop is `SelectorEventLoop` (which uvicorn sets when `--reload` is active).
+
+### LLMMCPCollector
+
+**Source:** `app/infrastructure/collectors/llm_mcp.py`  
+**Auth:** Handled by the LLM CLI's own MCP configuration (no tokens in the backend)
+
+```
+probe_mcp_sources()   →  detect which MCP servers are configured (Slack, Jira, etc.)
+    │
+    └─ If none found: returns CollectionResult(status="skipped")
+    └─ If found: _run_llm(collection_prompt) → structured JSON response
+                  → split into per-source CollectionResult[]
+```
+
+### Persistence
+
+All `CollectionResult` objects (including `status="failed"` and `status="skipped"`) are persisted as rows in `source_payloads`:
+
+```sql
+source_payloads
+  source_payload_id   TEXT PK
+  analysis_run_id     TEXT FK
+  source_type         TEXT    -- "github" | "slack" | "jira" | ...
+  source_handle       TEXT    -- GitHub username / display name
+  raw_data            TEXT    -- JSON array of enriched record dicts
+  record_count        INT
+  collection_status   TEXT    -- "collected" | "failed" | "skipped"
+  error_message       TEXT    -- populated on failure/skip
+```
+
+If **all** sources produce `status != "collected"`, the run transitions to `failed` immediately and phases 2–6 are skipped.
 
 ---
 
-### Phase 6 — Human Output Generation
+## Phase 2 — P1 Evidence Extraction
 
-**Substage:** `generating_kpt`, `generating_cases`, `generating_overview`
+**Status transition:** `collecting → analyzing` (stage: `extracting_evidence`)  
+**Progress:** 35% → 50%  
+**Source:** `app/infrastructure/analysis/pipeline/p1_runner.py`
 
-#### P4 — Dimension UI Summary
+### Record normalisation (chunker)
 
-Run per dimension. Converts P3 inference JSON into human-readable UI summary text (2–4 sentences). Non-judgmental, fair tone.
+**Source:** `app/infrastructure/analysis/pipeline/chunker.py`
 
-#### P5 — KPT Generation
+`chunk_records()` normalises raw source records into a uniform P1 input shape before sending to the LLM:
 
-**Input:** Top strengths, top growth areas, repeated patterns, role context, confidence notes.
+```
+_prepare_record(raw)
+  ├─ record_id  ← raw.sha[:12]  or  str(raw.number)  or  "rec_{idx}"
+  ├─ timestamp  ← raw.committed_at  or  raw.created_at  or  raw.updated_at
+  ├─ source_type← raw.source_type  (injected by runner.py)
+  ├─ title      ← raw.title  or  raw.type
+  └─ content    ← build_content_excerpt(raw)
+```
 
-**Output:**
-- 3–5 Keep items (with linked dimensions + evidence)
-- 3–5 Problem items (with frequency/confidence)
-- 3–5 Try items (actionable experiments mapping to problems)
-- 1–2 Development focus themes
+`build_content_excerpt()` builds a rich text string per record type:
 
-Persisted as `KPTItem` records.
+| Record type   | Content built from                                                                                                             |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `commit`      | commit message + files_changed (filename, +/- lines, patch excerpt)                                                            |
+| `pr_authored` | PR description body + reviews_received (with state) + inline_feedback_received (with diff_hunk, outdated note) + files_changed |
+| `pr_reviewed` | review_summaries (with state) + inline_comments (with diff_hunk, outdated note) + files_changed                                |
+| MCP records   | content / message / body (first non-empty field)                                                                               |
 
-#### P6 — Case-Based Feedback Generation
+Records are grouped by `source_type` and sorted by timestamp, then split into chunks of 20.
 
-**Input:** Behavioral events, dimension summaries, pattern clusters.
+### LLM calls
 
-**Output:** 3–8 case feedback items with:
-- What happened / why it matters / observed pattern / better alternative / next-time guidance
+```
+chunks = chunk_records(all_records)   # typically 8 chunks for ~160 records
 
-Persisted as `CaseFeedback` records.
+asyncio.gather(
+    process_chunk(chunk_0),
+    process_chunk(chunk_1),
+    ...                               # semaphore limits to 4 concurrent
+) → all_candidate_events[]
+```
 
-#### P7 — Overview + Journey Summary
+Each chunk call:
 
-**Input:** Dimension scores, category scores, top strengths, top growth areas, milestone history.
+```
+call_llm(p1_prompt)
+  └─ _run_subprocess(cli_tool, model, prompt, timeout)
+       └─ asyncio.to_thread(subprocess.run [claude --model ... -p ...])
+            ← must NOT use asyncio.create_subprocess_exec (breaks on SelectorEventLoop)
+```
 
-**Output:**
-- Profile summary (3–5 sentences, Tab 1)
-- Growth journey summary (2–4 sentences, Tab 5, if historical data available)
-- Current growth path archetype (nullable)
+P1 LLM output schema (per chunk):
 
----
-
-### Phase 7 — Self-Critique (P8)
-
-**Substage:** `self_checking`
-
-**Input:**
-- All dimension scores + confidence
-- All generated summaries (P4, P5, P6, P7 outputs)
-- Supporting event coverage index
-
-**Process:**
-- LLM audits final output for:
-  - Unsupported claims
-  - Overclaiming from weak evidence
-  - Unfair inferences from absence of evidence
-  - Dimensions that should be marked insufficient instead of scored
-
-**Output:**
 ```json
 {
-  "overall_profile_risk": "low | moderate | high",
-  "issues": [
+  "events": [
     {
-      "issue_type": "overclaim | insufficient_opportunity_misclassification | unfair_inference",
-      "target": "...",
-      "problem": "...",
-      "recommended_fix": "..."
+      "source_record_ids": ["sha_or_number"],
+      "event_type": "review_feedback | delivery_completion | ...",
+      "event_summary": "concrete description of observed behaviour",
+      "polarity": "positive | negative | mixed | neutral",
+      "severity": 0.0,
+      "event_confidence": 0.8,
+      "impact_level": "low | medium | high",
+      "opportunity_level": "none | low | medium | high",
+      "related_dimensions": [
+        { "dimension_id": "...", "relation_strength": 0.7 }
+      ],
+      "ambiguity_notes": [],
+      "why_it_matters": "one-line behavioural significance"
     }
-  ],
-  "approved": true | false
+  ]
 }
 ```
 
-**Decision rule:**
-- If `approved = false`: apply recommended patches (adjust wording / suppress scores)
-- Retry P8 once after patching
-- If still not approved: persist with `p8_approved = false` and `p8_issues` populated (human review recommended)
+### Persistence
+
+```sql
+evidence_units                         -- one row per source record
+  evidence_id          TEXT PK
+  analysis_run_id      TEXT FK
+  record_type          TEXT    -- "pr_authored" | "pr_reviewed" | "commit" | ...
+  record_id            TEXT    -- sha or PR number
+  timestamp            TEXT    -- ISO 8601 from source record
+  content_excerpt      TEXT    -- first 1000 chars of build_content_excerpt()
+  content_summary      TEXT    -- filled after P1 (currently empty in MVP)
+  extraction_confidence REAL
+```
+
+`candidate_events[]` (raw P1 dicts) are passed in memory to Phase 3 — not yet persisted at this stage.
 
 ---
 
-### Phase 8 — Persist AnalysisSnapshot
+## Phase 3 — P2 Event Consolidation
 
-**Substage:** `persisting`
-
-1. Assemble `AnalysisSnapshot` object from all outputs
-2. Derive milestone candidates from high-impact event clusters
-3. Persist / append new `Milestone` records (never overwrite existing)
-4. Update `AnalysisRun.status = 'completed'`, set `completed_at`
-5. On same-period refresh: overwrite snapshot, overwrite scores/KPT/cases, preserve flags
-
----
-
-## 3. Data Flow Diagram (text representation)
+**Progress:** 50% → 55%  
+**Source:** `app/infrastructure/analysis/pipeline/p2_runner.py`
 
 ```
-USER
-  │ triggers analysis
-  ▼
-[API: POST /analysis-runs]
-  │ creates AnalysisRun (pending)
-  ▼
-[Job Queue]
+call_llm(p2_prompt)
+  input:  candidate_events[] from P1 (all chunks merged)
+  output: consolidated BehavioralEvent[] (deduped, merged cross-record signals)
+  fallback: if P2 fails, P1 events are used directly
+```
+
+### Persistence
+
+```sql
+behavioral_events
+  event_id             TEXT PK
+  analysis_run_id      TEXT FK
+  event_type           TEXT
+  event_summary        TEXT
+  polarity             TEXT
+  severity             REAL
+  event_confidence     REAL
+  impact_level         TEXT
+  opportunity_level    TEXT
+  related_dimensions   TEXT    -- JSON: [{"dimension_id": str, "relation_strength": float}]
+  source_evidence_ids  TEXT    -- JSON: [evidence_id, ...]
+  why_it_matters       TEXT
+```
+
+---
+
+## Phase 4 — Scoring (P3 + Scoring Engine)
+
+**Status stage:** `inferring_dimensions` → `scoring`  
+**Progress:** 60% → 75%  
+**Sources:** `p3_runner.py`, `scoring_runner.py`, `domain/analysis/scoring_engine.py`
+
+```
+run_p3()
+  ├─ For each dimension in DIMENSION_IDS (parallel, semaphore=4):
+  │    call_llm(p3_prompt)
+  │      input:  behavioral_events + role_profile + baseline
+  │      output: {dimension_id, polarity, signal_strength, signal_specificity,
+  │               signal_confidence, opportunity_level, explanation_summary}
   │
-  ├─► [Data Collector]
-  │     │ pulls raw records from integrations
-  │     ▼ SourcePayload, RawSourceRecord
-  │
-  ├─► [P1: Evidence Extraction] (per chunk, parallel)
-  │     │ raw records → candidate BehavioralEvents
-  │     ▼
-  │   [P2: Event Consolidation]
-  │     │ deduplicated BehavioralEvents → DB
-  │     ▼
-  │   [Scoring Engine: Signal Mapping]
-  │     │ events → DimensionSignals → DB
-  │     ▼
-  │   [P3: Dimension Inference] (per dimension, parallel)
-  │     │ events → dimension inference JSON
-  │     ▼
-  │   [Scoring Engine: Score Computation]
-  │     │ DimensionScores, CategoryScores → DB
-  │     ▼
-  ├─► [P4: Dimension UI Summaries] (per dimension, parallel)
-  │     ▼
-  ├─► [P5: KPT Generation]
-  │     ▼ KPTItems → DB
-  ├─► [P6: Case Feedback Generation]
-  │     ▼ CaseFeedbacks → DB
-  ├─► [P7: Overview + Journey Summary]
-  │     ▼
-  └─► [P8: Self-Critique]
-        │ patch if needed
-        ▼
-  [AnalysisSnapshot assembled → DB]
-  [Milestones derived → DB (append only)]
-  [AnalysisRun.status = completed]
+  └─ → DimensionSignal[] per dimension
 
-USER
-  │ polls GET /analysis-runs/:id
-  │ → status: completed
-  │ → fetches profile tabs
-  ▼
-[Profile Tab APIs → read from DB]
+scoring_engine.compute_dimension_scores(signals)
+  → DimensionScore[] (raw_score 0–5, normalized_score, maturity_level,
+                      confidence_score/label, opportunity_score/label,
+                      delta_value/label vs personal baseline)
+
+scoring_engine.compute_category_scores(dimension_scores)
+  → CategoryScore[] (weighted average across dimensions per category)
+```
+
+### Persistence
+
+```sql
+dimension_scores     -- one row per dimension per run
+  dimension_id       TEXT
+  raw_score          REAL     -- 0.0–5.0
+  normalized_score   REAL
+  maturity_level     TEXT     -- "novice" | "developing" | ... | "expert"
+  confidence_score   REAL
+  confidence_label   TEXT     -- "low" | "moderate" | "high"
+  opportunity_score  REAL
+  opportunity_label  TEXT
+  delta_value        REAL     -- vs personal baseline
+  delta_label        TEXT     -- "improved" | "stable" | "regressing" | ...
+  p3_inference       TEXT     -- raw P3 JSON output
+
+category_scores      -- one row per category per run
+  category_id        TEXT
+  score              REAL
+  confidence_score   REAL
+  included_dimensions TEXT    -- JSON array
 ```
 
 ---
 
-## 4. Intermediate Artifact Storage Strategy
+## Phase 5 — Output Generation (P4–P7)
 
-| Artifact | Storage | Retention |
-|----------|---------|-----------|
-| Raw source records | In-memory during run only (not persisted to DB) | Discarded after evidence extraction |
-| P1 candidate events | In-memory / temp file | Used by P2, then discarded |
-| P2 consolidated events | DB (`behavioral_events`) | Retained per run |
-| P3 dimension inference JSON | In-memory | Used by scoring engine and P4 |
-| P4 UI summaries | Stored in `dimension_scores.ui_summary` | Retained |
-| P5 KPT output | DB (`kpt_items`) | Retained |
-| P6 case feedback | DB (`case_feedbacks`) | Retained |
-| P7 overview/journey | DB (`analysis_snapshots`) | Retained |
-| P8 issues | DB (`analysis_snapshots.p8_issues`) | Retained |
-| Milestones | DB (`milestones`) | Long-term, append-only |
-
----
-
-## 5. Refresh Flow
-
-### Same-period refresh
+**Status stage:** `generating_kpt`  
+**Progress:** 80%  
+**Source:** `app/infrastructure/analysis/pipeline/output_runner.py`
 
 ```
-User clicks Refresh with same date range
-  ↓
-POST /analysis-runs (run_type: refresh_same_period)
-  ↓
-New AnalysisRun created
-  ↓
-Pipeline runs again (full re-collection + re-analysis)
-  ↓
-Persisting phase:
-  - Overwrite analysis_snapshots (upsert on analysis_run_id → actually creates new snapshot for new run)
-  - Delete old kpt_items, case_feedbacks, dimension_scores for previous run? 
-    No — each run is independent. Previous run's data remains.
-  - Append new milestones (no overwrite)
-  - Preserve validation_flags (linked to previous run's targets; new run may produce new flaggable items)
+P4 — ui_summary per dimension
+  call_llm(p4_prompt) per dimension (parallel)
+  → updates dimension_scores.ui_summary
+
+P5 — KPT generation
+  call_llm(p5_prompt)
+  input:  dimension_scores + behavioral_events
+  output: keep[], problem[], try[]  items
+  → stored in kpt_items
+
+P6 — Case feedback
+  call_llm(p6_prompt)
+  input:  behavioral_events (negative/mixed polarity)
+  output: case_feedback[] with why_it_matters, better_alternative, next_time_guidance
+  → stored in case_feedbacks
+
+P7 — Overview / snapshot
+  call_llm(p7_prompt)
+  input:  dimension_scores + kpt + cases
+  output: profile_summary, growth_journey_summary, top_strengths, top_growth_areas
+  → stored in analysis_snapshots
 ```
 
-### New-period analysis
+### Persistence
 
-```
-User selects different date range, clicks Run Analysis
-  ↓
-POST /analysis-runs (run_type: refresh_new_period or fresh)
-  ↓
-New AnalysisRun created
-  ↓
-Pipeline runs for new period
-  ↓
-New snapshot persisted
-  ↓
-Previous run data untouched
-  ↓
-Delta computed vs previous closest valid run
+```sql
+kpt_items        -- keep/problem/try items with linked_dimension_ids + linked_evidence_ids
+case_feedbacks   -- per case: title, summary, why_it_matters, better_alternative, guidance
+analysis_snapshots -- profile_summary, growth_journey_summary, top strengths/growth
 ```
 
 ---
 
-## 6. Polling Flow (client-side)
+## Phase 6 — P8 Self-Critique Gate
+
+**Status stage:** `self_checking`  
+**Progress:** 92%  
+**Source:** `app/infrastructure/analysis/pipeline/p8_runner.py`
 
 ```
-Client: POST /analysis-runs → 202 { analysis_run_id, status: "pending" }
-Client: GET /analysis-runs/:id every 3–5s
+call_llm(p8_prompt)
+  input:  dimension_scores + snapshot + fairness_notes
+  output: {approved: bool, issues: [{dimension_id, verdict, note}]}
 
-status: pending     → "Waiting to start..."
-status: collecting  → "Collecting work data..."
-status: analyzing   → show progress stage label
-  - extracting_evidence
-  - inferring_dimensions
-  - scoring
-  - generating_kpt
-  - generating_cases
-  - generating_overview
-  - self_checking
-  - persisting
-status: completed   → fetch profile tabs
-status: failed      → show error + retry option
+  If approved → analysis_snapshots.p8_approved = true
+  If not approved → patch scores, retry once, then mark approved regardless
 ```
 
----
+### Persistence
 
-## 7. Evidence Trace Flow
+```sql
+analysis_snapshots.p8_approved    INT    -- 0 | 1
+analysis_snapshots.p8_issues      TEXT   -- JSON array of issue dicts
 
-```
-User clicks evidence link in Competency tab
-  ↓
-GET /evidence/:evidenceId
-  ↓
-Right Drawer opens with:
-  - Source details
-  - Content excerpt
-  - Related dimensions
-  - Confidence / ambiguity notes
-  - Original reference URL (if available)
+validation_flags                   -- per dimension, per run
+  dimension_id    TEXT
+  verdict         TEXT    -- "accurate" | "questionable" | "incorrect"
+  note            TEXT
 ```
 
 ---
 
-## 8. Validation Flag Flow
+## Completion
 
 ```
-User clicks "Questionable" on a dimension score
-  ↓
-Validation Flag form opens
-  ↓
-User submits (flag_type + optional note)
-  ↓
-POST /validation-flags
-  ↓
-Flag stored in DB (linked to analysis_run_id + target)
-  ↓
-Dimension card shows yellow flag icon
-  ↓
-Flagged count updated in Competency Summary Header
+run.status       = "completed"
+run.progress_pct = 100
+run.completed_at = utcnow()
 ```
+
+The UI polls `GET /members/:id/runs` for status. On `completed`, tabs (Overview, Competency, KPT, Cases, Journey, Evidence) fetch their respective endpoints.
+
+---
+
+## Subprocess pattern — why `asyncio.to_thread` everywhere
+
+**Rule:** All CLI subprocess calls in this codebase use `asyncio.to_thread(subprocess.run, ...)` and never `asyncio.create_subprocess_exec`.
+
+```
+asyncio.create_subprocess_exec   ← requires ProactorEventLoop on Win32
+                                    raises NotImplementedError on SelectorEventLoop
+                                    (uvicorn --reload sets SelectorEventLoop on Win32)
+
+asyncio.to_thread(subprocess.run)← runs subprocess.run in a ThreadPoolExecutor worker
+                                    works on any event loop type
+                                    correct choice for one-shot CLI tools
+```
+
+This applies to:
+
+- `run_subprocess()` in `collectors/base.py` — used by `GitHubCollector` and `LLMMCPCollector`
+- `_run_subprocess()` in `pipeline/llm_runner.py` — used by every P1–P8 LLM call
+
+Violating this rule silently kills the entire analysis pipeline: `NotImplementedError` is caught by `except Exception`, produces an empty error message string, and causes all chunks to be skipped with no visible error surfaced to the user.
+
+---
+
+## Progress stage reference
+
+| Stage key              | Phase              | Progress  |
+| ---------------------- | ------------------ | --------- |
+| `collecting_data`      | 1 — Collection     | 5% → 30%  |
+| `extracting_evidence`  | 2 — P1             | 35% → 50% |
+| `inferring_dimensions` | 3 — P2 + P3 start  | 55% → 60% |
+| `scoring`              | 4 — Scoring engine | 75%       |
+| `generating_kpt`       | 5 — Output gen     | 80%       |
+| `self_checking`        | 6 — P8             | 92%       |
+| _(null)_               | Completed          | 100%      |
+
+## Error states
+
+| Condition                                     | Result                                                         |
+| --------------------------------------------- | -------------------------------------------------------------- |
+| All collectors return `status != "collected"` | `run.status = "failed"`, phases 2–6 skipped                    |
+| All P1 chunks raise `LLMCallError`            | 0 events → 0 scores → empty analysis (completed but null)      |
+| P2 fails                                      | Falls back to raw P1 events                                    |
+| P3 fails for a dimension                      | That dimension gets `maturity_level = "insufficient_data"`     |
+| P5/P6/P7 fails                                | Section is empty; run still completes                          |
+| P8 fails                                      | Snapshot marked `p8_approved = false`; run still completes     |
+| Job timeout (configurable)                    | `run.status = "failed"`, error_message set                     |
+| Server restart mid-run                        | `cleanup_orphaned_runs()` on startup marks stale runs `failed` |
