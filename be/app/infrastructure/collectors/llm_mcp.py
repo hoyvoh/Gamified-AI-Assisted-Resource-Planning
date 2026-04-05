@@ -7,7 +7,6 @@ fetch and return structured JSON. The LLM's own MCP configuration handles auth.
 
 import asyncio
 import json
-import logging
 import re
 
 from app.infrastructure.collectors.base import (
@@ -15,8 +14,9 @@ from app.infrastructure.collectors.base import (
     CollectorTimeoutError,
     CollectorUnavailableError,
 )
+from app.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 _KNOWN_MCP_SOURCES = {"slack", "confluence", "jira", "notion", "linear"}
 
@@ -111,6 +111,7 @@ class LLMMCPCollector:
                 )
             ]
 
+        logger.debug("MCP probe result: cli=%s available_sources=%s", self._cli, available)
         if not available:
             logger.info("No known MCP sources configured for %s — skipping", self._cli)
             return [
@@ -131,6 +132,8 @@ class LLMMCPCollector:
             available_sources=", ".join(available),
         )
 
+        logger.info("MCP collection starting: display_name=%s sources=%s", display_name, available)
+        logger.debug("MCP collection prompt (len=%d):\n%s", len(prompt), prompt[:1000])
         raw_response = await self._run_llm(prompt)
         if raw_response is None:
             return [
@@ -143,6 +146,7 @@ class LLMMCPCollector:
                 )
             ]
 
+        logger.debug("MCP raw response (len=%d): %s", len(raw_response), raw_response[:500])
         parsed = _parse_json_response(raw_response)
         if parsed is None:
             logger.warning(

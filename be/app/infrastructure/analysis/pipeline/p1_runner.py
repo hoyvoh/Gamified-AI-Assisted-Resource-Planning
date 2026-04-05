@@ -1,7 +1,6 @@
 """P1 pipeline runner — parallel chunked behavioral event extraction."""
 
 import asyncio
-import logging
 import uuid
 
 from app.domain.analysis.entities import EvidenceUnit
@@ -10,8 +9,9 @@ from app.infrastructure.analysis.pipeline.chunker import chunk_records
 from app.infrastructure.analysis.pipeline.llm_runner import LLMCallError, call_llm
 from app.infrastructure.analysis.prompts.p1_extraction import build_p1_prompt
 from app.infrastructure.db.base import utcnow
+from app.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 _MAX_PARALLEL_CHUNKS = 4  # concurrency limit for parallel LLM calls
 
@@ -53,6 +53,7 @@ async def run_p1(
                 member_id=member_id,
                 timestamp=rec.get("timestamp", now),
                 source_type=rec.get("source_type", "unknown"),
+                record_type=rec.get("type") or None,  # "pr_authored" | "commit" | "message" | etc.
                 record_id=rec_id or None,
                 content_excerpt=content[:500] if content else "",
                 content_summary="",  # filled after P1 extracts events
@@ -70,6 +71,10 @@ async def run_p1(
     chunks = chunk_records(source_records)
     logger.info(
         "P1: run_id=%s total_records=%d chunks=%d", run_id, len(source_records), len(chunks)
+    )
+    logger.debug(
+        "P1 chunk breakdown: %s",
+        [f"chunk[{i}]={len(c)}recs" for i, c in enumerate(chunks)],
     )
 
     semaphore = asyncio.Semaphore(_MAX_PARALLEL_CHUNKS)
@@ -104,7 +109,14 @@ async def run_p1(
             if not isinstance(events, list):
                 return []
 
-            return [e for e in events if isinstance(e, dict)]
+            valid = [e for e in events if isinstance(e, dict)]
+            logger.debug(
+                "P1 chunk done: run_id=%s chunk_size=%d extracted_events=%d",
+                run_id,
+                len(chunk),
+                len(valid),
+            )
+            return valid
 
     tasks = [process_chunk(chunk) for chunk in chunks]
     results = await asyncio.gather(*tasks, return_exceptions=True)

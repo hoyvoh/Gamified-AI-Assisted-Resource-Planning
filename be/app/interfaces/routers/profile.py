@@ -10,6 +10,7 @@ from app.application.analysis.profile_use_cases import (
     GetMemberMilestonesUseCase,
     GetProfileCasesUseCase,
     GetProfileCompetencyUseCase,
+    GetProfileEvidenceUseCase,
     GetProfileJourneyUseCase,
     GetProfileKptUseCase,
     GetProfileOverviewUseCase,
@@ -21,6 +22,7 @@ from app.dependencies import (
     get_member_milestones_use_case,
     get_profile_cases_use_case,
     get_profile_competency_use_case,
+    get_profile_evidence_use_case,
     get_profile_journey_use_case,
     get_profile_kpt_use_case,
     get_profile_overview_use_case,
@@ -48,6 +50,7 @@ from app.interfaces.schemas.profile import (
     MilestonesResponse,
     ProfileCasesResponse,
     ProfileCompetencyResponse,
+    ProfileEvidenceResponse,
     ProfileJourneyResponse,
     ProfileKptResponse,
     ProfileOverviewResponse,
@@ -269,6 +272,50 @@ async def get_profile_journey(
     )
 
 
+# ── B7.10 — Evidence list ────────────────────────────────────────────────────
+
+
+@router.get("/members/{member_id}/profile/evidence")
+async def get_profile_evidence(
+    member_id: str,
+    search: str | None = Query(
+        default=None, description="Keyword in content_excerpt or content_summary"
+    ),
+    source: str | None = Query(
+        default=None, description="Comma-separated source types, e.g. github,jira"
+    ),
+    record_type: str | None = Query(
+        default=None, description="Comma-separated record types, e.g. pr_authored,commit"
+    ),
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+    use_case: GetProfileEvidenceUseCase = Depends(get_profile_evidence_use_case),
+) -> DataEnvelope[ProfileEvidenceResponse]:
+    sources = [s.strip() for s in source.split(",")] if source else None
+    record_types = [r.strip() for r in record_type.split(",")] if record_type else None
+    try:
+        payload = await use_case.execute(
+            member_id,
+            search=search,
+            sources=sources,
+            record_types=record_types,
+            limit=limit,
+            offset=offset,
+        )
+    except NotFoundError as exc:
+        return JSONResponse(status_code=404, content={"detail": str(exc)})  # type: ignore[return-value]
+
+    return DataEnvelope[ProfileEvidenceResponse](
+        data=ProfileEvidenceResponse(
+            run_id=payload.run.analysis_run_id,
+            items=[_evidence_schema(e) for e in payload.items],
+            total=payload.total,
+            limit=limit,
+            offset=offset,
+        )
+    )
+
+
 # ── B7.8 — Evidence trace ────────────────────────────────────────────────────
 
 
@@ -338,6 +385,7 @@ def _evidence_schema(ev: EvidenceUnit) -> EvidenceUnitSchema:
         member_id=ev.member_id,
         timestamp=ev.timestamp,
         source_type=ev.source_type,
+        record_type=ev.record_type,
         record_id=ev.record_id,
         content_excerpt=ev.content_excerpt,
         content_summary=ev.content_summary,

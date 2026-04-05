@@ -1,4 +1,3 @@
-import logging
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
@@ -7,6 +6,7 @@ from alembic.config import Config
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.config import get_settings
 from app.infrastructure.analysis.runner import cleanup_orphaned_runs
 from app.infrastructure.db.seed import seed_role_profiles
 from app.infrastructure.db.session import _session_factory
@@ -14,8 +14,11 @@ from app.interfaces.routers.analysis import router as analysis_router
 from app.interfaces.routers.org import router as org_router
 from app.interfaces.routers.profile import router as profile_router
 from app.interfaces.routers.role_profiles import router as role_profiles_router
+from app.logger import configure_logging, get_logger
 
-logging.getLogger("app").setLevel(logging.INFO)
+_settings = get_settings()
+configure_logging(_settings.logging)
+logger = get_logger(__name__)
 
 
 @asynccontextmanager

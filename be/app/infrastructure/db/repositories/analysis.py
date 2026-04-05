@@ -35,6 +35,9 @@ from app.infrastructure.db.models.analysis import (
     SourcePayloadModel,
     ValidationFlagModel,
 )
+from app.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class SqlAnalysisRunRepository:
@@ -62,7 +65,21 @@ class SqlAnalysisRunRepository:
 
     async def get_by_id(self, run_id: str) -> AnalysisRun | None:
         model = await self._session.get(AnalysisRunModel, run_id)
-        return _run_to_entity(model) if model else None
+        if model is None:
+            logger.debug("run not found: id=%s", run_id)
+            return None
+        entity = _run_to_entity(model)
+        logger.debug(
+            "run fetched: id=%s status=%s stage=%s pct=%d member=%s period=%s..%s",
+            run_id,
+            entity.status,
+            entity.progress_stage,
+            entity.progress_pct,
+            entity.member_id,
+            entity.period_start,
+            entity.period_end,
+        )
+        return entity
 
     async def get_latest_for_member(self, member_id: str) -> AnalysisRun | None:
         stmt = (
@@ -73,7 +90,17 @@ class SqlAnalysisRunRepository:
         )
         result = await self._session.execute(stmt)
         model = result.scalar_one_or_none()
-        return _run_to_entity(model) if model else None
+        if model is None:
+            logger.debug("latest run not found for member=%s", member_id)
+            return None
+        entity = _run_to_entity(model)
+        logger.debug(
+            "latest run for member=%s: id=%s status=%s",
+            member_id,
+            entity.analysis_run_id,
+            entity.status,
+        )
+        return entity
 
     async def get_active_for_member(self, member_id: str) -> AnalysisRun | None:
         active_statuses = list(ANALYSIS_RUN_ACTIVE_STATUSES)
@@ -87,7 +114,18 @@ class SqlAnalysisRunRepository:
         )
         result = await self._session.execute(stmt)
         model = result.scalar_one_or_none()
-        return _run_to_entity(model) if model else None
+        if model is None:
+            logger.debug("no active run for member=%s", member_id)
+            return None
+        entity = _run_to_entity(model)
+        logger.debug(
+            "active run for member=%s: id=%s status=%s stage=%s",
+            member_id,
+            entity.analysis_run_id,
+            entity.status,
+            entity.progress_stage,
+        )
+        return entity
 
     async def get_latest_completed_for_member(self, member_id: str) -> AnalysisRun | None:
         stmt = (
@@ -101,7 +139,17 @@ class SqlAnalysisRunRepository:
         )
         result = await self._session.execute(stmt)
         model = result.scalar_one_or_none()
-        return _run_to_entity(model) if model else None
+        if model is None:
+            logger.debug("no completed run for member=%s", member_id)
+            return None
+        entity = _run_to_entity(model)
+        logger.debug(
+            "latest completed run for member=%s: id=%s completed=%s",
+            member_id,
+            entity.analysis_run_id,
+            entity.completed_at,
+        )
+        return entity
 
     async def list_by_member(self, member_id: str, limit: int, offset: int) -> list[AnalysisRun]:
         stmt = (
@@ -112,7 +160,14 @@ class SqlAnalysisRunRepository:
             .offset(offset)
         )
         result = await self._session.execute(stmt)
-        return [_run_to_entity(m) for m in result.scalars().all()]
+        entities = [_run_to_entity(m) for m in result.scalars().all()]
+        logger.debug(
+            "runs listed: member=%s count=%d statuses=%s",
+            member_id,
+            len(entities),
+            [e.status for e in entities],
+        )
+        return entities
 
     async def update(self, run: AnalysisRun) -> None:
         model = await self._session.get(AnalysisRunModel, run.analysis_run_id)
@@ -125,6 +180,13 @@ class SqlAnalysisRunRepository:
             model.completed_at = run.completed_at
             model.updated_at = utcnow()
             await self._session.flush()
+            logger.debug(
+                "run updated: id=%s status=%s stage=%s pct=%d",
+                run.analysis_run_id,
+                run.status,
+                run.progress_stage,
+                run.progress_pct,
+            )
 
     async def list_all_active(self) -> list[AnalysisRun]:
         """Return all runs not in a terminal state (used for startup orphan cleanup)."""
@@ -153,11 +215,21 @@ class SqlSourcePayloadRepository:
         )
         self._session.add(model)
         await self._session.flush()
+        logger.debug(
+            "payload persisted: run=%s source=%s status=%s records=%d err=%s",
+            payload.analysis_run_id,
+            payload.source_type,
+            payload.collection_status,
+            payload.record_count,
+            payload.error_message,
+        )
 
     async def list_by_run(self, run_id: str) -> list[SourcePayload]:
         stmt = select(SourcePayloadModel).where(SourcePayloadModel.analysis_run_id == run_id)
         result = await self._session.execute(stmt)
-        return [_payload_to_entity(m) for m in result.scalars().all()]
+        entities = [_payload_to_entity(m) for m in result.scalars().all()]
+        logger.debug("payloads fetched: run=%s count=%d", run_id, len(entities))
+        return entities
 
 
 # ── helpers ───────────────────────────────────────────────────────────────────
@@ -208,6 +280,7 @@ class SqlEvidenceUnitRepository:
                     member_id=unit.member_id,
                     timestamp=unit.timestamp,
                     source_type=unit.source_type,
+                    record_type=unit.record_type,
                     record_id=unit.record_id,
                     content_excerpt=unit.content_excerpt,
                     content_summary=unit.content_summary,
@@ -217,22 +290,94 @@ class SqlEvidenceUnitRepository:
                 )
             )
         await self._session.flush()
+        if units:
+            run_id = units[0].analysis_run_id
+            by_source: dict[str, int] = {}
+            for u in units:
+                by_source[u.source_type or "unknown"] = (
+                    by_source.get(u.source_type or "unknown", 0) + 1
+                )
+            logger.debug(
+                "evidence units created: run=%s count=%d by_source=%s",
+                run_id,
+                len(units),
+                by_source,
+            )
 
     async def get_by_id(self, evidence_id: str) -> EvidenceUnit | None:
         model = await self._session.get(EvidenceUnitModel, evidence_id)
-        return _evidence_to_entity(model) if model else None
+        if model is None:
+            logger.debug("evidence not found: id=%s", evidence_id)
+            return None
+        entity = _evidence_to_entity(model)
+        logger.debug(
+            "evidence fetched: id=%s source=%s record_type=%s",
+            evidence_id,
+            entity.source_type,
+            entity.record_type,
+        )
+        return entity
 
     async def list_by_ids(self, evidence_ids: list[str]) -> list[EvidenceUnit]:
         if not evidence_ids:
             return []
         stmt = select(EvidenceUnitModel).where(EvidenceUnitModel.evidence_id.in_(evidence_ids))
         result = await self._session.execute(stmt)
-        return [_evidence_to_entity(m) for m in result.scalars().all()]
+        entities = [_evidence_to_entity(m) for m in result.scalars().all()]
+        logger.debug(
+            "evidence fetched by ids: requested=%d found=%d", len(evidence_ids), len(entities)
+        )
+        return entities
 
     async def list_by_run(self, run_id: str) -> list[EvidenceUnit]:
         stmt = select(EvidenceUnitModel).where(EvidenceUnitModel.analysis_run_id == run_id)
         result = await self._session.execute(stmt)
-        return [_evidence_to_entity(m) for m in result.scalars().all()]
+        entities = [_evidence_to_entity(m) for m in result.scalars().all()]
+        logger.debug("evidence units fetched: run=%s count=%d", run_id, len(entities))
+        return entities
+
+    async def list_by_run_filtered(
+        self,
+        run_id: str,
+        search: str | None = None,
+        sources: list[str] | None = None,
+        record_types: list[str] | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> tuple[list[EvidenceUnit], int]:
+        """Return (items, total_count) for the given filters."""
+        from sqlalchemy import func
+
+        base = select(EvidenceUnitModel).where(EvidenceUnitModel.analysis_run_id == run_id)
+
+        if sources:
+            base = base.where(EvidenceUnitModel.source_type.in_(sources))
+        if record_types:
+            base = base.where(EvidenceUnitModel.record_type.in_(record_types))
+        if search:
+            like = f"%{search}%"
+            base = base.where(
+                EvidenceUnitModel.content_excerpt.ilike(like)
+                | EvidenceUnitModel.content_summary.ilike(like)
+            )
+
+        count_stmt = select(func.count()).select_from(base.subquery())
+        total: int = (await self._session.execute(count_stmt)).scalar_one()
+
+        items_stmt = base.order_by(EvidenceUnitModel.timestamp.desc()).limit(limit).offset(offset)
+        result = await self._session.execute(items_stmt)
+        entities = [_evidence_to_entity(m) for m in result.scalars().all()]
+        logger.debug(
+            "evidence filtered: run=%s search=%r sources=%s record_types=%s returned=%d/%d offset=%d",
+            run_id,
+            search,
+            sources,
+            record_types,
+            len(entities),
+            total,
+            offset,
+        )
+        return entities, total
 
 
 class SqlBehavioralEventRepository:
@@ -262,11 +407,24 @@ class SqlBehavioralEventRepository:
                 )
             )
         await self._session.flush()
+        if events:
+            run_id = events[0].analysis_run_id
+            polarities: dict[str, int] = {}
+            for e in events:
+                polarities[e.polarity] = polarities.get(e.polarity, 0) + 1
+            logger.debug(
+                "behavioral events created: run=%s count=%d polarities=%s",
+                run_id,
+                len(events),
+                polarities,
+            )
 
     async def list_by_run(self, run_id: str) -> list[BehavioralEvent]:
         stmt = select(BehavioralEventModel).where(BehavioralEventModel.analysis_run_id == run_id)
         result = await self._session.execute(stmt)
-        return [_event_to_entity(m) for m in result.scalars().all()]
+        entities = [_event_to_entity(m) for m in result.scalars().all()]
+        logger.debug("behavioral events fetched: run=%s count=%d", run_id, len(entities))
+        return entities
 
 
 class SqlDimensionSignalRepository:
@@ -292,11 +450,24 @@ class SqlDimensionSignalRepository:
                 )
             )
         await self._session.flush()
+        if signals:
+            run_id = signals[0].analysis_run_id
+            by_dim: dict[str, int] = {}
+            for s in signals:
+                by_dim[s.dimension_id] = by_dim.get(s.dimension_id, 0) + 1
+            logger.debug(
+                "dim signals created: run=%s count=%d dims=%s",
+                run_id,
+                len(signals),
+                list(by_dim.keys()),
+            )
 
     async def list_by_run(self, run_id: str) -> list[DimensionSignal]:
         stmt = select(DimensionSignalModel).where(DimensionSignalModel.analysis_run_id == run_id)
         result = await self._session.execute(stmt)
-        return [_signal_to_entity(m) for m in result.scalars().all()]
+        entities = [_signal_to_entity(m) for m in result.scalars().all()]
+        logger.debug("dim signals fetched: run=%s count=%d", run_id, len(entities))
+        return entities
 
     async def list_by_run_and_dimension(
         self, run_id: str, dimension_id: str
@@ -306,14 +477,18 @@ class SqlDimensionSignalRepository:
             DimensionSignalModel.dimension_id == dimension_id,
         )
         result = await self._session.execute(stmt)
-        return [_signal_to_entity(m) for m in result.scalars().all()]
+        entities = [_signal_to_entity(m) for m in result.scalars().all()]
+        logger.debug(
+            "dim signals fetched: run=%s dim=%s count=%d", run_id, dimension_id, len(entities)
+        )
+        return entities
 
 
 class SqlDimensionScoreRepository:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
-    async def bulk_create(self, scores: list[DimensionScore]) -> None:
+    async def bulk_create(self, scores: list[DimensionScore]) -> None:  # type: ignore[override]
         for sc in scores:
             self._session.add(
                 DimensionScoreModel(
@@ -344,11 +519,26 @@ class SqlDimensionScoreRepository:
                 )
             )
         await self._session.flush()
+        if scores:
+            run_id = scores[0].analysis_run_id
+            logger.debug(
+                "dim scores created: run=%s count=%d dims=%s",
+                run_id,
+                len(scores),
+                [s.dimension_id for s in scores],
+            )
 
     async def list_by_run(self, run_id: str) -> list[DimensionScore]:
         stmt = select(DimensionScoreModel).where(DimensionScoreModel.analysis_run_id == run_id)
         result = await self._session.execute(stmt)
-        return [_dim_score_to_entity(m) for m in result.scalars().all()]
+        entities = [_dim_score_to_entity(m) for m in result.scalars().all()]
+        logger.debug(
+            "dim scores fetched: run=%s count=%d dims=%s",
+            run_id,
+            len(entities),
+            [e.dimension_id for e in entities],
+        )
+        return entities
 
     async def get_by_run_and_dimension(
         self, run_id: str, dimension_id: str
@@ -359,7 +549,18 @@ class SqlDimensionScoreRepository:
         )
         result = await self._session.execute(stmt)
         model = result.scalar_one_or_none()
-        return _dim_score_to_entity(model) if model else None
+        if model is None:
+            logger.debug("dim score not found: run=%s dim=%s", run_id, dimension_id)
+            return None
+        entity = _dim_score_to_entity(model)
+        logger.debug(
+            "dim score fetched: run=%s dim=%s maturity=%s score=%s",
+            run_id,
+            dimension_id,
+            entity.maturity_level,
+            entity.normalized_score,
+        )
+        return entity
 
     async def update_ui_summary(self, run_id: str, dimension_id: str, ui_summary: str) -> None:
         stmt = select(DimensionScoreModel).where(
@@ -395,11 +596,26 @@ class SqlCategoryScoreRepository:
                 )
             )
         await self._session.flush()
+        if scores:
+            run_id = scores[0].analysis_run_id
+            logger.debug(
+                "cat scores created: run=%s count=%d cats=%s",
+                run_id,
+                len(scores),
+                [f"{s.category_id}={s.score}" for s in scores],
+            )
 
     async def list_by_run(self, run_id: str) -> list[CategoryScore]:
         stmt = select(CategoryScoreModel).where(CategoryScoreModel.analysis_run_id == run_id)
         result = await self._session.execute(stmt)
-        return [_cat_score_to_entity(m) for m in result.scalars().all()]
+        entities = [_cat_score_to_entity(m) for m in result.scalars().all()]
+        logger.debug(
+            "cat scores fetched: run=%s count=%d cats=%s",
+            run_id,
+            len(entities),
+            [f"{e.category_id}={e.score}" for e in entities],
+        )
+        return entities
 
 
 class SqlPersonalBaselineRepository:
@@ -447,6 +663,7 @@ def _evidence_to_entity(model: EvidenceUnitModel) -> EvidenceUnit:
         member_id=model.member_id,
         timestamp=model.timestamp,
         source_type=model.source_type,
+        record_type=model.record_type,
         record_id=model.record_id,
         content_excerpt=model.content_excerpt,
         content_summary=model.content_summary,
@@ -559,7 +776,9 @@ class SqlKptItemRepository:
         await self._session.execute(
             delete(KptItemModel).where(KptItemModel.analysis_run_id == run_id)
         )
+        by_type: dict[str, int] = {}
         for item in items:
+            by_type[item.item_type] = by_type.get(item.item_type, 0) + 1
             self._session.add(
                 KptItemModel(
                     kpt_id=item.kpt_id,
@@ -576,6 +795,7 @@ class SqlKptItemRepository:
                 )
             )
         await self._session.flush()
+        logger.debug("kpt items replaced: run=%s total=%d by_type=%s", run_id, len(items), by_type)
 
     async def list_by_run(self, run_id: str) -> list[KptItem]:
         stmt = (
@@ -584,7 +804,19 @@ class SqlKptItemRepository:
             .order_by(KptItemModel.item_type, KptItemModel.display_order)
         )
         result = await self._session.execute(stmt)
-        return [_kpt_to_entity(m) for m in result.scalars().all()]
+        entities = [_kpt_to_entity(m) for m in result.scalars().all()]
+        keep = sum(1 for e in entities if e.item_type == "keep")
+        problem = sum(1 for e in entities if e.item_type == "problem")
+        try_ = sum(1 for e in entities if e.item_type == "try")
+        logger.debug(
+            "kpt items fetched: run=%s total=%d keep=%d problem=%d try=%d",
+            run_id,
+            len(entities),
+            keep,
+            problem,
+            try_,
+        )
+        return entities
 
 
 class SqlCaseFeedbackRepository:
@@ -619,10 +851,18 @@ class SqlCaseFeedbackRepository:
                 )
             )
         await self._session.flush()
+        logger.debug("cases replaced: run=%s count=%d", run_id, len(cases))
 
     async def get_by_id(self, case_id: str) -> CaseFeedback | None:
         model = await self._session.get(CaseFeedbackModel, case_id)
-        return _case_to_entity(model) if model else None
+        if model is None:
+            logger.debug("case not found: id=%s", case_id)
+            return None
+        entity = _case_to_entity(model)
+        logger.debug(
+            "case fetched: id=%s title=%r impact=%s", case_id, entity.title, entity.impact_level
+        )
+        return entity
 
     async def list_by_run(self, run_id: str) -> list[CaseFeedback]:
         stmt = (
@@ -631,7 +871,9 @@ class SqlCaseFeedbackRepository:
             .order_by(CaseFeedbackModel.display_order)
         )
         result = await self._session.execute(stmt)
-        return [_case_to_entity(m) for m in result.scalars().all()]
+        entities = [_case_to_entity(m) for m in result.scalars().all()]
+        logger.debug("cases fetched: run=%s count=%d", run_id, len(entities))
+        return entities
 
 
 class SqlMilestoneRepository:
@@ -657,6 +899,10 @@ class SqlMilestoneRepository:
                 )
             )
         await self._session.flush()
+        if milestones:
+            logger.debug(
+                "milestones appended: member=%s count=%d", milestones[0].member_id, len(milestones)
+            )
 
     async def list_by_member(self, member_id: str) -> list[Milestone]:
         stmt = (
@@ -665,7 +911,9 @@ class SqlMilestoneRepository:
             .order_by(MilestoneModel.timestamp)
         )
         result = await self._session.execute(stmt)
-        return [_milestone_to_entity(m) for m in result.scalars().all()]
+        entities = [_milestone_to_entity(m) for m in result.scalars().all()]
+        logger.debug("milestones fetched: member=%s count=%d", member_id, len(entities))
+        return entities
 
 
 class SqlAnalysisSnapshotRepository:
@@ -718,7 +966,19 @@ class SqlAnalysisSnapshotRepository:
         stmt = select(AnalysisSnapshotModel).where(AnalysisSnapshotModel.analysis_run_id == run_id)
         result = await self._session.execute(stmt)
         model = result.scalar_one_or_none()
-        return _snapshot_to_entity(model) if model else None
+        if model is None:
+            logger.debug("snapshot not found: run=%s", run_id)
+            return None
+        entity = _snapshot_to_entity(model)
+        logger.debug(
+            "snapshot fetched: run=%s approved=%s confidence=%s strengths=%d growth=%d",
+            run_id,
+            entity.p8_approved,
+            entity.overall_confidence,
+            len(entity.top_strength_dimension_ids),
+            len(entity.top_growth_dimension_ids),
+        )
+        return entity
 
 
 def _kpt_to_entity(model: KptItemModel) -> KptItem:
@@ -833,7 +1093,14 @@ class SqlValidationFlagRepository:
             .order_by(ValidationFlagModel.flagged_at)
         )
         result = await self._session.execute(stmt)
-        return [_flag_to_entity(m) for m in result.scalars().all()]
+        entities = [_flag_to_entity(m) for m in result.scalars().all()]
+        logger.debug(
+            "validation flags fetched: run=%s count=%d verdicts=%s",
+            run_id,
+            len(entities),
+            [e.verdict for e in entities],
+        )
+        return entities
 
     async def count_by_run(self, run_id: str) -> int:
         from sqlalchemy import func

@@ -2,10 +2,11 @@
 
 import asyncio
 import json
-import logging
 import re
 
-logger = logging.getLogger(__name__)
+from app.logger import get_logger
+
+logger = get_logger(__name__)
 
 _MAX_RETRIES = 2
 
@@ -26,18 +27,49 @@ async def call_llm(
     Retries up to max_retries times on transient failures (non-zero exit, parse error).
     Raises LLMCallError if all attempts fail.
     """
+    logger.debug(
+        "LLM call starting: tool=%s model=%s timeout=%ds retries=%d prompt_len=%d\nPROMPT>>>\n%s\n<<<",
+        cli_tool,
+        model,
+        timeout_seconds,
+        max_retries,
+        len(prompt),
+        prompt[:2000],
+    )
+
     last_error: str = ""
     for attempt in range(1, max_retries + 2):
+        logger.debug(
+            "LLM attempt %d/%d: tool=%s model=%s", attempt, max_retries + 1, cli_tool, model
+        )
         try:
             raw = await _run_subprocess(cli_tool, model, prompt, timeout_seconds)
+            logger.debug(
+                "LLM attempt %d/%d raw response (len=%d):\n%s",
+                attempt,
+                max_retries + 1,
+                len(raw),
+                raw[:1000],
+            )
             parsed = _parse_json(raw)
             if parsed is not None:
+                logger.debug(
+                    "LLM attempt %d/%d parsed OK: type=%s keys=%s",
+                    attempt,
+                    max_retries + 1,
+                    type(parsed).__name__,
+                    list(parsed.keys()) if isinstance(parsed, dict) else f"[{len(parsed)} items]",
+                )
                 return parsed
             last_error = f"Non-JSON output (first 200 chars): {raw[:200]}"
-            logger.warning("LLM attempt %d/%d returned non-JSON", attempt, max_retries + 1)
+            logger.warning(
+                "LLM attempt %d/%d returned non-JSON: %s", attempt, max_retries + 1, raw[:200]
+            )
         except TimeoutError:
             last_error = f"Timed out after {timeout_seconds}s"
-            logger.warning("LLM attempt %d/%d timed out", attempt, max_retries + 1)
+            logger.warning(
+                "LLM attempt %d/%d timed out after %ds", attempt, max_retries + 1, timeout_seconds
+            )
         except FileNotFoundError:
             raise LLMCallError(
                 f"LLM CLI `{cli_tool}` not found on PATH. "

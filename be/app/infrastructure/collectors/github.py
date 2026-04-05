@@ -8,15 +8,15 @@ Collects three data streams in parallel:
 
 import asyncio
 import json
-import logging
 
 from app.infrastructure.collectors.base import (
     CollectionResult,
     CollectorTimeoutError,
     CollectorUnavailableError,
 )
+from app.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class GitHubCollector:
@@ -58,6 +58,12 @@ class GitHubCollector:
                 error_message="GitHub CLI not authenticated. Run `gh auth login` on the host machine.",
             )
 
+        logger.info(
+            "GitHub collection starting: handle=%s period=%s to %s",
+            handle,
+            period_start,
+            period_end,
+        )
         # Run all three fetches in parallel — none write to the DB
         authored_task = asyncio.create_task(
             self._fetch_authored_prs(handle, period_start, period_end)
@@ -106,6 +112,7 @@ class GitHubCollector:
     ) -> list[dict]:
         """Fetch PRs authored by the user via GitHub search API."""
         query = f"type:pr+author:{handle}+created:{period_start}..{period_end}"
+        logger.debug("GitHub authored PRs query: %s", query)
         data = await self._gh_api(f"search/issues?q={query}&per_page=50&sort=created&order=desc")
         if isinstance(data, str):
             raise RuntimeError(data)
@@ -133,6 +140,7 @@ class GitHubCollector:
     ) -> list[dict]:
         """Fetch PRs where the user left a review or comment."""
         query = f"type:pr+commenter:{handle}+updated:{period_start}..{period_end}"
+        logger.debug("GitHub reviewed PRs query: %s", query)
         data = await self._gh_api(f"search/issues?q={query}&per_page=50&sort=updated&order=desc")
         if isinstance(data, str):
             raise RuntimeError(data)
@@ -168,7 +176,7 @@ class GitHubCollector:
                 "--limit",
                 "100",
                 "--json",
-                "sha,message,url,committedDate,repository",
+                "sha,commit,url,repository",
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
@@ -191,9 +199,12 @@ class GitHubCollector:
                 {
                     "type": "commit",
                     "sha": c.get("sha", "")[:12],
-                    "message": (c.get("message") or "")[:500],
+                    "message": ((c.get("commit") or {}).get("message") or "")[:500],
                     "url": c.get("url", ""),
-                    "committed_at": c.get("committedDate", ""),
+                    "committed_at": (
+                        (c.get("commit") or {}).get("author", {}).get("date", "")
+                        or (c.get("commit") or {}).get("committer", {}).get("date", "")
+                    ),
                     "repo": (c.get("repository") or {}).get("nameWithOwner", ""),
                 }
                 for c in (commits if isinstance(commits, list) else [])

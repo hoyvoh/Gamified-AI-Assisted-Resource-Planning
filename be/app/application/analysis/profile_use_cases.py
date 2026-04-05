@@ -302,6 +302,48 @@ class GetEvidenceTraceUseCase:
 # ── B7.9 ─────────────────────────────────────────────────────────────────────
 
 
+# ── B7.10 — Evidence list ─────────────────────────────────────────────────────
+
+
+@dataclass
+class EvidenceListPayload:
+    run: AnalysisRun
+    items: list[EvidenceUnit]
+    total: int
+
+
+class GetProfileEvidenceUseCase:
+    def __init__(
+        self,
+        member_repo: IMemberRepository,
+        run_repo: SqlAnalysisRunRepository,
+        evidence_repo: SqlEvidenceUnitRepository,
+    ) -> None:
+        self._members = member_repo
+        self._runs = run_repo
+        self._evidence = evidence_repo
+
+    async def execute(
+        self,
+        member_id: str,
+        search: str | None = None,
+        sources: list[str] | None = None,
+        record_types: list[str] | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> EvidenceListPayload:
+        run = await _require_member_and_run(member_id, self._members, self._runs)
+        items, total = await self._evidence.list_by_run_filtered(
+            run_id=run.analysis_run_id,
+            search=search,
+            sources=sources,
+            record_types=record_types,
+            limit=limit,
+            offset=offset,
+        )
+        return EvidenceListPayload(run=run, items=items, total=total)
+
+
 class GetMemberMilestonesUseCase:
     def __init__(
         self,

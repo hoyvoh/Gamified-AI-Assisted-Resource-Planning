@@ -51,6 +51,7 @@ class EvidenceUnitSchema(BaseResponse):
     member_id: str
     timestamp: str
     source_type: str | None
+    record_type: str | None
     record_id: str | None
     content_excerpt: str
     content_summary: str
@@ -186,3 +187,14 @@ class ProfileJourneyResponse(BaseResponse):
 
 class MilestonesResponse(BaseResponse):
     milestones: list[MilestoneSchema]
+
+
+# ── B7.10 — Evidence list ─────────────────────────────────────────────────────
+
+
+class ProfileEvidenceResponse(BaseResponse):
+    run_id: str
+    items: list[EvidenceUnitSchema]
+    total: int
+    limit: int
+    offset: int

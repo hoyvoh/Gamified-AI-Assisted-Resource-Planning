@@ -1,13 +1,13 @@
 """P3 pipeline runner — per-dimension skill inference (parallel)."""
 
 import asyncio
-import logging
 
 from app.domain.analysis.taxonomy import DIMENSION_IDS
 from app.infrastructure.analysis.pipeline.llm_runner import LLMCallError, call_llm
 from app.infrastructure.analysis.prompts.p3_inference import build_p3_prompt
+from app.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 _MAX_CONCURRENT = 4  # parallel LLM calls
 
@@ -51,6 +51,7 @@ async def run_p3(
                 baseline_summary=baseline_summary,
                 behavioral_events=dim_events,
             )
+            logger.debug("P3: inferring dim=%s run=%s events=%d", dim_id, run_id, len(dim_events))
             try:
                 result = await call_llm(
                     cli_tool=cli_tool,
@@ -60,6 +61,14 @@ async def run_p3(
                     max_retries=max_retries,
                 )
                 if isinstance(result, dict) and result.get("dimension_id") == dim_id:
+                    logger.debug(
+                        "P3: dim=%s run=%s maturity=%s score=%s confidence=%s",
+                        dim_id,
+                        run_id,
+                        result.get("maturity_level"),
+                        result.get("inferred_score"),
+                        result.get("confidence_score"),
+                    )
                     return dim_id, result
                 logger.warning("P3: unexpected output structure for dim=%s run=%s", dim_id, run_id)
                 return dim_id, None

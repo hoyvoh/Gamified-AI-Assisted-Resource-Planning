@@ -9,6 +9,20 @@ from pydantic_settings import (
 )
 
 
+class LoggingSettings(BaseModel):
+    # Level for the 'app' logger hierarchy.
+    # "DEBUG" shows every step including LLM prompts/responses.
+    # "INFO" shows only key milestones (phase start/end, record counts, errors).
+    level: Literal["DEBUG", "INFO", "WARNING"] = "INFO"
+
+    # Level for SQLAlchemy engine output.
+    # Set to "INFO" to see all SQL statements; "WARNING" to suppress them.
+    sql_level: Literal["DEBUG", "INFO", "WARNING"] = "WARNING"
+
+    # Log format: "text" for human-readable console output, "json" for structured logs.
+    format: Literal["text", "json"] = "text"
+
+
 class LLMSettings(BaseModel):
     # LLM ops run via CLI subprocess (claude / codex) — no API keys stored here.
     # Authenticate once with: `claude auth login` or similar.
@@ -37,6 +51,7 @@ class Settings(BaseSettings):
     database_url: str
     secret_key: str
     debug: bool = False
+    logging: LoggingSettings = LoggingSettings()
     llm: LLMSettings = LLMSettings()
     analysis: AnalysisSettings = AnalysisSettings()
 

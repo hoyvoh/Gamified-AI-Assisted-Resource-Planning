@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import logging
 import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -32,8 +31,9 @@ from app.infrastructure.db.repositories.analysis import (
     SqlMilestoneRepository,
 )
 from app.infrastructure.db.repositories.org import SqlMemberRepository, SqlRoleProfileRepository
+from app.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 _P4_CONCURRENT = 4
 _MILESTONE_CONFIDENCE_THRESHOLD = 0.65
@@ -68,6 +68,7 @@ async def run_output_generation(
 
     # ── Phase A: P4 — dimension UI summaries (parallel) ───────────────────────
     scored_dims = [ds for ds in dimension_scores if ds.p3_inference is not None]
+    logger.info("P4 starting: run_id=%s scored_dims=%d", run.analysis_run_id, len(scored_dims))
     await _run_p4_parallel(scored_dims, run.analysis_run_id, dim_score_repo, session, llm_settings)
     await session.commit()
 
@@ -170,11 +171,19 @@ async def run_output_generation(
     await session.commit()
 
     logger.info(
-        "Output generation complete: run_id=%s kpt=%d cases=%d milestones=%d",
+        "Output generation complete: run_id=%s kpt=%d cases=%d milestones=%d overall_confidence=%.2f",
         run.analysis_run_id,
         len(kpt_items),
         len(cases),
         len(new_milestones),
+        overall_confidence,
+    )
+    logger.debug(
+        "Snapshot summary: run_id=%s top_strengths=%s top_growth=%s profile_summary_len=%d",
+        run.analysis_run_id,
+        top_strength_ids,
+        top_growth_ids,
+        len(profile_summary or ""),
     )
 
 

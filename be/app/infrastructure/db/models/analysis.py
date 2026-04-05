@@ -20,6 +20,7 @@ class EvidenceUnitModel(Base):
     member_id: Mapped[str] = mapped_column(sa.String, nullable=False)
     timestamp: Mapped[str] = mapped_column(sa.String, nullable=False)
     source_type: Mapped[str | None] = mapped_column(sa.String(50), nullable=True)
+    record_type: Mapped[str | None] = mapped_column(sa.String(50), nullable=True)
     record_id: Mapped[str | None] = mapped_column(sa.String(255), nullable=True)
     content_excerpt: Mapped[str] = mapped_column(sa.Text, nullable=False, default="")
     content_summary: Mapped[str] = mapped_column(sa.Text, nullable=False, default="")

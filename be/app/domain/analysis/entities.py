@@ -51,7 +51,8 @@ class EvidenceUnit:
     analysis_run_id: str
     member_id: str
     timestamp: str  # ISO 8601 from source record
-    source_type: str | None  # "github" | "slack" | etc.
+    source_type: str | None  # "github" | "slack" | "jira" | "confluence" | etc.
+    record_type: str | None  # "pr_authored" | "pr_reviewed" | "commit" | "message" | "task" | etc.
     record_id: str | None  # original record id from source payload
     content_excerpt: str  # raw content (truncated)
     content_summary: str  # one-line summary (filled in after P1)

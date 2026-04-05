@@ -7,7 +7,6 @@ State machine:
 
 import asyncio
 import json
-import logging
 import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -37,8 +36,9 @@ from app.infrastructure.db.repositories.analysis import (
 )
 from app.infrastructure.db.repositories.org import SqlMemberRepository
 from app.infrastructure.db.session import _session_factory
+from app.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 async def run_analysis_job(
@@ -172,8 +172,19 @@ async def _run_pipeline(
                 period_start=run.period_start,
                 period_end=run.period_end,
             )
-        except CollectorTimeoutError as exc:
-            logger.warning("LLM MCP collection timed out: %s", exc)
+        except (CollectorTimeoutError, CollectorUnavailableError) as exc:
+            logger.warning("LLM MCP collection skipped: %s", exc)
+            return [
+                CollectionResult(
+                    source_type="mcp",
+                    source_handle=member.display_name,
+                    records=[],
+                    status="skipped",
+                    error_message=str(exc),
+                )
+            ]
+        except Exception as exc:
+            logger.warning("LLM MCP collection failed unexpectedly: %s", exc)
             return [
                 CollectionResult(
                     source_type="mcp",
@@ -184,6 +195,7 @@ async def _run_pipeline(
                 )
             ]
 
+    logger.info("Collection starting: run_id=%s member=%s", run_id, run.member_id)
     # Run both collectors in parallel — they only make subprocess/network calls
     gh_results, mcp_results = await asyncio.gather(
         _collect_gh(), _collect_mcp(), return_exceptions=True
@@ -218,13 +230,28 @@ async def _run_pipeline(
 
     total_records = sum(r.record_count for r in results)
     collected_results = [r for r in results if r.status == "collected"]
+    logger.info(
+        "Collection complete: run_id=%s sources=%d total_records=%d collected_sources=%d",
+        run_id,
+        len(results),
+        total_records,
+        len(collected_results),
+    )
+    logger.debug(
+        "Collection results: %s",
+        [
+            f"{r.source_type}({r.source_handle})={r.status} records={r.record_count} err={r.error_message}"
+            for r in results
+        ],
+    )
 
-    if not collected_results and results:
+    if not collected_results:
         errors = "; ".join(r.error_message or "" for r in results if r.error_message)
+        detail = f" Details: {errors}" if errors else " No collectors ran or all were skipped."
         await _mark_failed_in_session(
             run,
             run_repo,
-            f"No data collected from any source. Details: {errors}",
+            f"No data collected from any source.{detail}",
             session,
         )
         return
@@ -291,6 +318,7 @@ async def _run_pipeline(
     )
 
     # ── Phase 3: Dimension Scoring (P3 + scoring engine) ─────────────────────
+    logger.info("Phase 3 starting: run_id=%s stage=inferring_dimensions", run_id)
     run.progress_stage = "inferring_dimensions"
     run.progress_pct = 60
     await run_repo.update(run)
@@ -309,6 +337,7 @@ async def _run_pipeline(
     await session.commit()
 
     # ── Phase 4: Human Output Generation (P4-P7) ─────────────────────────────
+    logger.info("Phase 4 starting: run_id=%s stage=generating_kpt", run_id)
     run.progress_stage = "generating_kpt"
     run.progress_pct = 80
     await run_repo.update(run)
@@ -325,6 +354,7 @@ async def _run_pipeline(
     )
 
     # ── Phase 5: P8 Self-Critique Gate ────────────────────────────────────────
+    logger.info("Phase 5 starting: run_id=%s stage=self_checking", run_id)
     run.progress_stage = "self_checking"
     run.progress_pct = 92
     await run_repo.update(run)

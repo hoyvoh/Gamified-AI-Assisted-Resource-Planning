@@ -1,6 +1,5 @@
 """P2 pipeline runner — event consolidation and deduplication."""
 
-import logging
 import uuid
 
 from app.domain.analysis.entities import BehavioralEvent
@@ -12,8 +11,9 @@ from app.domain.analysis.taxonomy import (
 from app.infrastructure.analysis.pipeline.llm_runner import LLMCallError, call_llm
 from app.infrastructure.analysis.prompts.p2_consolidation import build_p2_prompt
 from app.infrastructure.db.base import utcnow
+from app.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 async def run_p2(
@@ -67,6 +67,10 @@ async def run_p2(
         events.append(_dict_to_behavioral_event(ev, run_id, member_id, now))
 
     logger.info("P2 complete: run_id=%s consolidated_events=%d", run_id, len(events))
+    logger.debug(
+        "P2 event summaries: %s",
+        [f"{e.event_type}({e.polarity}): {(e.event_summary or '')[:60]}" for e in events],
+    )
     return events
 
 

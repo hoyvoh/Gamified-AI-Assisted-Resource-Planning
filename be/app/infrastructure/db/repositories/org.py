@@ -12,6 +12,9 @@ from app.infrastructure.db.models.org import (
     RoleProfileModel,
     TeamModel,
 )
+from app.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class SqlOrganizationRepository:
@@ -37,8 +40,11 @@ class SqlOrganizationRepository:
         result = await self._session.execute(stmt)
         model = result.scalar_one_or_none()
         if model is None:
+            logger.debug("org not found: id=%s", org_id)
             return None
-        return _org_to_entity(model, include_tree=True)
+        entity = _org_to_entity(model, include_tree=True)
+        logger.debug("org fetched: id=%s name=%r teams=%d", org_id, entity.name, len(entity.teams))
+        return entity
 
     async def list_all(self) -> list[Organization]:
         stmt = select(OrganizationModel).options(
@@ -46,7 +52,9 @@ class SqlOrganizationRepository:
         )
         result = await self._session.execute(stmt)
         models = result.scalars().all()
-        return [_org_to_entity(m, include_tree=True) for m in models]
+        entities = [_org_to_entity(m, include_tree=True) for m in models]
+        logger.debug("orgs fetched: count=%d", len(entities))
+        return entities
 
     async def update(self, org: Organization) -> None:
         model = await self._session.get(OrganizationModel, org.organization_id)
@@ -80,8 +88,13 @@ class SqlTeamRepository:
     async def get_by_id(self, team_id: str) -> Team | None:
         model = await self._session.get(TeamModel, team_id)
         if model is None:
+            logger.debug("team not found: id=%s", team_id)
             return None
-        return _team_to_entity(model)
+        entity = _team_to_entity(model)
+        logger.debug(
+            "team fetched: id=%s name=%r org=%s", team_id, entity.name, entity.organization_id
+        )
+        return entity
 
     async def update(self, team: Team) -> None:
         model = await self._session.get(TeamModel, team.team_id)
@@ -121,8 +134,18 @@ class SqlMemberRepository:
         result = await self._session.execute(stmt)
         model = result.scalar_one_or_none()
         if model is None:
+            logger.debug("member not found: id=%s", member_id)
             return None
-        return _member_to_entity(model, org_id=model.team.organization_id)
+        entity = _member_to_entity(model, org_id=model.team.organization_id)
+        logger.debug(
+            "member fetched: id=%s name=%r external_id=%r role=%s team=%s",
+            member_id,
+            entity.display_name,
+            entity.external_id,
+            entity.role_profile_id,
+            entity.team_id,
+        )
+        return entity
 
     async def update(self, member: Member) -> None:
         model = await self._session.get(MemberModel, member.member_id)

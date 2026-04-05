@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import logging
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import LLMSettings
@@ -14,8 +12,9 @@ from app.infrastructure.db.repositories.analysis import (
     SqlAnalysisSnapshotRepository,
     SqlDimensionScoreRepository,
 )
+from app.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 async def run_p8(
@@ -59,7 +58,20 @@ async def run_p8(
         llm_settings=llm_settings,
     )
 
+    logger.debug(
+        "P8 first pass: run_id=%s approved=%s issues=%d",
+        run.analysis_run_id,
+        approved,
+        len(issues),
+    )
     if not approved and issues:
+        logger.debug(
+            "P8 issues: %s",
+            [
+                f"field={i.get('field')} dim={i.get('dimension_id')} severity={i.get('severity')}: {i.get('reason', '')[:80]}"
+                for i in issues
+            ],
+        )
         # ── Apply patches ─────────────────────────────────────────────────────
         patched_summary = snapshot.profile_summary
         patched_journey = snapshot.growth_journey_summary

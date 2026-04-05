@@ -1,7 +1,5 @@
 """Scoring runner — orchestrates P3 inference + scoring engine + persistence."""
 
-import logging
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import LLMSettings
@@ -20,8 +18,9 @@ from app.infrastructure.db.repositories.analysis import (
     SqlPersonalBaselineRepository,
 )
 from app.infrastructure.db.repositories.org import SqlMemberRepository, SqlRoleProfileRepository
+from app.logger import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 async def run_scoring(
@@ -55,6 +54,12 @@ async def run_scoring(
             role_weights = weights if isinstance(weights, dict) else {}
 
     role_profile_summary = f"Role: {role_name}." if role_name else "No role profile assigned."
+    logger.debug(
+        "Scoring context: run_id=%s role=%r weights=%d",
+        run.analysis_run_id,
+        role_name,
+        len(role_weights),
+    )
 
     # Load personal baseline for delta computation
     baseline = await baseline_repo.get_by_member(run.member_id)
@@ -131,6 +136,22 @@ async def run_scoring(
         len(dimension_scores),
         len(category_scores),
         SCORING_VERSION,
+    )
+    logger.debug(
+        "Dimension scores detail: %s",
+        [
+            f"{ds.dimension_id}={ds.normalized_score:.2f} conf={ds.confidence_score:.2f} maturity={ds.maturity_level}"
+            for ds in dimension_scores
+            if ds.normalized_score is not None
+        ],
+    )
+    logger.debug(
+        "Category scores detail: %s",
+        [
+            f"{cs.category_id}={cs.score:.2f} conf={cs.confidence_label}"
+            for cs in category_scores
+            if cs.score is not None
+        ],
     )
 
 

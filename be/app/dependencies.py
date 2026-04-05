@@ -8,6 +8,7 @@ from app.application.analysis.profile_use_cases import (
     GetMemberMilestonesUseCase,
     GetProfileCasesUseCase,
     GetProfileCompetencyUseCase,
+    GetProfileEvidenceUseCase,
     GetProfileJourneyUseCase,
     GetProfileKptUseCase,
     GetProfileOverviewUseCase,
@@ -298,6 +299,16 @@ def get_profile_journey_use_case(
         run_repo=SqlAnalysisRunRepository(session),
         snapshot_repo=SqlAnalysisSnapshotRepository(session),
         milestone_repo=SqlMilestoneRepository(session),
+    )
+
+
+def get_profile_evidence_use_case(
+    session: AsyncSession = Depends(get_session),
+) -> GetProfileEvidenceUseCase:
+    return GetProfileEvidenceUseCase(
+        member_repo=SqlMemberRepository(session),
+        run_repo=SqlAnalysisRunRepository(session),
+        evidence_repo=SqlEvidenceUnitRepository(session),
     )
 
 
