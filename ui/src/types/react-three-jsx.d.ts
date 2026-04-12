@@ -33,6 +33,7 @@ declare module "react" {
       pointLight: Props;
       points: Props;
       pointsMaterial: Props;
+      primitive: Props;
       ringGeometry: Props;
       sphereGeometry: Props;
       torusGeometry: Props;

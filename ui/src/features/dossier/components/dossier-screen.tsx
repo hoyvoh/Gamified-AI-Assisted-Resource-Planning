@@ -83,6 +83,22 @@ const isDefinedHTMLElement = (
   value: HTMLDivElement | HTMLElement | null,
 ): value is HTMLDivElement | HTMLElement => value !== null;
 
+const DossierHeroAtmosphere = () => (
+  <div className="pointer-events-none absolute inset-0 -z-10 overflow-visible">
+    <div className="absolute inset-x-[8%] bottom-[18%] top-[9%] rounded-[50%] bg-[radial-gradient(circle,_rgba(96,238,226,0.16),_rgba(63,211,255,0.05)_34%,_transparent_68%)] blur-3xl" />
+    <div className="absolute inset-x-[2%] bottom-[14%] top-0 bg-[radial-gradient(circle_at_50%_24%,_rgba(173,255,240,0.1),_transparent_22%),radial-gradient(circle_at_50%_78%,_rgba(63,211,255,0.08),_transparent_28%)]" />
+    <div className="absolute inset-x-[24%] bottom-[16%] top-[10%] bg-[linear-gradient(180deg,rgba(191,255,247,0.08),rgba(63,211,255,0.03)_35%,transparent_80%)] blur-2xl" />
+    <div className="absolute inset-x-[4%] bottom-[12%] top-[12%] bg-[radial-gradient(circle_at_50%_40%,_rgba(156,255,240,0.08),_transparent_30%),radial-gradient(circle_at_48%_76%,_rgba(63,211,255,0.12),_transparent_24%)] opacity-80" />
+    <div className="absolute inset-x-[16%] bottom-[10%] h-28 rounded-[50%] bg-[radial-gradient(circle,_rgba(63,211,255,0.18),_rgba(28,91,118,0.08)_44%,_transparent_72%)] blur-2xl" />
+    <div className="absolute inset-x-[6%] bottom-[8%] h-24 bg-[radial-gradient(ellipse_at_center,rgba(5,7,13,0.08)_0%,rgba(5,7,13,0.22)_42%,rgba(5,7,13,0.56)_68%,transparent_100%)] blur-xl" />
+    <div className="absolute inset-x-[12%] bottom-[6%] h-28 rounded-[50%] border border-white/10 bg-[radial-gradient(circle,_rgba(213,252,246,0.14),_rgba(9,25,36,0.16)_45%,_transparent_75%)] shadow-[0_18px_60px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)]" />
+    <div className="absolute inset-x-[19%] bottom-[9%] h-7 rounded-[50%] bg-[radial-gradient(circle,_rgba(140,247,232,0.34),_rgba(63,211,255,0.12)_58%,_transparent_90%)] blur-xl" />
+    <div className="absolute inset-x-0 bottom-[7%] flex justify-center">
+      <div className="h-px w-[72%] bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+    </div>
+  </div>
+);
+
 export const DossierScreen = ({
   memberId,
   memberName,
@@ -111,7 +127,7 @@ export const DossierScreen = ({
   const pendingTabRef = useRef<DossierTab>(activeTab);
   const briefClusterRef = useRef<HTMLDivElement | null>(null);
   const rightClusterRef = useRef<HTMLElement | null>(null);
-  const stageCaptionRef = useRef<HTMLDivElement | null>(null);
+  const stageClusterRef = useRef<HTMLDivElement | null>(null);
 
   const headerViewModel: DossierHeaderViewModel = {
     memberName,
@@ -207,7 +223,7 @@ export const DossierScreen = ({
     const panelTargets = [
       briefClusterRef.current,
       rightClusterRef.current,
-      stageCaptionRef.current,
+      stageClusterRef.current,
     ].filter(isDefinedHTMLElement);
 
     if (panelTargets.length === 0) {
@@ -265,7 +281,7 @@ export const DossierScreen = ({
 
   return (
     <main
-      className="relative min-h-screen overflow-hidden dossier-chamber-bg xl:flex xl:h-dvh xl:flex-col"
+      className="relative min-h-screen overflow-x-hidden overflow-y-visible dossier-chamber-bg xl:flex xl:h-dvh xl:flex-col xl:overflow-x-hidden xl:overflow-y-visible"
       style={{ backgroundColor: DOSSIER_COLORS.bg }}
     >
       <div className="absolute inset-0">
@@ -292,8 +308,22 @@ export const DossierScreen = ({
 
       <MemberHeaderPanel header={headerViewModel} />
 
-      <div className="relative z-10 mx-auto max-w-[1880px] px-4 pb-5 pt-3 md:px-6 xl:flex-1 xl:min-h-0 xl:w-full xl:overflow-hidden xl:pb-4">
-        <div className="flex flex-col gap-3 xl:h-full xl:min-h-0 xl:flex-row xl:items-stretch xl:gap-2">
+      <div className="relative z-10 mx-auto max-w-[1880px] px-4 pb-5 pt-3 md:px-6 xl:flex-1 xl:min-h-0 xl:w-full xl:overflow-visible xl:pb-4">
+        <div
+          className="absolute inset-y-0 left-[clamp(10rem,12vw,13rem)] right-[40%] z-[15] hidden xl:block"
+          ref={stageClusterRef}
+        >
+          <div className="relative h-full overflow-visible pt-3">
+            <DossierHeroAtmosphere />
+            <CharacterStage
+              confidence={confidence}
+              isFocusMode={isEvidenceOpen}
+              status={analysisStatus}
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3 xl:h-full xl:min-h-0 xl:flex-row xl:items-stretch xl:gap-2 xl:overflow-visible">
           {briefViewModel ? (
             <div
               className="xl:flex xl:h-full xl:items-start"
@@ -303,62 +333,17 @@ export const DossierScreen = ({
             </div>
           ) : null}
 
-          <section className="relative xl:h-full xl:min-h-0 xl:w-[46%] xl:pt-3">
-            <CharacterStage
-              confidence={confidence}
-              isFocusMode={isEvidenceOpen}
-              status={analysisStatus}
-            />
-            <div
-              className="mt-[-1.5rem] flex items-center justify-between gap-3 px-3"
-              ref={stageCaptionRef}
-            >
-              <div>
-                <p
-                  style={{
-                    fontSize: TYPO.eyebrow.fontSize,
-                    lineHeight: TYPO.eyebrow.lineHeight,
-                    letterSpacing: TYPO.eyebrow.letterSpacing,
-                    color: CONTRAST.textTertiary,
-                  }}
-                >
-                  Hero Presence
-                </p>
-                <p
-                  className="mt-1"
-                  style={{
-                    fontSize: TYPO.heroCaption.fontSize,
-                    lineHeight: TYPO.heroCaption.lineHeight,
-                    color: CONTRAST.textSecondary,
-                  }}
-                >
-                  Free-standing stage, aura-first silhouette, and linked
-                  attribute pressure.
-                </p>
-              </div>
-              <div className="text-right">
-                <p
-                  style={{
-                    fontSize: TYPO.eyebrow.fontSize,
-                    lineHeight: TYPO.eyebrow.lineHeight,
-                    letterSpacing: TYPO.eyebrow.letterSpacing,
-                    color: CONTRAST.textTertiary,
-                  }}
-                >
-                  Confidence
-                </p>
-                <p
-                  className="text-xl font-semibold"
-                  style={{
-                    fontSize: TYPO.valueLg.fontSize,
-                    lineHeight: TYPO.valueLg.lineHeight,
-                    letterSpacing: TYPO.valueLg.letterSpacing,
-                    color: CONTRAST.signalBright,
-                  }}
-                >
-                  {Math.round(confidence * 100)}%
-                </p>
-              </div>
+          <section
+            className="relative xl:w-[46%]"
+            aria-hidden="true"
+          >
+            <div className="relative xl:hidden">
+              <DossierHeroAtmosphere />
+              <CharacterStage
+                confidence={confidence}
+                isFocusMode={isEvidenceOpen}
+                status={analysisStatus}
+              />
             </div>
           </section>
 
