@@ -2,7 +2,7 @@
 
 import { Canvas, useThree } from "@react-three/fiber";
 import gsap from "gsap";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import type { ColorRepresentation } from "three";
 
 import type { AnalysisStatus } from "@/types/organization";
@@ -89,6 +89,9 @@ export const CharacterStage = ({
 }: CharacterStageProps) => {
   const loadingVeilRef = useRef<HTMLDivElement | null>(null);
   const [isModelReady, setIsModelReady] = useState(false);
+  const handleModelReady = useCallback(() => {
+    setIsModelReady(true);
+  }, []);
 
   useEffect(() => {
     if (!loadingVeilRef.current) {
@@ -123,7 +126,7 @@ export const CharacterStage = ({
           <Suspense fallback={<HeroStageFallback />}>
             <CharacterCore
               confidence={confidence}
-              onModelReady={() => setIsModelReady(true)}
+              onModelReady={handleModelReady}
               status={status}
             />
           </Suspense>

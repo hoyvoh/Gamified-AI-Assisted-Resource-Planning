@@ -14,7 +14,7 @@ import { Box3, Color, Vector3 } from "three";
 import { clone } from "three/examples/jsm/utils/SkeletonUtils.js";
 import { useEffect, useMemo, useRef } from "react";
 
-import type { AnalysisStatus } from "@/types/organization";
+import { normalizeAnalysisStatus, type AnalysisStatus } from "@/types/organization";
 
 export interface CharacterModelConfig {
   src: string;
@@ -94,6 +94,7 @@ export const CharacterModel = ({
   config,
   onReady,
 }: CharacterModelProps) => {
+  const resolvedStatus = normalizeAnalysisStatus(status);
   const mergedConfig = {
     ...CHARACTER_MODEL_DEFAULT_CONFIG,
     ...config,
@@ -138,10 +139,11 @@ export const CharacterModel = ({
 
       if (material && isLitMaterial(material)) {
         material.emissive = emissiveColor.clone();
-        material.emissiveIntensity = STATUS_EMISSIVE_INTENSITY[status] * 0.6;
+        material.emissiveIntensity =
+          STATUS_EMISSIVE_INTENSITY[resolvedStatus] * 0.6;
       }
     });
-  }, [clonedScene, emissiveColor, mergedConfig.hideMeshNames, status]);
+  }, [clonedScene, emissiveColor, mergedConfig.hideMeshNames, resolvedStatus]);
 
   useEffect(() => {
     const animationName = resolveAnimationName(
@@ -172,9 +174,14 @@ export const CharacterModel = ({
   useFrame(({ clock }) => {
     const time = clock.getElapsedTime();
     const speed =
-      status === "analyzing" ? 1.9 : status === "failed" ? 1.15 : 0.7;
+      resolvedStatus === "analyzing"
+        ? 1.9
+        : resolvedStatus === "failed"
+          ? 1.15
+          : 0.7;
     const pulse =
-      1 + Math.sin(time * speed) * (status === "analyzing" ? 0.024 : 0.01);
+      1 +
+      Math.sin(time * speed) * (resolvedStatus === "analyzing" ? 0.024 : 0.01);
 
     if (!modelGroupRef.current) {
       return;
@@ -202,8 +209,9 @@ export const CharacterModel = ({
       if (material && isLitMaterial(material)) {
         material.emissive.copy(emissiveColor);
         material.emissiveIntensity =
-          STATUS_EMISSIVE_INTENSITY[status] +
-          Math.sin(time * speed) * (status === "analyzing" ? 0.12 : 0.04) +
+          STATUS_EMISSIVE_INTENSITY[resolvedStatus] +
+          Math.sin(time * speed) *
+            (resolvedStatus === "analyzing" ? 0.12 : 0.04) +
           confidence * 0.05;
       }
     });

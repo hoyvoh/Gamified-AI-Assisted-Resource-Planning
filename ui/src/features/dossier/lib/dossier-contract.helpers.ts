@@ -14,6 +14,11 @@ const EMPTY_SUMMARY = "No summary available";
 const REVIEW_REQUIRED_LABEL = "Required";
 const REVIEW_CLEAR_LABEL = "Clear";
 const LOW_OPPORTUNITY_LABEL = "low";
+const EMPTY_CONFIDENCE_LABEL = "N/A";
+const ONE_HUNDRED_PERCENT = 100;
+const PERCENT_SCALE_THRESHOLD = 1;
+const SCORE_MAX = 100;
+const SCORE_MIN = 0;
 
 const DIMENSION_LABELS: Record<string, string> = {
   "dim-tech": "Technical Skill",
@@ -40,6 +45,30 @@ export const getDimensionLabel = (dimensionId: string): string =>
 export const getCategoryLabel = (categoryId: string): string =>
   CATEGORY_LABELS[categoryId] ?? categoryId ?? EMPTY_LABEL;
 
+export const toPercentValue = (value: number | null | undefined): number | null => {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return null;
+  }
+
+  if (value <= PERCENT_SCALE_THRESHOLD) {
+    return Math.min(
+      Math.max(value * ONE_HUNDRED_PERCENT, SCORE_MIN),
+      SCORE_MAX,
+    );
+  }
+
+  return Math.min(Math.max(value, SCORE_MIN), SCORE_MAX);
+};
+
+export const formatPercentLabel = (
+  value: number | null | undefined,
+  emptyLabel = EMPTY_CONFIDENCE_LABEL,
+): string => {
+  const percentValue = toPercentValue(value);
+
+  return percentValue === null ? emptyLabel : `${Math.round(percentValue)}%`;
+};
+
 export const getOverviewBriefViewModel = (
   overview: ProfileOverviewResponse,
 ): DossierBriefViewModel => ({
@@ -55,9 +84,7 @@ export const getOverviewBriefViewModel = (
 export const getTrustStripViewModel = (
   overview: ProfileOverviewResponse,
 ): DossierTrustStripViewModel => ({
-  confidenceLabel: overview.overallConfidence
-    ? `${Math.round(overview.overallConfidence * 100)}%`
-    : "N/A",
+  confidenceLabel: formatPercentLabel(overview.overallConfidence),
   flaggedLabel: `${overview.insufficientDimensions.length}`,
   reviewLabel:
     overview.p8Approved && overview.fairnessNotes.length === 0
@@ -83,7 +110,11 @@ export const isDimensionFlagged = (dimension: DimensionScore): boolean =>
 
 export const hasDimensionOpportunity = (dimension: DimensionScore): boolean =>
   dimension.opportunityLabel.toLowerCase() !== LOW_OPPORTUNITY_LABEL &&
-  dimension.opportunityScore > 0;
+  (toPercentValue(dimension.opportunityScore) ?? 0) > 0;
+
+export const getDisplayScore = (
+  value: number | null | undefined,
+): number | null => toPercentValue(value);
 
 export const getKptGroups = (response: {
   keepItems: KptItem[];

@@ -1,6 +1,7 @@
 "use client";
 
 import gsap from "gsap";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { AnalysisLauncher } from "@/features/dossier/components/analysis-launcher";
@@ -107,6 +108,7 @@ export const DossierScreen = ({
   analysisStatus,
   confidence,
 }: DossierScreenProps) => {
+  const router = useRouter();
   const { overview, competency, kpt, cases, journey } =
     useDossierData(memberId);
   const {
@@ -253,6 +255,22 @@ export const DossierScreen = ({
   }, [isEvidenceOpen]);
 
   const renderActiveDeck = () => {
+    if (activePanel.isError) {
+      return (
+        <div className="py-8 text-center">
+          <p
+            style={{
+              fontSize: TYPO.bodySm.fontSize,
+              lineHeight: TYPO.bodySm.lineHeight,
+              color: CONTRAST.textSecondary,
+            }}
+          >
+            Failed to load surface data. Please try again.
+          </p>
+        </div>
+      );
+    }
+
     if (!activePanel.data) {
       return null;
     }
@@ -433,6 +451,7 @@ export const DossierScreen = ({
                 <AnalysisLauncher
                   analysisStatus={analysisStatus}
                   onOpenEvidence={openEvidence}
+                  onReturnToWarRoom={() => router.push("/")}
                 />
               </div>
             </div>

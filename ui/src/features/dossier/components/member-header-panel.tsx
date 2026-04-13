@@ -3,7 +3,7 @@
 import {
   CONTRAST,
   DOSSIER_COPY,
-  DOSSIER_STATUS_META,
+  getStatusMeta,
   TYPO,
 } from "@/features/dossier/constants/dossier.constants";
 import type { DossierHeaderViewModel } from "@/features/dossier/types/dossier.types";
@@ -13,7 +13,7 @@ interface MemberHeaderPanelProps {
 }
 
 export const MemberHeaderPanel = ({ header }: MemberHeaderPanelProps) => {
-  const statusMeta = DOSSIER_STATUS_META[header.status];
+  const statusMeta = getStatusMeta(header.status);
 
   return (
     <header

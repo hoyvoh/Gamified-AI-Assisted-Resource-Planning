@@ -3,7 +3,7 @@
  * Status/color constants (shader functions removed - aura rings deprecated)
  */
 
-import type { AnalysisStatus } from "@/types/organization";
+import { normalizeAnalysisStatus, type AnalysisStatus } from "@/types/organization";
 
 /**
  * Status codes for GPU uniforms (since GPUs don't support enums)
@@ -24,3 +24,9 @@ export const STATUS_TO_COLOR: Record<AnalysisStatus, string> = {
   completed: "#6ee7b7", // Emerald
   failed: "#dc2626", // Red
 } as const;
+
+export const getStatusCode = (status: string | null | undefined): number =>
+  STATUS_CODES[normalizeAnalysisStatus(status)];
+
+export const getStatusColorToken = (status: string | null | undefined): string =>
+  STATUS_TO_COLOR[normalizeAnalysisStatus(status)];

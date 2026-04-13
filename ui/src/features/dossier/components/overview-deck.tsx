@@ -3,6 +3,7 @@
 import { CONTRAST, TYPO } from "@/features/dossier/constants/dossier.constants";
 import {
   getDimensionLabel,
+  getDisplayScore,
   getOverviewSignalGroups,
 } from "@/features/dossier/lib/dossier-contract.helpers";
 import type { ProfileOverviewResponse } from "@/features/dossier/types/dossier.types";
@@ -13,15 +14,20 @@ interface OverviewDeckProps {
 
 export const OverviewDeck = ({ data }: OverviewDeckProps) => {
   const signalGroups = getOverviewSignalGroups(data.categoryScores).map(
-    (signal) => ({
-      ...signal,
+    (signal) => {
+      const displayValue = getDisplayScore(signal.value);
+
+      return {
+        ...signal,
+        value: displayValue,
       tone:
-        signal.value !== null && signal.value >= 80
+        displayValue !== null && displayValue >= 80
           ? CONTRAST.successGlow
-          : signal.value !== null && signal.value >= 65
+          : displayValue !== null && displayValue >= 65
             ? CONTRAST.warningGlow
             : CONTRAST.primaryGlow,
-    }),
+      };
+    },
   );
   const strengthLabels = data.topStrengthDimensionIds
     .slice(0, 3)
@@ -62,7 +68,9 @@ export const OverviewDeck = ({ data }: OverviewDeckProps) => {
             color: CONTRAST.textSecondary,
           }}
         >
-          {data.growthJourneySummary ?? data.profileSummary ?? "No summary available"}
+          {data.growthJourneySummary ??
+            data.profileSummary ??
+            "No summary available"}
         </p>
       </div>
 

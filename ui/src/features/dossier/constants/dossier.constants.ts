@@ -6,7 +6,10 @@ import type {
   DossierMaturity,
   DossierTab,
 } from "@/features/dossier/types/dossier.types";
-import type { AnalysisStatus } from "@/types/organization";
+import {
+  normalizeAnalysisStatus,
+  type AnalysisStatus,
+} from "@/types/organization";
 
 export const DOSSIER_TABS: { id: DossierTab; label: string }[] = [
   { id: "overview", label: "Overview" },
@@ -193,6 +196,9 @@ export const DOSSIER_STATUS_META = {
   }
 >;
 
+export const getStatusMeta = (status: string | null | undefined) =>
+  DOSSIER_STATUS_META[normalizeAnalysisStatus(status)];
+
 export const DOSSIER_MATURITY_META = {
   advanced: {
     label: "Advanced",
@@ -211,6 +217,14 @@ export const DOSSIER_MATURITY_META = {
     color: DOSSIER_COLORS.danger,
   },
 } satisfies Record<DossierMaturity, { label: string; color: string }>;
+
+export const DEFAULT_DOSSIER_MATURITY: DossierMaturity = "developing";
+
+export const getMaturityMeta = (maturityLevel: string | null | undefined) =>
+  DOSSIER_MATURITY_META[
+    (maturityLevel as DossierMaturity | null | undefined) ??
+      DEFAULT_DOSSIER_MATURITY
+  ] ?? DOSSIER_MATURITY_META[DEFAULT_DOSSIER_MATURITY];
 
 // ─── Typography Tokens ─────────────────────────────────────────────
 // Design principle: nothing below 10px, increase sub-20px text for readability

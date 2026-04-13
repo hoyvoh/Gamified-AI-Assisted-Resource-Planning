@@ -10,14 +10,17 @@ import type { AnalysisStatus } from "@/types/organization";
 interface AnalysisLauncherProps {
   analysisStatus: AnalysisStatus;
   onOpenEvidence: () => void;
+  onReturnToWarRoom?: () => void;
 }
 
 export const AnalysisLauncher = ({
   analysisStatus,
   onOpenEvidence,
+  onReturnToWarRoom,
 }: AnalysisLauncherProps) => {
   const scanLabel =
     analysisStatus === "analyzing" ? "Scan Running" : "Start Scan";
+  const isScanReady = false;
 
   return (
     <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-white/6 pt-3">
@@ -30,12 +33,14 @@ export const AnalysisLauncher = ({
         {
           label: "Scan",
           action: scanLabel,
+          disabled: !isScanReady,
           onClick: () => undefined,
         },
       ].map((item) => (
         <button
           key={item.label}
-          className="rounded-full border px-3.5 py-2.5 text-left transition duration-300 hover:-translate-y-0.5"
+          className="rounded-full border px-3.5 py-2.5 text-left transition duration-300 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0 hover:-translate-y-0.5"
+          disabled={"disabled" in item ? item.disabled : false}
           style={{
             borderColor: DOSSIER_COLORS.panelBorder,
             background:
@@ -71,6 +76,7 @@ export const AnalysisLauncher = ({
 
       <button
         className="rounded-full border px-3.5 py-2.5 text-left transition duration-300 hover:-translate-y-0.5"
+        onClick={onReturnToWarRoom}
         style={{
           borderColor: `${CONTRAST.primaryBright}45`,
           background:

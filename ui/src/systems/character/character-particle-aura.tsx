@@ -6,7 +6,7 @@ import { useMemo, useRef } from "react";
 import {
   DOSSIER_PARTICLE_AURA,
 } from "@/features/dossier/constants/dossier.constants";
-import type { AnalysisStatus } from "@/types/organization";
+import { normalizeAnalysisStatus, type AnalysisStatus } from "@/types/organization";
 import type {
   AnimatedGroupRef,
   BasicMaterialRef,
@@ -48,6 +48,7 @@ export const CharacterParticleAura = ({
   confidence,
   status,
 }: CharacterParticleAuraProps) => {
+  const resolvedStatus = normalizeAnalysisStatus(status);
   const particleGroupRef = useRef<AnimatedGroupRef | null>(null);
   const particleRef = useRef<ParticlePointsRef | null>(null);
 
@@ -96,14 +97,14 @@ export const CharacterParticleAura = ({
       ),
       opacity:
         DOSSIER_PARTICLE_AURA.pointOpacity *
-        STATUS_OPACITY_MULTIPLIER[status],
+        STATUS_OPACITY_MULTIPLIER[resolvedStatus],
     };
-  }, [confidence, status]);
+  }, [confidence, resolvedStatus]);
 
   useFrame(({ clock }) => {
     const elapsedTime = clock.getElapsedTime();
     const rotationSpeed =
-      particleConfig.speed * STATUS_SPEED_MULTIPLIER[status];
+      particleConfig.speed * STATUS_SPEED_MULTIPLIER[resolvedStatus];
 
     if (particleGroupRef.current) {
       particleGroupRef.current.rotation.y = elapsedTime * rotationSpeed;

@@ -1,4 +1,4 @@
-import type { AnalysisStatus } from "@/types/organization";
+import { normalizeAnalysisStatus, type AnalysisStatus } from "@/types/organization";
 
 export interface AnimatedVector {
   y: number;
@@ -36,3 +36,6 @@ export const STATUS_COLORS: Record<AnalysisStatus, string> = {
   completed: "#2ee6a6",
   failed: "#ff5c5c",
 };
+
+export const getStatusColor = (status: string | null | undefined): string =>
+  STATUS_COLORS[normalizeAnalysisStatus(status)];

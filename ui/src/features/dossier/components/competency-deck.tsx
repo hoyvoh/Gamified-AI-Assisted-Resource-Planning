@@ -3,11 +3,13 @@
 import {
   CONTRAST,
   DOSSIER_COLORS,
-  DOSSIER_MATURITY_META,
+  getMaturityMeta,
   TYPO,
 } from "@/features/dossier/constants/dossier.constants";
 import {
+  formatPercentLabel,
   getDimensionDisplayName,
+  getDisplayScore,
   hasDimensionOpportunity,
   isDimensionFlagged,
 } from "@/features/dossier/lib/dossier-contract.helpers";
@@ -26,8 +28,8 @@ export const CompetencyDeck = ({
 }: CompetencyDeckProps) => {
   const sorted = [...data].sort(
     (left, right) =>
-      (right.normalizedScore ?? right.rawScore ?? 0) -
-      (left.normalizedScore ?? left.rawScore ?? 0),
+      (getDisplayScore(right.normalizedScore ?? right.rawScore) ?? 0) -
+      (getDisplayScore(left.normalizedScore ?? left.rawScore) ?? 0),
   );
   const strongest = sorted[0];
   const growthEdge =
@@ -43,7 +45,7 @@ export const CompetencyDeck = ({
     spotlightCards.push({
       label: "Primary Edge",
       value: getDimensionDisplayName(strongest),
-      detail: `${strongest.normalizedScore ?? strongest.rawScore ?? "—"} signal / ${Math.round(strongest.confidenceScore * 100)}% confidence`,
+      detail: `${getDisplayScore(strongest.normalizedScore ?? strongest.rawScore) ?? "—"} signal / ${formatPercentLabel(strongest.confidenceScore)} confidence`,
       tone: CONTRAST.successGlow,
     });
   }
@@ -52,7 +54,7 @@ export const CompetencyDeck = ({
     spotlightCards.push({
       label: "Growth Edge",
       value: getDimensionDisplayName(growthEdge),
-      detail: `${growthEdge.normalizedScore ?? growthEdge.rawScore ?? "—"} signal / ${Math.round(growthEdge.confidenceScore * 100)}% confidence`,
+      detail: `${getDisplayScore(growthEdge.normalizedScore ?? growthEdge.rawScore) ?? "—"} signal / ${formatPercentLabel(growthEdge.confidenceScore)} confidence`,
       tone: isDimensionFlagged(growthEdge)
         ? CONTRAST.warningGlow
         : CONTRAST.primaryGlow,
@@ -153,12 +155,12 @@ export const CompetencyDeck = ({
 
       <section className="grid gap-3 lg:grid-cols-2">
         {sorted.map((dimension) => {
-          const maturity = DOSSIER_MATURITY_META[dimension.maturityLevel];
+          const maturity = getMaturityMeta(dimension.maturityLevel);
           const isSelected = selectedDimensionId === dimension.dimensionId;
           const isFlagged = isDimensionFlagged(dimension);
           const hasOpportunity = hasDimensionOpportunity(dimension);
           const displayScore =
-            dimension.normalizedScore ?? dimension.rawScore ?? 0;
+            getDisplayScore(dimension.normalizedScore ?? dimension.rawScore) ?? 0;
 
           return (
             <button
@@ -246,7 +248,7 @@ export const CompetencyDeck = ({
                       letterSpacing: TYPO.valueLg.letterSpacing,
                       color: maturity.color,
                     }}
-                    >
+                  >
                     {displayScore}
                   </p>
                   <p
@@ -258,7 +260,7 @@ export const CompetencyDeck = ({
                       color: CONTRAST.textTertiary,
                     }}
                   >
-                    {Math.round(dimension.confidenceScore * 100)}% confidence
+                    {formatPercentLabel(dimension.confidenceScore)} confidence
                   </p>
                 </div>
               </div>
@@ -275,10 +277,10 @@ export const CompetencyDeck = ({
                         color: CONTRAST.primaryGlow,
                         borderColor: `${CONTRAST.primaryGlow}40`,
                         backgroundColor: `${CONTRAST.primaryGlow}15`,
-                    }}
-                  >
-                    {dimension.opportunityLabel}
-                  </span>
+                      }}
+                    >
+                      {dimension.opportunityLabel}
+                    </span>
                   )}
                   <span
                     className="rounded-full border px-2.5 py-0.5 uppercase"

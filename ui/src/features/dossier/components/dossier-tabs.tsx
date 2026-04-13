@@ -16,7 +16,9 @@ interface DossierTabsProps {
 export const DossierTabs = ({ activeTab, onTabChange }: DossierTabsProps) => {
   return (
     <div
+      aria-label="Dossier sections"
       className="flex flex-wrap gap-1.5 rounded-full border p-1.5 backdrop-blur-[15px]"
+      role="tablist"
       style={{
         borderColor: DOSSIER_COLORS.panelBorder,
         background:
@@ -29,8 +31,10 @@ export const DossierTabs = ({ activeTab, onTabChange }: DossierTabsProps) => {
 
         return (
           <button
+            aria-selected={isActive}
             key={tab.id}
             className="rounded-full border px-3 py-1.5 font-medium uppercase transition duration-300"
+            role="tab"
             style={{
               fontSize: TYPO.tab.fontSize,
               lineHeight: TYPO.tab.lineHeight,
