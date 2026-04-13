@@ -1,0 +1,82 @@
+import type {
+  ApiErrorResponse,
+  DataEnvelope,
+} from "@/features/dossier/api/dossier-api.types";
+
+const DEFAULT_API_BASE_URL = "http://localhost:8000/api/v1";
+
+const normalizeBaseUrl = (value: string | undefined): string =>
+  (value ?? DEFAULT_API_BASE_URL).replace(/\/+$/, "");
+
+export const DOSSIER_API_BASE_URL = normalizeBaseUrl(
+  process.env.NEXT_PUBLIC_API_URL,
+);
+
+export class DossierApiError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "DossierApiError";
+    this.status = status;
+  }
+}
+
+const buildUrl = (
+  path: string,
+  query?: Record<string, string | number | null | undefined>,
+): string => {
+  const url = new URL(`${DOSSIER_API_BASE_URL}${path}`);
+
+  if (query) {
+    for (const [key, value] of Object.entries(query)) {
+      if (value !== null && value !== undefined && value !== "") {
+        url.searchParams.set(key, String(value));
+      }
+    }
+  }
+
+  return url.toString();
+};
+
+const parseErrorMessage = async (response: Response): Promise<string> => {
+  try {
+    const body = (await response.json()) as ApiErrorResponse;
+    return body.detail ?? `HTTP ${response.status}`;
+  } catch {
+    return `HTTP ${response.status}`;
+  }
+};
+
+export const fetchEnvelope = async <T>(
+  path: string,
+  init?: RequestInit,
+  query?: Record<string, string | number | null | undefined>,
+): Promise<T> => {
+  const response = await fetch(buildUrl(path, query), {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      ...(init?.headers ?? {}),
+    },
+  });
+
+  if (!response.ok) {
+    throw new DossierApiError(
+      await parseErrorMessage(response),
+      response.status,
+    );
+  }
+
+  const envelope = (await response.json()) as DataEnvelope<T>;
+  return envelope.data;
+};
+
+export const postEnvelope = async <TResponse, TBody>(
+  path: string,
+  body: TBody,
+): Promise<TResponse> =>
+  fetchEnvelope<TResponse>(path, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });

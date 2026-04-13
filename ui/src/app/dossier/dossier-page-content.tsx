@@ -3,29 +3,41 @@
 import { useSearchParams } from "next/navigation";
 
 import { DossierScreen } from "@/features/dossier/components/dossier-screen";
-import { normalizeAnalysisStatus } from "@/types/organization";
+import { useDossierBootstrap } from "@/features/dossier/hooks/use-dossier-bootstrap";
 
-const DEFAULT_DOSSIER_MEMBER = {
-  memberId: "mem-001",
-  memberName: "An Vy Nguyen",
-  roleName: "Senior Frontend Engineer",
-  teamName: "Orbit Forge",
-  analysisStatus: normalizeAnalysisStatus("completed"),
-  confidence: 0.92,
-} as const;
+// TODO: Remove default member ID and handle missing/invalid IDs properly
+const DEFAULT_MEMBER_ID = "95822897-33ad-4aa7-aa7c-1bd3ca8081cd";
 
 export function DossierPageContent() {
   const searchParams = useSearchParams();
-  const memberId = searchParams.get("id") ?? DEFAULT_DOSSIER_MEMBER.memberId;
+  const memberId = searchParams.get("id") ?? DEFAULT_MEMBER_ID;
+  const bootstrap = useDossierBootstrap(memberId);
+
+  if (bootstrap.isLoading || !bootstrap.data) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#05070d] px-6 text-center text-[#b8cde0]">
+        Loading dossier chamber...
+      </main>
+    );
+  }
+
+  if (bootstrap.isError) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#05070d] px-6 text-center text-[#fca5a5]">
+        Failed to bootstrap dossier data. Please verify the backend API.
+      </main>
+    );
+  }
 
   return (
     <DossierScreen
-      memberId={memberId}
-      memberName={DEFAULT_DOSSIER_MEMBER.memberName}
-      roleName={DEFAULT_DOSSIER_MEMBER.roleName}
-      teamName={DEFAULT_DOSSIER_MEMBER.teamName}
-      analysisStatus={DEFAULT_DOSSIER_MEMBER.analysisStatus}
-      confidence={DEFAULT_DOSSIER_MEMBER.confidence}
+      memberId={bootstrap.data.memberId}
+      memberName={bootstrap.data.memberName}
+      roleName={bootstrap.data.roleName}
+      teamName={bootstrap.data.teamName}
+      analysisStatus={bootstrap.data.analysisStatus}
+      confidence={bootstrap.data.confidence}
+      latestRun={bootstrap.data.latestRun}
     />
   );
 }

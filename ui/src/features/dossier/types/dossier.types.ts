@@ -144,11 +144,79 @@ export interface ProfileJourneyResponse {
   milestones: Milestone[];
 }
 
-export interface EvidenceTrace {
+export interface EvidenceUnit {
+  evidenceId: string;
+  analysisRunId: string;
+  memberId: string;
+  timestamp: string;
+  sourceType: string | null;
+  recordType: string | null;
+  recordId: string | null;
+  contentExcerpt: string;
+  contentSummary: string;
+  extractionConfidence: number | null;
+  ambiguityNotes: string[];
+  createdAt: string;
+}
+
+export interface BehavioralEvent {
+  eventId: string;
+  timestamp: string;
+  eventType: string;
+  eventSummary: string | null;
+  polarity: string;
+  severity: number | null;
+  eventConfidence: number | null;
+  impactLevel: string | null;
+  opportunityLevel: string | null;
+  relatedDimensions: Record<string, string>[];
+  whyItMatters: string | null;
+}
+
+export interface DimensionScoreDetail extends DimensionScore {
+  p3Inference: Record<string, string | number | boolean | null>;
+}
+
+export interface DimensionDetailResponse {
+  dimensionScore: DimensionScoreDetail;
+  supportingEvidence: EvidenceUnit[];
+  counterEvidence: EvidenceUnit[];
+  behavioralEvents: BehavioralEvent[];
+}
+
+export interface ValidationFlag {
+  flagId: string;
+  analysisRunId: string;
   dimensionId: string;
-  supportingCount: number;
-  counterCount: number;
-  summary: string;
+  verdict: "accurate" | "questionable" | "incorrect";
+  note: string | null;
+  flaggedAt: string;
+}
+
+export interface AnalysisRun {
+  analysisRunId: string;
+  memberId: string;
+  periodStart: string;
+  periodEnd: string;
+  runType: string;
+  status: AnalysisStatus;
+  progressStage: string | null;
+  progressPct: number;
+  errorMessage: string | null;
+  scoringVersion: string | null;
+  createdAt: string;
+  updatedAt: string;
+  completedAt: string | null;
+}
+
+export interface DossierBootstrapData {
+  memberId: string;
+  memberName: string;
+  roleName: string | null;
+  teamName: string;
+  analysisStatus: AnalysisStatus;
+  confidence: number;
+  latestRun: AnalysisRun | null;
 }
 
 export interface DossierTrustStripViewModel {

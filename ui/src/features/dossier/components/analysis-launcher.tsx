@@ -11,16 +11,23 @@ interface AnalysisLauncherProps {
   analysisStatus: AnalysisStatus;
   onOpenEvidence: () => void;
   onReturnToWarRoom?: () => void;
+  onStartScan?: () => void;
+  scanReady?: boolean;
+  scanStageLabel?: string | null;
 }
 
 export const AnalysisLauncher = ({
   analysisStatus,
   onOpenEvidence,
   onReturnToWarRoom,
+  onStartScan,
+  scanReady = false,
+  scanStageLabel,
 }: AnalysisLauncherProps) => {
   const scanLabel =
-    analysisStatus === "analyzing" ? "Scan Running" : "Start Scan";
-  const isScanReady = false;
+    analysisStatus === "analyzing"
+      ? scanStageLabel ?? "Scan Running"
+      : "Start Scan";
 
   return (
     <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-white/6 pt-3">
@@ -33,8 +40,8 @@ export const AnalysisLauncher = ({
         {
           label: "Scan",
           action: scanLabel,
-          disabled: !isScanReady,
-          onClick: () => undefined,
+          disabled: !scanReady,
+          onClick: onStartScan,
         },
       ].map((item) => (
         <button

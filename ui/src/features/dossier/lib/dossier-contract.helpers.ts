@@ -69,6 +69,20 @@ export const formatPercentLabel = (
   return percentValue === null ? emptyLabel : `${Math.round(percentValue)}%`;
 };
 
+export const normalizeConfidenceValue = (
+  value: number | null | undefined,
+): number => {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return 0;
+  }
+
+  if (value <= PERCENT_SCALE_THRESHOLD) {
+    return Math.min(Math.max(value, 0), 1);
+  }
+
+  return Math.min(Math.max(value / ONE_HUNDRED_PERCENT, 0), 1);
+};
+
 export const getOverviewBriefViewModel = (
   overview: ProfileOverviewResponse,
 ): DossierBriefViewModel => ({

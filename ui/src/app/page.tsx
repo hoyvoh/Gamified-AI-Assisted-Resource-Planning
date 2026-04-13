@@ -19,7 +19,7 @@ export default function Home() {
 
       <Link
         className="rounded-full border border-white/10 bg-white/5 px-5 py-3 font-display uppercase tracking-[0.16em] text-text-primary transition duration-300 hover:-translate-y-0.5"
-        href="/dossier?id=mem-001"
+        href="/dossier?id=95822897-33ad-4aa7-aa7c-1bd3ca8081cd"
       >
         Open dossier
       </Link>

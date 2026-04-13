@@ -1,20 +1,22 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import gsap from "gsap";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { AnalysisLauncher } from "@/features/dossier/components/analysis-launcher";
 import { CasesDeck } from "@/features/dossier/components/cases-deck";
 import { CompetencyDeck } from "@/features/dossier/components/competency-deck";
 import { DossierTabs } from "@/features/dossier/components/dossier-tabs";
+import { DossierSurfaceSkeleton } from "@/features/dossier/components/dossier-surface-skeleton";
+import { DossierSurfaceStatePanel } from "@/features/dossier/components/dossier-surface-state-panel";
 import { EvidenceDrawer } from "@/features/dossier/components/evidence-drawer";
 import { JourneyDeck } from "@/features/dossier/components/journey-deck";
 import { KptDeck } from "@/features/dossier/components/kpt-deck";
 import { LeftBriefPanel } from "@/features/dossier/components/left-brief-panel";
 import { MemberHeaderPanel } from "@/features/dossier/components/member-header-panel";
 import { OverviewDeck } from "@/features/dossier/components/overview-deck";
-import { DossierSurfaceSkeleton } from "@/features/dossier/components/dossier-surface-skeleton";
 import { ReviewOverlay } from "@/features/dossier/components/review-overlay";
 import { TrustStrip } from "@/features/dossier/components/trust-strip";
 import {
@@ -24,12 +26,22 @@ import {
   TYPO,
 } from "@/features/dossier/constants/dossier.constants";
 import {
+  useAnalysisRunStatus,
+  useCreateAnalysisRun,
+  useCreateValidationFlag,
+  useDossierData,
+  useDossierDimensionDetail,
+  useDossierValidationFlags,
+} from "@/features/dossier/hooks/use-dossier-data";
+import { useDossierUiState } from "@/features/dossier/hooks/use-dossier-ui-state";
+import {
   getOverviewBriefViewModel,
+  normalizeConfidenceValue,
   getTrustStripViewModel,
 } from "@/features/dossier/lib/dossier-contract.helpers";
-import { useDossierData } from "@/features/dossier/hooks/use-dossier-data";
-import { useDossierUiState } from "@/features/dossier/hooks/use-dossier-ui-state";
+import { resolveDossierSurfaceState } from "@/features/dossier/lib/dossier-surface-state";
 import type {
+  AnalysisRun,
   DossierHeaderViewModel,
   DossierTab,
 } from "@/features/dossier/types/dossier.types";
@@ -43,6 +55,7 @@ interface DossierScreenProps {
   teamName: string;
   analysisStatus: AnalysisStatus;
   confidence: number;
+  latestRun: AnalysisRun | null;
 }
 
 const ACTIVE_PANEL_COPY: Record<
@@ -80,9 +93,30 @@ const ACTIVE_PANEL_COPY: Record<
   },
 };
 
+const ANALYSIS_STAGE_LABELS: Record<string, string> = {
+  collecting_data: "Collecting data...",
+  extracting_evidence: "Extracting evidence...",
+  inferring_dimensions: "Inferring dimensions...",
+  scoring: "Scoring...",
+  generating_kpt: "Generating coaching deck...",
+  self_checking: "Self-check gate...",
+};
+
 const isDefinedHTMLElement = (
   value: HTMLDivElement | HTMLElement | null,
 ): value is HTMLDivElement | HTMLElement => value !== null;
+
+const getDefaultScanWindow = (): { periodEnd: string; periodStart: string } => {
+  const periodEnd = new Date();
+  const periodStart = new Date(periodEnd);
+
+  periodStart.setMonth(periodStart.getMonth() - 3);
+
+  return {
+    periodStart: periodStart.toISOString().slice(0, 10),
+    periodEnd: periodEnd.toISOString().slice(0, 10),
+  };
+};
 
 const DossierHeroAtmosphere = () => (
   <div className="pointer-events-none absolute inset-0 -z-10 overflow-visible">
@@ -107,10 +141,11 @@ export const DossierScreen = ({
   teamName,
   analysisStatus,
   confidence,
+  latestRun,
 }: DossierScreenProps) => {
   const router = useRouter();
-  const { overview, competency, kpt, cases, journey } =
-    useDossierData(memberId);
+  const queryClient = useQueryClient();
+  const { overview, competency, kpt, cases, journey } = useDossierData(memberId);
   const {
     activeTab,
     isEvidenceOpen,
@@ -124,6 +159,9 @@ export const DossierScreen = ({
     setSelectedDimensionId,
   } = useDossierUiState();
   const [displayedTab, setDisplayedTab] = useState<DossierTab>(activeTab);
+  const [reviewErrorMessage, setReviewErrorMessage] = useState<string | null>(
+    null,
+  );
   const deckMotionRef = useRef<HTMLDivElement | null>(null);
   const deckTimelineRef = useRef<gsap.core.Timeline | null>(null);
   const pendingTabRef = useRef<DossierTab>(activeTab);
@@ -131,11 +169,37 @@ export const DossierScreen = ({
   const rightClusterRef = useRef<HTMLElement | null>(null);
   const stageClusterRef = useRef<HTMLDivElement | null>(null);
 
+  const activeRun = useAnalysisRunStatus(
+    latestRun?.analysisRunId ?? null,
+    latestRun?.status === "analyzing",
+  );
+  const currentRun = activeRun.data ?? latestRun;
+  const activeAnalysisStatus = currentRun?.status ?? analysisStatus;
+  const displayConfidence =
+    currentRun?.status === "analyzing"
+      ? normalizeConfidenceValue(currentRun.progressPct)
+      : normalizeConfidenceValue(overview.data?.overallConfidence ?? confidence);
+  const dimensionDetail = useDossierDimensionDetail(memberId, selectedDimensionId);
+  const validationFlags = useDossierValidationFlags(overview.data?.runId ?? null);
+  const createValidationFlag = useCreateValidationFlag(
+    memberId,
+    overview.data?.runId ?? null,
+  );
+  const createAnalysisRun = useCreateAnalysisRun(memberId);
+
+  const selectedValidationFlag = useMemo(
+    () =>
+      validationFlags.data?.find(
+        (item) => item.dimensionId === selectedDimensionId,
+      ) ?? null,
+    [selectedDimensionId, validationFlags.data],
+  );
+
   const headerViewModel: DossierHeaderViewModel = {
     memberName,
     roleName: roleName ?? "Role pending",
     teamName,
-    status: analysisStatus,
+    status: activeAnalysisStatus,
   };
 
   const briefViewModel = overview.data
@@ -143,7 +207,10 @@ export const DossierScreen = ({
     : null;
 
   const trustViewModel = overview.data
-    ? getTrustStripViewModel(overview.data)
+    ? {
+        ...getTrustStripViewModel(overview.data),
+        flaggedLabel: `${validationFlags.data?.length ?? overview.data.insufficientDimensions.length}`,
+      }
     : null;
 
   const activePanel = {
@@ -153,10 +220,31 @@ export const DossierScreen = ({
     cases,
     journey,
   }[displayedTab];
+  const activeSurfaceState = resolveDossierSurfaceState({
+    tab: displayedTab,
+    analysisStatus: activeAnalysisStatus,
+    data: activePanel.data,
+    error: activePanel.error instanceof Error ? activePanel.error : null,
+    isError: activePanel.isError,
+  });
 
   useEffect(() => {
     pendingTabRef.current = activeTab;
   }, [activeTab]);
+
+  useEffect(() => {
+    if (
+      activeRun.data &&
+      (activeRun.data.status === "completed" || activeRun.data.status === "failed")
+    ) {
+      void queryClient.invalidateQueries({
+        queryKey: ["dossier", memberId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ["dossier-bootstrap", memberId],
+      });
+    }
+  }, [activeRun.data, memberId, queryClient]);
 
   useEffect(() => {
     const deckNode = deckMotionRef.current;
@@ -254,44 +342,108 @@ export const DossierScreen = ({
     };
   }, [isEvidenceOpen]);
 
-  const renderActiveDeck = () => {
-    if (activePanel.isError) {
-      return (
-        <div className="py-8 text-center">
-          <p
-            style={{
-              fontSize: TYPO.bodySm.fontSize,
-              lineHeight: TYPO.bodySm.lineHeight,
-              color: CONTRAST.textSecondary,
-            }}
-          >
-            Failed to load surface data. Please try again.
-          </p>
-        </div>
-      );
+  const handleOpenEvidence = () => {
+    const fallbackDimensionId =
+      selectedDimensionId ?? competency.data?.dimensionScores[0]?.dimensionId ?? null;
+
+    if (fallbackDimensionId) {
+      setSelectedDimensionId(fallbackDimensionId);
+      openEvidence();
+    }
+  };
+
+  const handleSelectDimension = (dimensionId: string) => {
+    setSelectedDimensionId(dimensionId);
+    openEvidence();
+  };
+
+  const handleOpenReview = () => {
+    const fallbackDimensionId =
+      selectedDimensionId ??
+      overview.data?.insufficientDimensions[0] ??
+      competency.data?.dimensionScores[0]?.dimensionId ??
+      null;
+
+    if (fallbackDimensionId) {
+      setSelectedDimensionId(fallbackDimensionId);
+      openReview();
+    }
+  };
+
+  const handleSubmitValidation = (input: {
+    dimensionId: string;
+    note: string | null;
+    verdict: "accurate" | "questionable" | "incorrect";
+  }) => {
+    if (!overview.data?.runId) {
+      setReviewErrorMessage("No analysis run is available for validation.");
+      return;
     }
 
-    if (!activePanel.data) {
-      return null;
+    setReviewErrorMessage(null);
+    createValidationFlag.mutate(
+      {
+        analysisRunId: overview.data.runId,
+        dimensionId: input.dimensionId,
+        verdict: input.verdict,
+        note: input.note,
+      },
+      {
+        onError: (error) => {
+          setReviewErrorMessage(
+            error instanceof Error ? error.message : "Failed to save review.",
+          );
+        },
+        onSuccess: () => {
+          closeReview();
+        },
+      },
+    );
+  };
+
+  const handleStartScan = () => {
+    const { periodEnd, periodStart } = getDefaultScanWindow();
+
+    createAnalysisRun.mutate({
+      periodEnd,
+      periodStart,
+      runType: "fresh",
+    });
+  };
+
+  const renderActiveDeck = () => {
+    if (activeSurfaceState !== "ready") {
+      return (
+        <DossierSurfaceStatePanel
+          onRetry={() => {
+            void activePanel.refetch();
+          }}
+          onStartScan={handleStartScan}
+          scanReady={
+            !createAnalysisRun.isPending && activeAnalysisStatus !== "analyzing"
+          }
+          state={activeSurfaceState}
+        />
+      );
     }
 
     switch (displayedTab) {
       case "overview":
-        return overview.data ? <OverviewDeck data={overview.data} /> : null;
+        return <OverviewDeck data={overview.data!} />;
       case "competency":
-        return competency.data ? (
+        return (
           <CompetencyDeck
-            data={competency.data.dimensionScores}
-            onSelectDimension={setSelectedDimensionId}
+            data={competency.data!.dimensionScores}
+            onSelectDimension={handleSelectDimension}
             selectedDimensionId={selectedDimensionId}
           />
-        ) : null;
+        );
       case "kpt":
-        return kpt.data ? <KptDeck data={kpt.data} /> : null;
+        return <KptDeck data={kpt.data!} />;
       case "cases":
-        return cases.data ? <CasesDeck data={cases.data} /> : null;
+        return <CasesDeck data={cases.data!} />;
       case "journey":
-        return journey.data ? <JourneyDeck data={journey.data} /> : null;
+        return <JourneyDeck data={journey.data!} />;
       default:
         return null;
     }
@@ -334,9 +486,9 @@ export const DossierScreen = ({
           <div className="relative h-full overflow-visible pt-3">
             <DossierHeroAtmosphere />
             <CharacterStage
-              confidence={confidence}
+              confidence={displayConfidence}
               isFocusMode={isEvidenceOpen}
-              status={analysisStatus}
+              status={activeAnalysisStatus}
             />
           </div>
         </div>
@@ -351,16 +503,13 @@ export const DossierScreen = ({
             </div>
           ) : null}
 
-          <section
-            className="relative xl:w-[46%]"
-            aria-hidden="true"
-          >
+          <section className="relative xl:w-[46%]" aria-hidden="true">
             <div className="relative xl:hidden">
               <DossierHeroAtmosphere />
               <CharacterStage
-                confidence={confidence}
+                confidence={displayConfidence}
                 isFocusMode={isEvidenceOpen}
-                status={analysisStatus}
+                status={activeAnalysisStatus}
               />
             </div>
           </section>
@@ -380,7 +529,8 @@ export const DossierScreen = ({
                   borderColor: DOSSIER_COLORS.panelBorderStrong,
                   background:
                     "linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.025))",
-                  boxShadow: `0 26px 84px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06), 0 0 1px rgba(63,211,255,0.1)`,
+                  boxShadow:
+                    "0 26px 84px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06), 0 0 1px rgba(63,211,255,0.1)",
                 }}
               >
                 <div
@@ -394,7 +544,7 @@ export const DossierScreen = ({
                 {trustViewModel ? (
                   <div className="mb-3">
                     <TrustStrip
-                      onOpenReview={openReview}
+                      onOpenReview={handleOpenReview}
                       trust={trustViewModel}
                     />
                   </div>
@@ -449,9 +599,19 @@ export const DossierScreen = ({
                 </div>
 
                 <AnalysisLauncher
-                  analysisStatus={analysisStatus}
-                  onOpenEvidence={openEvidence}
+                  analysisStatus={activeAnalysisStatus}
+                  onOpenEvidence={handleOpenEvidence}
                   onReturnToWarRoom={() => router.push("/")}
+                  onStartScan={handleStartScan}
+                  scanReady={
+                    !createAnalysisRun.isPending && activeAnalysisStatus !== "analyzing"
+                  }
+                  scanStageLabel={
+                    currentRun?.progressStage
+                      ? ANALYSIS_STAGE_LABELS[currentRun.progressStage] ??
+                        currentRun.progressStage
+                      : null
+                  }
                 />
               </div>
             </div>
@@ -460,13 +620,24 @@ export const DossierScreen = ({
       </div>
 
       <EvidenceDrawer
+        data={dimensionDetail.data ?? null}
+        errorMessage={
+          dimensionDetail.error instanceof Error
+            ? dimensionDetail.error.message
+            : null
+        }
+        isLoading={dimensionDetail.isLoading}
         isOpen={isEvidenceOpen}
         onClose={closeEvidence}
         selectedDimensionId={selectedDimensionId}
       />
       <ReviewOverlay
+        errorMessage={reviewErrorMessage}
+        existingFlag={selectedValidationFlag}
         isOpen={isReviewOpen}
+        isSubmitting={createValidationFlag.isPending}
         onClose={closeReview}
+        onSubmit={handleSubmitValidation}
         selectedDimensionId={selectedDimensionId}
       />
     </main>

@@ -1,9 +1,11 @@
 import type {
+  DimensionDetailResponse,
   ProfileCasesResponse,
   ProfileCompetencyResponse,
   ProfileJourneyResponse,
   ProfileKptResponse,
   ProfileOverviewResponse,
+  ValidationFlag,
 } from "@/features/dossier/types/dossier.types";
 
 export const MOCK_DOSSIER_OVERVIEW: ProfileOverviewResponse = {
@@ -382,3 +384,73 @@ export const MOCK_JOURNEY_RESPONSE: ProfileJourneyResponse = {
     },
   ],
 };
+
+export const MOCK_DIMENSION_DETAIL_RESPONSE: DimensionDetailResponse = {
+  dimensionScore: {
+    ...MOCK_COMPETENCY_RESPONSE.dimensionScores[3],
+    p3Inference: {
+      summary:
+        "Design signals are present but less consistent than execution signals.",
+    },
+  },
+  supportingEvidence: [
+    {
+      evidenceId: "ev-005",
+      analysisRunId: "run-001",
+      memberId: "mem-001",
+      timestamp: "2026-03-08T09:30:00Z",
+      sourceType: "github",
+      recordType: "pr_authored",
+      recordId: "pr-84",
+      contentExcerpt: "Authored a proposal outlining trade-offs for state ownership.",
+      contentSummary: "Surfaced design intent before implementation.",
+      extractionConfidence: 0.72,
+      ambiguityNotes: [],
+      createdAt: "2026-03-08T09:40:00Z",
+    },
+  ],
+  counterEvidence: [
+    {
+      evidenceId: "ev-006",
+      analysisRunId: "run-001",
+      memberId: "mem-001",
+      timestamp: "2026-03-18T13:10:00Z",
+      sourceType: "github",
+      recordType: "pr_reviewed",
+      recordId: "pr-102",
+      contentExcerpt:
+        "Risk surfaced after implementation was already underway, causing rework.",
+      contentSummary: "Architectural concern was identified later than ideal.",
+      extractionConfidence: 0.68,
+      ambiguityNotes: ["Timing signal may be influenced by reviewer cadence."],
+      createdAt: "2026-03-18T13:20:00Z",
+    },
+  ],
+  behavioralEvents: [
+    {
+      eventId: "event-002",
+      timestamp: "2026-03-18T13:10:00Z",
+      eventType: "design_review",
+      eventSummary: "Architectural risk raised after implementation start.",
+      polarity: "mixed",
+      severity: 2,
+      eventConfidence: 0.71,
+      impactLevel: "medium",
+      opportunityLevel: "high",
+      relatedDimensions: [{ dimension_id: "dim-design" }],
+      whyItMatters:
+        "Earlier escalation would have reduced sprint rework and clarified ownership.",
+    },
+  ],
+};
+
+export const MOCK_VALIDATION_FLAGS: ValidationFlag[] = [
+  {
+    flagId: "flag-001",
+    analysisRunId: "run-001",
+    dimensionId: "dim-design",
+    verdict: "questionable",
+    note: "Need more explicit system design evidence before approving.",
+    flaggedAt: "2026-04-11T12:00:00Z",
+  },
+];
