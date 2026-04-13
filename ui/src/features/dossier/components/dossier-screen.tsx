@@ -158,13 +158,10 @@ export const DossierScreen = ({
     closeReview,
     setSelectedDimensionId,
   } = useDossierUiState();
-  const [displayedTab, setDisplayedTab] = useState<DossierTab>(activeTab);
   const [reviewErrorMessage, setReviewErrorMessage] = useState<string | null>(
     null,
   );
   const deckMotionRef = useRef<HTMLDivElement | null>(null);
-  const deckTimelineRef = useRef<gsap.core.Timeline | null>(null);
-  const pendingTabRef = useRef<DossierTab>(activeTab);
   const briefClusterRef = useRef<HTMLDivElement | null>(null);
   const rightClusterRef = useRef<HTMLElement | null>(null);
   const stageClusterRef = useRef<HTMLDivElement | null>(null);
@@ -219,18 +216,14 @@ export const DossierScreen = ({
     kpt,
     cases,
     journey,
-  }[displayedTab];
+  }[activeTab];
   const activeSurfaceState = resolveDossierSurfaceState({
-    tab: displayedTab,
+    tab: activeTab,
     analysisStatus: activeAnalysisStatus,
     data: activePanel.data,
     error: activePanel.error instanceof Error ? activePanel.error : null,
     isError: activePanel.isError,
   });
-
-  useEffect(() => {
-    pendingTabRef.current = activeTab;
-  }, [activeTab]);
 
   useEffect(() => {
     if (
@@ -245,36 +238,6 @@ export const DossierScreen = ({
       });
     }
   }, [activeRun.data, memberId, queryClient]);
-
-  useEffect(() => {
-    const deckNode = deckMotionRef.current;
-
-    if (!deckNode || displayedTab === activeTab) {
-      return;
-    }
-
-    deckTimelineRef.current?.kill();
-
-    const exitTween = gsap.to(deckNode, {
-      x: DOSSIER_MOTION.deckExitOffset,
-      opacity: 0,
-      filter: `blur(${DOSSIER_MOTION.deckExitBlur}px)`,
-      scale: 0.975,
-      duration: DOSSIER_MOTION.deckExitDuration,
-      ease: "power3.inOut",
-      overwrite: true,
-      onComplete: () => {
-        setDisplayedTab(pendingTabRef.current);
-      },
-    });
-
-    deckTimelineRef.current = gsap.timeline();
-    deckTimelineRef.current.add(exitTween, 0);
-
-    return () => {
-      exitTween.kill();
-    };
-  }, [activeTab, displayedTab]);
 
   useEffect(() => {
     const deckNode = deckMotionRef.current;
@@ -307,7 +270,15 @@ export const DossierScreen = ({
     return () => {
       window.cancelAnimationFrame(animationFrame);
     };
-  }, [displayedTab]);
+  }, [activeTab]);
+
+  const handleTabChange = (tab: DossierTab) => {
+    if (tab === activeTab) {
+      return;
+    }
+
+    setActiveTab(tab);
+  };
 
   useEffect(() => {
     const panelTargets = [
@@ -427,7 +398,7 @@ export const DossierScreen = ({
       );
     }
 
-    switch (displayedTab) {
+    switch (activeTab) {
       case "overview":
         return <OverviewDeck data={overview.data!} />;
       case "competency":
@@ -480,10 +451,10 @@ export const DossierScreen = ({
 
       <div className="relative z-10 mx-auto max-w-[1880px] px-4 pb-5 pt-3 md:px-6 xl:flex-1 xl:min-h-0 xl:w-full xl:overflow-visible xl:pb-4">
         <div
-          className="absolute inset-y-0 left-[clamp(10rem,12vw,13rem)] right-[40%] z-[15] hidden xl:block"
+          className="pointer-events-none absolute inset-y-0 left-[clamp(10rem,12vw,13rem)] right-[40%] z-[15] hidden xl:block"
           ref={stageClusterRef}
         >
-          <div className="relative h-full overflow-visible pt-3">
+          <div className="pointer-events-none relative h-full overflow-visible pt-3">
             <DossierHeroAtmosphere />
             <CharacterStage
               confidence={displayConfidence}
@@ -504,7 +475,7 @@ export const DossierScreen = ({
           ) : null}
 
           <section className="relative xl:w-[46%]" aria-hidden="true">
-            <div className="relative xl:hidden">
+            <div className="pointer-events-none relative xl:hidden">
               <DossierHeroAtmosphere />
               <CharacterStage
                 confidence={displayConfidence}
@@ -520,7 +491,10 @@ export const DossierScreen = ({
           >
             <div className="dossier-scroll xl:h-full xl:min-h-0 xl:overflow-x-hidden xl:overflow-y-auto xl:pr-2 xl:overscroll-contain">
               <div className="mb-3 xl:sticky xl:top-0 xl:z-20 xl:mb-2 xl:bg-[linear-gradient(180deg,rgba(6,13,21,0.96),rgba(6,13,21,0.82)_72%,transparent)] xl:pb-3">
-                <DossierTabs activeTab={activeTab} onTabChange={setActiveTab} />
+                <DossierTabs
+                  activeTab={activeTab}
+                  onTabChange={handleTabChange}
+                />
               </div>
 
               <div
@@ -560,7 +534,7 @@ export const DossierScreen = ({
                         color: CONTRAST.textTertiary,
                       }}
                     >
-                      {ACTIVE_PANEL_COPY[displayedTab].eyebrow}
+                      {ACTIVE_PANEL_COPY[activeTab].eyebrow}
                     </p>
                     <div className="mt-2 flex flex-wrap items-end justify-between gap-2">
                       <div className="max-w-xl">
@@ -573,7 +547,7 @@ export const DossierScreen = ({
                             color: CONTRAST.textPrimary,
                           }}
                         >
-                          {ACTIVE_PANEL_COPY[displayedTab].title}
+                          {ACTIVE_PANEL_COPY[activeTab].title}
                         </h2>
                         <p
                           className="mt-1.5 max-w-xl"
@@ -583,7 +557,7 @@ export const DossierScreen = ({
                             color: CONTRAST.textSecondary,
                           }}
                         >
-                          {ACTIVE_PANEL_COPY[displayedTab].description}
+                          {ACTIVE_PANEL_COPY[activeTab].description}
                         </p>
                       </div>
                     </div>

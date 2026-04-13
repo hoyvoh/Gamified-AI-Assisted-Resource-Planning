@@ -71,6 +71,7 @@ export const EvidenceDrawer = ({
     <div
       className="pointer-events-none absolute inset-0 z-30"
       ref={containerRef}
+      style={{ pointerEvents: isOpen ? "auto" : "none" }}
     >
       <div
         className="absolute inset-0 bg-[#02060b]/68 backdrop-blur-[2px]"

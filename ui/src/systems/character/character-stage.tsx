@@ -107,7 +107,7 @@ export const CharacterStage = ({
   }, [isModelReady]);
 
   return (
-    <section className="relative flex min-h-[35rem] flex-1 overflow-visible pt-4 xl:h-full xl:min-h-[calc(100vh-150px)] xl:pt-5">
+    <section className="pointer-events-none relative flex min-h-[35rem] flex-1 overflow-visible pt-4 xl:h-full xl:min-h-[calc(100vh-150px)] xl:pt-5">
       <div className="absolute inset-x-0 bottom-0 top-4 xl:top-5">
         <Canvas
           camera={{ position: [0, 0.72, 4.1], fov: 34 }}
@@ -115,7 +115,7 @@ export const CharacterStage = ({
           onCreated={({ gl }) => {
             gl.setClearColor(TRANSPARENT_CLEAR, 0);
           }}
-          style={{ background: "transparent" }}
+          style={{ background: "transparent", pointerEvents: "none" }}
         >
           <CharacterCameraRig isFocusMode={isFocusMode} />
           <ambientLight intensity={1.1} />

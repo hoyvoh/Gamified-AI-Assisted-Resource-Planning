@@ -77,6 +77,7 @@ export const ReviewOverlay = ({
     <div
       className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center px-4"
       ref={containerRef}
+      style={{ pointerEvents: isOpen ? "auto" : "none" }}
     >
       <div
         className="absolute inset-0 bg-[#02060b]/72 backdrop-blur-[3px]"
