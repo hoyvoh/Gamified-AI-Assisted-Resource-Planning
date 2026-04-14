@@ -38,6 +38,7 @@ export const MemberHeaderPanel = ({ header }: MemberHeaderPanelProps) => {
           <div className="min-w-0">
             <h1
               className="truncate font-display uppercase md:text-lg"
+              title={header.memberName}
               style={{
                 fontSize: TYPO.headerName.fontSize,
                 lineHeight: TYPO.headerName.lineHeight,
@@ -49,6 +50,7 @@ export const MemberHeaderPanel = ({ header }: MemberHeaderPanelProps) => {
             </h1>
             <p
               className="mt-0.5 truncate uppercase"
+              title={`${header.roleName} · ${header.teamName}`}
               style={{
                 fontSize: TYPO.headerSub.fontSize,
                 lineHeight: TYPO.headerSub.lineHeight,

@@ -16,17 +16,6 @@ export type DossierMaturity =
   | "developing"
   | "emerging";
 
-export interface DossierMember {
-  memberId: string;
-  displayName: string;
-  roleName: string | null;
-  teamName: string;
-  analysisStatus: AnalysisStatus;
-  latestRunId: string | null;
-  latestRunProgress: number;
-  latestRunStage: string | null;
-}
-
 export interface CategoryScore {
   categoryScoreId: string;
   categoryId: string;

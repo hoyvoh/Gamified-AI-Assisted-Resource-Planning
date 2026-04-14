@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+
 import {
   DOSSIER_COLORS,
   DOSSIER_MOTION,
@@ -43,6 +45,53 @@ export const EvidenceDrawer = ({
     itemDuration: DOSSIER_MOTION.drawerBackdropDuration,
     itemStagger: DOSSIER_MOTION.drawerCardStagger,
   });
+  const panelElementRef = useRef<HTMLElement | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    closeButtonRef.current?.focus();
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+
+      if (event.key !== "Tab" || !panelElementRef.current) {
+        return;
+      }
+
+      const focusableElements = panelElementRef.current.querySelectorAll<
+        HTMLButtonElement | HTMLAnchorElement | HTMLInputElement | HTMLTextAreaElement
+      >('button:not([disabled]), [href], input:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+
+      if (focusableElements.length === 0) {
+        return;
+      }
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (event.shiftKey && document.activeElement === firstElement) {
+        event.preventDefault();
+        lastElement.focus();
+      } else if (!event.shiftKey && document.activeElement === lastElement) {
+        event.preventDefault();
+        firstElement.focus();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, onClose]);
 
   if (!isMounted) {
     return null;
@@ -78,8 +127,14 @@ export const EvidenceDrawer = ({
         ref={backdropRef}
       />
       <aside
+        aria-label="Evidence drawer"
+        aria-modal="true"
         className="pointer-events-auto absolute bottom-4 right-4 top-4 w-[min(440px,calc(100vw-2rem))] rounded-[28px] border px-5 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.4)]"
-        ref={panelRef}
+        ref={(node) => {
+          panelRef.current = node;
+          panelElementRef.current = node;
+        }}
+        role="dialog"
         style={{
           borderColor: `${DOSSIER_COLORS.primary}30`,
           background:
@@ -108,7 +163,9 @@ export const EvidenceDrawer = ({
             </p>
           </div>
           <button
+            aria-label="Close evidence drawer"
             className="rounded-full border px-3 py-2 text-[10px] uppercase tracking-[0.2em]"
+            ref={closeButtonRef}
             style={{
               borderColor: "rgba(255,255,255,0.08)",
               color: DOSSIER_COLORS.textDim,

@@ -23,6 +23,7 @@ export const CasesDeck = ({ data }: CasesDeckProps) => {
   );
   const selected =
     data.cases.find((item) => item.caseId === selectedId) ?? data.cases[0];
+  const hasCases = data.cases.length > 0;
 
   return (
     <div className="space-y-3.5">
@@ -59,7 +60,7 @@ export const CasesDeck = ({ data }: CasesDeckProps) => {
 
       <section className="grid gap-3 xl:grid-cols-[0.86fr_1.14fr]">
         <div className="space-y-2.5">
-          {data.cases.map((caseItem) => {
+          {hasCases ? data.cases.map((caseItem) => {
             const isActive = caseItem.caseId === selected?.caseId;
 
             return (
@@ -103,7 +104,26 @@ export const CasesDeck = ({ data }: CasesDeckProps) => {
                 </p>
               </button>
             );
-          })}
+          }) : (
+            <div
+              className="rounded-[22px] border px-4 py-4"
+              style={{
+                borderColor: DOSSIER_COLORS.panelBorder,
+                background:
+                  "linear-gradient(180deg, rgba(10, 20, 35, 0.82), rgba(7, 14, 22, 0.8))",
+              }}
+            >
+              <p
+                style={{
+                  fontSize: TYPO.cardBody.fontSize,
+                  lineHeight: TYPO.cardBody.lineHeight,
+                  color: CONTRAST.textSecondary,
+                }}
+              >
+                No case evidence is available for this dossier yet.
+              </p>
+            </div>
+          )}
         </div>
 
         <div
@@ -183,7 +203,22 @@ export const CasesDeck = ({ data }: CasesDeckProps) => {
                 </div>
               ))}
             </div>
-          ) : null}
+          ) : (
+            <div className="rounded-[18px] border px-4 py-4" style={{
+              borderColor: "rgba(255,255,255,0.07)",
+              backgroundColor: "rgba(255,255,255,0.03)",
+            }}>
+              <p
+                style={{
+                  fontSize: TYPO.cardBody.fontSize,
+                  lineHeight: TYPO.cardBody.lineHeight,
+                  color: CONTRAST.textSecondary,
+                }}
+              >
+                Select a case when evidence becomes available to inspect its full chain.
+              </p>
+            </div>
+          )}
         </div>
       </section>
     </div>

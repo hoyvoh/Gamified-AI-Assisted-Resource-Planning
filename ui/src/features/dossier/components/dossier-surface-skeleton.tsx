@@ -21,7 +21,13 @@ const SkeletonBar = ({
 
 export const DossierSurfaceSkeleton = () => {
   return (
-    <div className="space-y-3">
+    <div
+      aria-busy="true"
+      aria-live="polite"
+      className="space-y-3"
+      role="status"
+    >
+      <span className="sr-only">Loading dossier surface</span>
       <div
         className="rounded-[18px] border px-4 py-4 backdrop-blur-xl"
         style={{

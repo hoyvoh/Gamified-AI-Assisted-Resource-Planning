@@ -102,9 +102,54 @@ export const KptDeck = ({ data }: KptDeckProps) => {
                 </span>
               </div>
               <div className="mt-3.5 space-y-2.5">
-                {grouped[type].map((item) => (
+                {grouped[type].length > 0 ? (
+                  grouped[type].map((item) => (
+                    <div
+                      key={item.kptId}
+                      className="rounded-[18px] border px-4 py-3.5"
+                      style={{
+                        borderColor: "rgba(255,255,255,0.07)",
+                        backgroundColor: "rgba(255,255,255,0.03)",
+                      }}
+                    >
+                      <p
+                        style={{
+                          fontSize: TYPO.cardBody.fontSize,
+                          lineHeight: TYPO.cardBody.lineHeight,
+                          color: CONTRAST.textPrimary,
+                        }}
+                      >
+                        {item.title}
+                      </p>
+                      {item.summary ? (
+                        <p
+                          className="mt-2"
+                          style={{
+                            fontSize: TYPO.bodySm.fontSize,
+                            lineHeight: TYPO.bodySm.lineHeight,
+                            color: CONTRAST.textSecondary,
+                          }}
+                        >
+                          {item.summary}
+                        </p>
+                      ) : null}
+                      {item.linkedDimensionIds.length > 0 && (
+                        <p
+                          className="mt-2.5"
+                          style={{
+                            fontSize: TYPO.badge.fontSize,
+                            lineHeight: TYPO.badge.lineHeight,
+                            letterSpacing: TYPO.badge.letterSpacing,
+                            color: CONTRAST.textTertiary,
+                          }}
+                        >
+                          Linked dimension surface
+                        </p>
+                      )}
+                    </div>
+                  ))
+                ) : (
                   <div
-                    key={item.kptId}
                     className="rounded-[18px] border px-4 py-3.5"
                     style={{
                       borderColor: "rgba(255,255,255,0.07)",
@@ -113,40 +158,15 @@ export const KptDeck = ({ data }: KptDeckProps) => {
                   >
                     <p
                       style={{
-                        fontSize: TYPO.cardBody.fontSize,
-                        lineHeight: TYPO.cardBody.lineHeight,
-                        color: CONTRAST.textPrimary,
+                        fontSize: TYPO.bodySm.fontSize,
+                        lineHeight: TYPO.bodySm.lineHeight,
+                        color: CONTRAST.textSecondary,
                       }}
                     >
-                      {item.title}
+                      No {meta.label.toLowerCase()} items are available for this scan yet.
                     </p>
-                    {item.summary ? (
-                      <p
-                        className="mt-2"
-                        style={{
-                          fontSize: TYPO.bodySm.fontSize,
-                          lineHeight: TYPO.bodySm.lineHeight,
-                          color: CONTRAST.textSecondary,
-                        }}
-                      >
-                        {item.summary}
-                      </p>
-                    ) : null}
-                    {item.linkedDimensionIds.length > 0 && (
-                      <p
-                        className="mt-2.5"
-                        style={{
-                          fontSize: TYPO.badge.fontSize,
-                          lineHeight: TYPO.badge.lineHeight,
-                          letterSpacing: TYPO.badge.letterSpacing,
-                          color: CONTRAST.textTertiary,
-                        }}
-                      >
-                        Linked dimension surface
-                      </p>
-                    )}
                   </div>
-                ))}
+                )}
               </div>
             </article>
           );

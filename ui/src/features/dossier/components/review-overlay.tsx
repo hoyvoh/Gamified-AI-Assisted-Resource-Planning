@@ -61,6 +61,10 @@ export const ReviewOverlay = ({
     itemDuration: DOSSIER_MOTION.reviewBackdropDuration,
     itemStagger: DOSSIER_MOTION.reviewCardStagger,
   });
+  const [panelNode, setPanelNode] = useState<HTMLElement | null>(null);
+  const [closeButtonNode, setCloseButtonNode] = useState<HTMLButtonElement | null>(
+    null,
+  );
 
   useEffect(() => {
     if (isOpen) {
@@ -68,6 +72,51 @@ export const ReviewOverlay = ({
       setNote(existingFlag?.note ?? "");
     }
   }, [existingFlag, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    closeButtonNode?.focus();
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+
+      if (event.key !== "Tab" || !panelNode) {
+        return;
+      }
+
+      const focusableElements = panelNode.querySelectorAll<
+        HTMLButtonElement | HTMLInputElement | HTMLTextAreaElement | HTMLAnchorElement
+      >('button:not([disabled]), [href], input:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+
+      if (focusableElements.length === 0) {
+        return;
+      }
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (event.shiftKey && document.activeElement === firstElement) {
+        event.preventDefault();
+        lastElement.focus();
+      } else if (!event.shiftKey && document.activeElement === lastElement) {
+        event.preventDefault();
+        firstElement.focus();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [closeButtonNode, isOpen, onClose, panelNode]);
 
   if (!isMounted) {
     return null;
@@ -84,8 +133,14 @@ export const ReviewOverlay = ({
         ref={backdropRef}
       />
       <section
+        aria-label="Validation review overlay"
+        aria-modal="true"
         className="pointer-events-auto relative w-full max-w-2xl rounded-[30px] border px-6 py-6 shadow-[0_30px_90px_rgba(0,0,0,0.44)]"
-        ref={panelRef}
+        ref={(node) => {
+          panelRef.current = node;
+          setPanelNode(node);
+        }}
+        role="dialog"
         style={{
           borderColor: `${DOSSIER_COLORS.warning}34`,
           background:
@@ -111,7 +166,9 @@ export const ReviewOverlay = ({
             </p>
           </div>
           <button
+            aria-label="Close review overlay"
             className="rounded-full border px-3 py-2 text-[10px] uppercase tracking-[0.2em]"
+            ref={setCloseButtonNode}
             style={{
               borderColor: "rgba(255,255,255,0.08)",
               color: DOSSIER_COLORS.textDim,

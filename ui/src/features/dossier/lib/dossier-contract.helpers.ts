@@ -20,7 +20,7 @@ const PERCENT_SCALE_THRESHOLD = 1;
 const SCORE_MAX = 100;
 const SCORE_MIN = 0;
 
-const DIMENSION_LABELS: Record<string, string> = {
+const DIMENSION_LABEL_OVERRIDES: Record<string, string> = {
   "dim-tech": "Technical Skill",
   "dim-comm": "Communication",
   "dim-owner": "Ownership",
@@ -29,7 +29,7 @@ const DIMENSION_LABELS: Record<string, string> = {
   "dim-docs": "Documentation",
 };
 
-const CATEGORY_LABELS: Record<string, string> = {
+const CATEGORY_LABEL_OVERRIDES: Record<string, string> = {
   execution: "Exec",
   communication: "Comm",
   design: "Design",
@@ -39,11 +39,30 @@ const CATEGORY_LABELS: Record<string, string> = {
   process: "Process",
 };
 
+const prettifyEntityLabel = (value: string): string => {
+  const normalizedValue = value.trim();
+
+  if (!normalizedValue) {
+    return EMPTY_LABEL;
+  }
+
+  return normalizedValue
+    .replace(/^[a-z]+[-_]/i, "")
+    .split(/[-_]/)
+    .filter(Boolean)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(" ");
+};
+
 export const getDimensionLabel = (dimensionId: string): string =>
-  DIMENSION_LABELS[dimensionId] ?? dimensionId ?? EMPTY_LABEL;
+  DIMENSION_LABEL_OVERRIDES[dimensionId] ??
+  prettifyEntityLabel(dimensionId) ??
+  EMPTY_LABEL;
 
 export const getCategoryLabel = (categoryId: string): string =>
-  CATEGORY_LABELS[categoryId] ?? categoryId ?? EMPTY_LABEL;
+  CATEGORY_LABEL_OVERRIDES[categoryId] ??
+  prettifyEntityLabel(categoryId) ??
+  EMPTY_LABEL;
 
 export const toPercentValue = (value: number | null | undefined): number | null => {
   if (value === null || value === undefined || Number.isNaN(value)) {

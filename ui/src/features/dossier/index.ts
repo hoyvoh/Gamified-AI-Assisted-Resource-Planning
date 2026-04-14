@@ -2,7 +2,6 @@
 
 export type {
   DossierTab,
-  DossierMember,
   ProfileOverviewResponse,
   ProfileCompetencyResponse,
   ProfileKptResponse,

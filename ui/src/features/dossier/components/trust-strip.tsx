@@ -29,7 +29,7 @@ export const TrustStrip = ({ trust, onOpenReview }: TrustStripProps) => {
         boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05)",
       }}
     >
-      <div className="grid grid-cols-[1fr_1fr_1fr_auto] items-end gap-3">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[1fr_1fr_1fr_auto] xl:items-end">
         {/* Confidence — emerald glow for trust */}
         <div>
           <p

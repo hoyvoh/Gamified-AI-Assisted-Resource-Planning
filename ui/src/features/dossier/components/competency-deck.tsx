@@ -293,7 +293,7 @@ export const CompetencyDeck = ({
                       backgroundColor: "rgba(255,255,255,0.04)",
                     }}
                   >
-                    Select to focus
+                    {isSelected ? "Focused signal" : "Select to focus"}
                   </span>
                 </div>
                 <div className="h-1.5 overflow-hidden rounded-full bg-white/5">
