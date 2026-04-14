@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { getDossierRepository } from "@/features/dossier/api/dossier-repository.factory";
+import type { ProfileOverviewResponse } from "@/features/dossier/types/dossier.types";
 
 const Q = {
   overview: (id: string) => ["dossier", id, "overview"] as const,
@@ -15,10 +16,14 @@ const Q = {
   validationFlags: (runId: string) => ["dossier", "validation-flags", runId] as const,
 };
 
-export const useDossierOverview = (memberId: string) =>
+export const useDossierOverview = (
+  memberId: string,
+  initialData?: ProfileOverviewResponse | null,
+) =>
   useQuery({
     queryKey: Q.overview(memberId),
     queryFn: () => getDossierRepository().getOverview(memberId),
+    initialData: initialData ?? undefined,
     staleTime: 60_000,
   });
 
@@ -128,8 +133,11 @@ export const useAnalysisRunStatus = (runId: string | null, enabled: boolean) =>
     staleTime: 0,
   });
 
-export const useDossierData = (memberId: string) => {
-  const overview = useDossierOverview(memberId);
+export const useDossierData = (
+  memberId: string,
+  initialOverview?: ProfileOverviewResponse | null,
+) => {
+  const overview = useDossierOverview(memberId, initialOverview);
   const competency = useDossierCompetency(memberId);
   const kpt = useDossierKpt(memberId);
   const cases = useDossierCases(memberId);

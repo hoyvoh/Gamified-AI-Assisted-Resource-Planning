@@ -37,6 +37,7 @@ export function DossierPageContent() {
       teamName={bootstrap.data.teamName}
       analysisStatus={bootstrap.data.analysisStatus}
       confidence={bootstrap.data.confidence}
+      initialOverview={bootstrap.data.initialOverview}
       latestRun={bootstrap.data.latestRun}
     />
   );

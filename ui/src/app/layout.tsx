@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
+import { Inter, JetBrains_Mono, Orbitron } from "next/font/google";
 
 import "./globals.css";
 import { QueryClientProviderWrapper } from "@/providers/query-client.provider";
@@ -14,9 +14,9 @@ const jetBrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
 });
 
-const spaceGrotesk = Space_Grotesk({
+const orbitron = Orbitron({
   subsets: ["latin"],
-  variable: "--font-space-grotesk",
+  variable: "--font-orbitron",
 });
 
 export const metadata: Metadata = {
@@ -31,7 +31,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${jetBrainsMono.variable} ${spaceGrotesk.variable}`}>
+      <body className={`${inter.variable} ${jetBrainsMono.variable} ${orbitron.variable}`}>
         <QueryClientProviderWrapper>{children}</QueryClientProviderWrapper>
       </body>
     </html>

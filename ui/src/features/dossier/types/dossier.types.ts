@@ -205,6 +205,7 @@ export interface DossierBootstrapData {
   teamName: string;
   analysisStatus: AnalysisStatus;
   confidence: number;
+  initialOverview: ProfileOverviewResponse | null;
   latestRun: AnalysisRun | null;
 }
 

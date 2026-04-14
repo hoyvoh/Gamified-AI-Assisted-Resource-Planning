@@ -44,6 +44,7 @@ import type {
   AnalysisRun,
   DossierHeaderViewModel,
   DossierTab,
+  ProfileOverviewResponse,
 } from "@/features/dossier/types/dossier.types";
 import type { AnalysisStatus } from "@/types/organization";
 import { CharacterStage } from "@/systems/character/character-stage";
@@ -55,6 +56,7 @@ interface DossierScreenProps {
   teamName: string;
   analysisStatus: AnalysisStatus;
   confidence: number;
+  initialOverview: ProfileOverviewResponse | null;
   latestRun: AnalysisRun | null;
 }
 
@@ -141,11 +143,15 @@ export const DossierScreen = ({
   teamName,
   analysisStatus,
   confidence,
+  initialOverview,
   latestRun,
 }: DossierScreenProps) => {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { overview, competency, kpt, cases, journey } = useDossierData(memberId);
+  const { overview, competency, kpt, cases, journey } = useDossierData(
+    memberId,
+    initialOverview,
+  );
   const {
     activeTab,
     isEvidenceOpen,
@@ -465,14 +471,12 @@ export const DossierScreen = ({
         </div>
 
         <div className="flex flex-col gap-3 xl:h-full xl:min-h-0 xl:flex-row xl:items-stretch xl:gap-2 xl:overflow-visible">
-          {briefViewModel ? (
-            <div
-              className="xl:flex xl:h-full xl:items-start"
-              ref={briefClusterRef}
-            >
-              <LeftBriefPanel brief={briefViewModel} />
-            </div>
-          ) : null}
+          <div
+            className="hidden xl:flex xl:h-full xl:w-[14%] xl:min-w-[168px] xl:max-w-[198px] xl:items-start xl:-mr-3"
+            ref={briefClusterRef}
+          >
+            <LeftBriefPanel brief={briefViewModel} />
+          </div>
 
           <section className="relative xl:w-[46%]" aria-hidden="true">
             <div className="pointer-events-none relative xl:hidden">
@@ -489,8 +493,8 @@ export const DossierScreen = ({
             className="relative xl:h-full xl:min-h-0 xl:w-[40%] xl:min-w-[480px] xl:pt-3"
             ref={rightClusterRef}
           >
-            <div className="dossier-scroll xl:h-full xl:min-h-0 xl:overflow-x-hidden xl:overflow-y-auto xl:pr-2 xl:overscroll-contain">
-              <div className="mb-3 xl:sticky xl:top-0 xl:z-20 xl:mb-2 xl:bg-[linear-gradient(180deg,rgba(6,13,21,0.96),rgba(6,13,21,0.82)_72%,transparent)] xl:pb-3">
+            <div className="xl:flex xl:h-full xl:min-h-0 xl:flex-col xl:pr-2">
+              <div className="mb-3 xl:mb-2 xl:flex-shrink-0 xl:bg-[linear-gradient(180deg,rgba(6,13,21,0.96),rgba(6,13,21,0.82)_72%,transparent)] xl:pb-3">
                 <DossierTabs
                   activeTab={activeTab}
                   onTabChange={handleTabChange}
@@ -498,7 +502,7 @@ export const DossierScreen = ({
               </div>
 
               <div
-                className="relative rounded-[24px] border px-5 pb-5 pt-4 shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-xl"
+                className="relative rounded-[24px] border px-5 pb-5 pt-4 shadow-[0_24px_80px_rgba(0,0,0,0.32)] backdrop-blur-xl xl:flex xl:h-full xl:min-h-0 xl:flex-col"
                 style={{
                   borderColor: DOSSIER_COLORS.panelBorderStrong,
                   background:
@@ -516,7 +520,7 @@ export const DossierScreen = ({
                   style={{ backgroundColor: "rgba(63, 211, 255, 0.08)" }}
                 />
                 {trustViewModel ? (
-                  <div className="mb-3">
+                  <div className="mb-3 xl:flex-shrink-0">
                     <TrustStrip
                       onOpenReview={handleOpenReview}
                       trust={trustViewModel}
@@ -524,69 +528,73 @@ export const DossierScreen = ({
                   </div>
                 ) : null}
 
-                <div className="overflow-x-hidden" ref={deckMotionRef}>
-                  <div className="border-b border-white/6 pb-3">
-                    <p
-                      style={{
-                        fontSize: TYPO.eyebrow.fontSize,
-                        lineHeight: TYPO.eyebrow.lineHeight,
-                        letterSpacing: TYPO.eyebrow.letterSpacing,
-                        color: CONTRAST.textTertiary,
-                      }}
-                    >
-                      {ACTIVE_PANEL_COPY[activeTab].eyebrow}
-                    </p>
-                    <div className="mt-2 flex flex-wrap items-end justify-between gap-2">
-                      <div className="max-w-xl">
-                        <h2
-                          className="font-display uppercase md:text-lg"
-                          style={{
-                            fontSize: TYPO.sectionTitle.fontSize,
-                            lineHeight: TYPO.sectionTitle.lineHeight,
-                            letterSpacing: TYPO.sectionTitle.letterSpacing,
-                            color: CONTRAST.textPrimary,
-                          }}
-                        >
-                          {ACTIVE_PANEL_COPY[activeTab].title}
-                        </h2>
-                        <p
-                          className="mt-1.5 max-w-xl"
-                          style={{
-                            fontSize: TYPO.bodySm.fontSize,
-                            lineHeight: TYPO.bodySm.lineHeight,
-                            color: CONTRAST.textSecondary,
-                          }}
-                        >
-                          {ACTIVE_PANEL_COPY[activeTab].description}
-                        </p>
+                <div className="overflow-x-hidden xl:min-h-0 xl:flex-1" ref={deckMotionRef}>
+                  <div className="xl:flex xl:h-full xl:min-h-0 xl:flex-col">
+                    <div className="border-b border-white/6 pb-3 xl:flex-shrink-0">
+                      <p
+                        style={{
+                          fontSize: TYPO.eyebrow.fontSize,
+                          lineHeight: TYPO.eyebrow.lineHeight,
+                          letterSpacing: TYPO.eyebrow.letterSpacing,
+                          color: CONTRAST.textTertiary,
+                        }}
+                      >
+                        {ACTIVE_PANEL_COPY[activeTab].eyebrow}
+                      </p>
+                      <div className="mt-2 flex flex-wrap items-end justify-between gap-2">
+                        <div className="max-w-xl">
+                          <h2
+                            className="font-display uppercase md:text-lg"
+                            style={{
+                              fontSize: TYPO.sectionTitle.fontSize,
+                              lineHeight: TYPO.sectionTitle.lineHeight,
+                              letterSpacing: TYPO.sectionTitle.letterSpacing,
+                              color: CONTRAST.textPrimary,
+                            }}
+                          >
+                            {ACTIVE_PANEL_COPY[activeTab].title}
+                          </h2>
+                          <p
+                            className="mt-1.5 max-w-xl"
+                            style={{
+                              fontSize: TYPO.bodySm.fontSize,
+                              lineHeight: TYPO.bodySm.lineHeight,
+                              color: CONTRAST.textSecondary,
+                            }}
+                          >
+                            {ACTIVE_PANEL_COPY[activeTab].description}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="pt-3.5">
-                    {activePanel.isLoading ? (
-                      <DossierSurfaceSkeleton />
-                    ) : (
-                      renderActiveDeck()
-                    )}
+                    <div className="pt-3.5 xl:min-h-0 xl:flex-1 xl:overflow-x-hidden xl:overflow-y-auto xl:overscroll-contain">
+                      {activePanel.isLoading ? (
+                        <DossierSurfaceSkeleton />
+                      ) : (
+                        renderActiveDeck()
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                <AnalysisLauncher
-                  analysisStatus={activeAnalysisStatus}
-                  onOpenEvidence={handleOpenEvidence}
-                  onReturnToWarRoom={() => router.push("/")}
-                  onStartScan={handleStartScan}
-                  scanReady={
-                    !createAnalysisRun.isPending && activeAnalysisStatus !== "analyzing"
-                  }
-                  scanStageLabel={
-                    currentRun?.progressStage
-                      ? ANALYSIS_STAGE_LABELS[currentRun.progressStage] ??
-                        currentRun.progressStage
-                      : null
-                  }
-                />
+                <div className="xl:flex-shrink-0">
+                  <AnalysisLauncher
+                    analysisStatus={activeAnalysisStatus}
+                    onOpenEvidence={handleOpenEvidence}
+                    onReturnToWarRoom={() => router.push("/")}
+                    onStartScan={handleStartScan}
+                    scanReady={
+                      !createAnalysisRun.isPending && activeAnalysisStatus !== "analyzing"
+                    }
+                    scanStageLabel={
+                      currentRun?.progressStage
+                        ? ANALYSIS_STAGE_LABELS[currentRun.progressStage] ??
+                          currentRun.progressStage
+                        : null
+                    }
+                  />
+                </div>
               </div>
             </div>
           </section>

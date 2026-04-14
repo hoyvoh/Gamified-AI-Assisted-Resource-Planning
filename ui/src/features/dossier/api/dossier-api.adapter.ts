@@ -285,5 +285,6 @@ export const toBootstrapData = ({
   teamName,
   analysisStatus: normalizeAnalysisStatus(member.analysis_status),
   confidence: overview?.overallConfidence ?? DEFAULT_CONFIDENCE,
+  initialOverview: overview,
   latestRun,
 });
