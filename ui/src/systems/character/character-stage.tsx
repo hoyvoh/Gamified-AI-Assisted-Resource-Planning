@@ -10,6 +10,7 @@ import { DOSSIER_MOTION } from "@/features/dossier/constants/dossier.constants";
 import { CharacterCore } from "@/systems/character/character-core";
 
 interface CharacterStageProps {
+  accentColor?: string;
   confidence: number;
   status: AnalysisStatus;
   isFocusMode: boolean;
@@ -83,6 +84,7 @@ const CharacterCameraRig = ({ isFocusMode }: CharacterCameraRigProps) => {
 };
 
 export const CharacterStage = ({
+  accentColor = "#99fff2",
   confidence,
   status,
   isFocusMode,
@@ -120,8 +122,8 @@ export const CharacterStage = ({
           <CharacterCameraRig isFocusMode={isFocusMode} />
           <ambientLight intensity={1.1} />
           <directionalLight color="#ffe7cf" intensity={2.2} position={[0, 3, 3]} />
-          <directionalLight color="#ff9c5f" intensity={2.8} position={[1.4, 0.6, 2.6]} />
-          <pointLight color="#ff7c4d" intensity={12} position={[0, -0.1, 2.1]} />
+          <directionalLight color={accentColor} intensity={2.8} position={[1.4, 0.6, 2.6]} />
+          <pointLight color={accentColor} intensity={12} position={[0, -0.1, 2.1]} />
           <pointLight color="#ffd7ab" intensity={8} position={[-1.2, 1.8, 2]} />
           <Suspense fallback={<HeroStageFallback />}>
             <CharacterCore
@@ -136,6 +138,9 @@ export const CharacterStage = ({
       <div
         className="pointer-events-none absolute inset-x-[10%] bottom-[12%] top-[12%] z-[1] rounded-[50%] bg-[radial-gradient(circle,_rgba(98,240,229,0.04)_0%,rgba(63,211,255,0.02)_30%,rgba(5,7,13,0)_78%)] blur-3xl"
         ref={loadingVeilRef}
+        style={{
+          background: `radial-gradient(circle, ${accentColor}14 0%, rgba(63,211,255,0.02) 30%, rgba(5,7,13,0) 78%)`,
+        }}
       />
     </section>
   );
