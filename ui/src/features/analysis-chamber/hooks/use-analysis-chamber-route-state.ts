@@ -45,7 +45,21 @@ export const useAnalysisChamberRouteState = () => {
       if ("drawer" in patch) apply("drawer", patch.drawer);
       if ("highlight" in patch) apply("highlight", patch.highlight);
 
-      const target = next.toString() ? `${pathname}?${next.toString()}` : pathname;
+      const target = next.toString()
+        ? `${pathname}?${next.toString()}`
+        : pathname;
+
+      if (typeof window !== "undefined") {
+        const nextUrl = `${window.location.origin}${target}`;
+        if (history === "push") {
+          window.history.pushState(null, "", nextUrl);
+          return;
+        }
+
+        window.history.replaceState(null, "", nextUrl);
+        return;
+      }
+
       if (history === "push") {
         router.push(target, { scroll: false });
         return;

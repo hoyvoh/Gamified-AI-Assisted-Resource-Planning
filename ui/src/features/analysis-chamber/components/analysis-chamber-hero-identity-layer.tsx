@@ -1,7 +1,10 @@
+"use client";
+
 import { CharacterStage } from "@/systems/character/character-stage";
 import { getStatusColor } from "@/systems/character/character-shared";
 import type { AnalysisStatus } from "@/types/organization";
 import { ANALYSIS_CHAMBER_SHELL_PALETTE as palette } from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
+import { useEffect, useState } from "react";
 
 const formatConfidenceLabel = (confidence: number) =>
   `${Math.round(Math.max(0, Math.min(confidence, 1)) * 100)}% confidence`;
@@ -18,6 +21,11 @@ export const AnalysisChamberHeroIdentityLayer = ({
   status: AnalysisStatus;
 }) => {
   const accentColor = getStatusColor(status);
+  const [canRenderCharacter, setCanRenderCharacter] = useState(false);
+
+  useEffect(() => {
+    setCanRenderCharacter(true);
+  }, []);
 
   return (
     <aside
@@ -42,13 +50,23 @@ export const AnalysisChamberHeroIdentityLayer = ({
               "radial-gradient(circle at 50% 30%, rgba(200,140,30,0.10) 0%, transparent 70%)",
           }}
         >
-          <div className="h-28">
-            <CharacterStage
-              accentColor={accentColor}
-              confidence={confidence}
-              isFocusMode={false}
-              status={status}
-            />
+          <div className="relative h-36 overflow-hidden">
+            {canRenderCharacter ? (
+              <CharacterStage
+                accentColor={accentColor}
+                confidence={confidence}
+                isFocusMode={false}
+                stageMode="portrait"
+                status={status}
+              />
+            ) : (
+              <div
+                className="absolute inset-0"
+                style={{
+                  background: `radial-gradient(circle at 50% 82%, ${accentColor}24 0%, transparent 42%)`,
+                }}
+              />
+            )}
           </div>
           <div
             className="absolute inset-x-0 bottom-0 h-10"

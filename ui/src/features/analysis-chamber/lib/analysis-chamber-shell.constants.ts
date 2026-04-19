@@ -94,7 +94,7 @@ export const ANALYSIS_CHAMBER_ROUTES: AnalysisChamberRouteMeta[] = [
     label: "KPT",
     shortLabel: "KP",
     artifact: "Scroll",
-    artifactSymbol: "📜",
+    artifactSymbol: "⚜",
     description: "Council reflection — keep, problem, try.",
   },
   {
@@ -102,7 +102,7 @@ export const ANALYSIS_CHAMBER_ROUTES: AnalysisChamberRouteMeta[] = [
     label: "Cases",
     shortLabel: "CS",
     artifact: "Ledger",
-    artifactSymbol: "📖",
+    artifactSymbol: "⊞",
     description: "Case archive — flagged patterns and outcomes.",
   },
   {
@@ -110,7 +110,7 @@ export const ANALYSIS_CHAMBER_ROUTES: AnalysisChamberRouteMeta[] = [
     label: "Journey",
     shortLabel: "JR",
     artifact: "Map",
-    artifactSymbol: "🗺",
+    artifactSymbol: "⧖",
     description: "Expedition milestones and progression map.",
   },
 ];

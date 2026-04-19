@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import {
   getAnalysisChamberBootstrap,
@@ -12,13 +12,16 @@ import {
 } from "@/features/analysis-chamber/api/analysis-chamber-api";
 
 const Q = {
-  bootstrap: (memberId: string) => ["analysis-chamber", memberId, "bootstrap"] as const,
-  overview: (memberId: string) => ["analysis-chamber", memberId, "overview"] as const,
+  bootstrap: (memberId: string) =>
+    ["analysis-chamber", memberId, "bootstrap"] as const,
+  overview: (memberId: string) =>
+    ["analysis-chamber", memberId, "overview"] as const,
   competency: (memberId: string, category: string | null) =>
     ["analysis-chamber", memberId, "competency", category ?? "all"] as const,
   kpt: (memberId: string) => ["analysis-chamber", memberId, "kpt"] as const,
   cases: (memberId: string) => ["analysis-chamber", memberId, "cases"] as const,
-  journey: (memberId: string) => ["analysis-chamber", memberId, "journey"] as const,
+  journey: (memberId: string) =>
+    ["analysis-chamber", memberId, "journey"] as const,
 };
 
 export const useAnalysisChamberShellData = (memberId: string) =>
@@ -42,6 +45,7 @@ export const useAnalysisChamberCompetencyData = (
   useQuery({
     queryKey: Q.competency(memberId, category),
     queryFn: () => getChamberCompetency(memberId, { category }),
+    placeholderData: keepPreviousData,
     staleTime: 60_000,
   });
 

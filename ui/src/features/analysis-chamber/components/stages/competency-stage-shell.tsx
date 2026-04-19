@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
 import type {
   ChamberCategoryScoreResponse,
@@ -58,6 +58,61 @@ const CATEGORY_ACCENT = {
   },
 } as const;
 
+// Sigil per category — 4 archetypes
+const CATEGORY_SIGIL: Record<string, string> = {
+  core_technical_execution: "⟁",
+  technical_depth_breadth: "◈",
+  engineering_mindset: "⊕",
+  collaboration_growth: "✦",
+};
+
+// Injected keyframes — drawerReveal (clip-path wipe), stampPress, signalPop
+const DRAWER_KEYFRAMES = `
+  @keyframes drawerReveal {
+    from { clip-path: inset(0 100% 0 0); opacity: 0.5; }
+    to   { clip-path: inset(0 0% 0 0);   opacity: 1; }
+  }
+  @keyframes signalPop {
+    0%   { transform: scale(0.7) translateY(4px); opacity: 0; }
+    70%  { transform: scale(1.08) translateY(-1px); opacity: 1; }
+    100% { transform: scale(1) translateY(0); opacity: 1; }
+  }
+  @keyframes stampPress {
+    0%   { transform: scale(1); }
+    30%  { transform: scale(0.82); }
+    65%  { transform: scale(1.12); }
+    100% { transform: scale(1); }
+  }
+  @keyframes sealGlowPulse {
+    0%, 100% { box-shadow: 0 0 0 2px var(--seal-glow), 0 0 14px var(--seal-glow); }
+    50%       { box-shadow: 0 0 0 4px var(--seal-glow), 0 0 28px var(--seal-glow); }
+  }
+  @keyframes nodeReveal {
+    0%   { opacity: 0; transform: translateY(14px) scale(0.88); filter: blur(2px); }
+    40%  { filter: blur(0); }
+    100% { opacity: 1; transform: translateY(var(--node-offset, 0px)) scale(1); }
+  }
+  @keyframes lineDrawForward {
+    from { stroke-dashoffset: var(--seg-len, 300); }
+    to   { stroke-dashoffset: 0; }
+  }
+  @keyframes lineGlowFloat {
+    0%, 100% { opacity: 0.22; }
+    50%       { opacity: 0.62; }
+  }
+  @keyframes nodeDotAppear {
+    from { opacity: 0; transform: scale(0); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    [data-drawer-reveal] { animation: none !important; }
+    [data-signal-pop]    { animation: none !important; }
+    [data-node-item]     { animation: none !important; }
+    [data-lattice-line]  { animation: none !important; stroke-dashoffset: 0 !important; }
+    [data-lattice-dot]   { animation: none !important; opacity: 1 !important; }
+  }
+` as const;
+
 type CategoryAccent = (typeof CATEGORY_ACCENT)[keyof typeof CATEGORY_ACCENT];
 const DEFAULT_ACCENT: CategoryAccent = CATEGORY_ACCENT.core_technical_execution;
 const getCategoryAccent = (
@@ -98,6 +153,37 @@ const humanizeId = (value: string | null | undefined) => {
 
 const getCategoryLabel = (categoryId: string | null | undefined) =>
   CATEGORY_LABELS[categoryId ?? ""] ?? humanizeId(categoryId);
+
+const DIMENSION_SHORT_LABELS: Record<string, string> = {
+  implementation_reliability: "Reliability",
+  code_quality_discipline: "Code Quality",
+  debugging_root_cause: "Debugging",
+  careless_mistake_control: "Mistake Control",
+  technical_ownership: "Ownership",
+  technical_learning_adaptability: "Learning",
+  backend_capability: "Backend",
+  frontend_capability: "Frontend",
+  devops_delivery_capability: "DevOps",
+  system_integration_capability: "Integration",
+  data_interface_handling: "Data Interface",
+  architecture_exposure: "Architecture",
+  quality_mindset: "Quality Mindset",
+  performance_awareness: "Performance",
+  security_awareness: "Security",
+  maintainability_thinking: "Maintainability",
+  risk_awareness: "Risk",
+  decision_hygiene: "Decision Hygiene",
+  problem_solving: "Problem Solving",
+  self_management: "Self Management",
+  horenso_reporting_discipline: "Horenso",
+  user_first: "User First",
+  collaboration: "Collaboration",
+  mentoring_knowledge_support: "Mentoring",
+  ai_leverage_ability: "AI Leverage",
+};
+
+const getDimensionShortLabel = (dimensionId: string) =>
+  DIMENSION_SHORT_LABELS[dimensionId] ?? humanizeId(dimensionId);
 
 const getMaturityTone = (maturityLevel: string) => {
   const normalized = maturityLevel.toLowerCase();
@@ -163,6 +249,9 @@ const getFallbackDimensionIds = (
 
 export const CompetencyStageShell = ({ memberId }: { memberId: string }) => {
   const { state, updateQuery } = useAnalysisChamberRouteState();
+  const [selectedDimensionId, setSelectedDimensionId] = useState<string | null>(
+    state.dimension,
+  );
   const competency = useAnalysisChamberCompetencyData(memberId, state.category);
   const runId = competency.data?.run_id ?? null;
   const dimensions = competency.data?.dimension_scores ?? [];
@@ -177,9 +266,21 @@ export const CompetencyStageShell = ({ memberId }: { memberId: string }) => {
     [categoryScores, state.category],
   );
 
+  useEffect(() => {
+    if (state.dimension) {
+      setSelectedDimensionId(state.dimension);
+    }
+  }, [state.dimension]);
+
+  useEffect(() => {
+    if (state.dimension || state.highlight) {
+      updateQuery({ dimension: null, highlight: null });
+    }
+  }, [state.dimension, state.highlight, updateQuery]);
+
   const selectedDimension = useMemo(
-    () => getSelectedDimensionFromScores(dimensions, state.dimension),
-    [dimensions, state.dimension],
+    () => getSelectedDimensionFromScores(dimensions, selectedDimensionId),
+    [dimensions, selectedDimensionId],
   );
 
   const focusAccent = getCategoryAccent(focusCategory?.category_id);
@@ -189,8 +290,8 @@ export const CompetencyStageShell = ({ memberId }: { memberId: string }) => {
     [focusCategory],
   );
   const selectedFallbackDimension =
-    state.dimension && fallbackDimensionIds.includes(state.dimension)
-      ? state.dimension
+    selectedDimensionId && fallbackDimensionIds.includes(selectedDimensionId)
+      ? selectedDimensionId
       : (fallbackDimensionIds[0] ?? null);
   const activeDimensionId =
     selectedDimension?.dimension_id ?? selectedFallbackDimension;
@@ -201,32 +302,53 @@ export const CompetencyStageShell = ({ memberId }: { memberId: string }) => {
     (selectedDimension?.mixed_signals ?? 0);
   const includedCount = focusCategory?.included_dimensions.length ?? 0;
   const excludedCount = focusCategory?.excluded_dimensions.length ?? 0;
+  const isReadingCategory = competency.isFetching && Boolean(competency.data);
+  const activeBranchAccent = selectedDimension
+    ? getMaturityTone(selectedDimension.maturity_level).border
+    : focusAccent.border;
   const radarData = categoryScores.slice(0, 4).map((cat) => ({
     categoryId: cat.category_id,
     score: normalizeScoreToPercent(cat.score) ?? 0,
     fullMark: 100,
   }));
   const seedDimensions = (
-    hasMeasuredDimensions ? dimensions.slice(0, 6).map((dimension) => ({
+    hasMeasuredDimensions
+      ? dimensions.slice(0, 6).map((dimension) => ({
           id: dimension.dimension_id,
           label: humanizeId(dimension.dimension_id),
+          shortLabel: getDimensionShortLabel(dimension.dimension_id),
           tone: getMaturityTone(dimension.maturity_level),
           subtitle: dimension.maturity_level,
-        })) : fallbackDimensionIds.slice(0, 6).map((dimensionId) => ({
+          scored: true,
+          positiveSignals: dimension.positive_signals,
+          negativeSignals: dimension.negative_signals,
+          mixedSignals: dimension.mixed_signals,
+        }))
+      : fallbackDimensionIds.slice(0, 6).map((dimensionId) => ({
           id: dimensionId,
           label: humanizeId(dimensionId),
+          shortLabel: getDimensionShortLabel(dimensionId),
           tone: {
             border: "rgba(154,171,184,0.45)",
             background: "rgba(255,255,255,0.08)",
             text: palette.inkSoft,
           },
           subtitle: "Awaiting scored inclusion",
+          scored: false,
+          positiveSignals: 0,
+          negativeSignals: 0,
+          mixedSignals: 0,
         }))
   ) as Array<{
     id: string;
+    shortLabel: string;
     label: string;
     tone: { border: string; background: string; text: string };
     subtitle: string;
+    scored: boolean;
+    positiveSignals: number;
+    negativeSignals: number;
+    mixedSignals: number;
   }>;
 
   return (
@@ -280,7 +402,7 @@ export const CompetencyStageShell = ({ memberId }: { memberId: string }) => {
 
         <div className="mt-6 grid gap-5">
           <div
-            className="rounded-[22px] border px-5 py-6 md:px-7"
+            className="relative rounded-[22px] border px-5 py-6 md:px-7"
             style={{
               borderColor: "rgba(200,150,30,0.25)",
               background:
@@ -296,6 +418,18 @@ export const CompetencyStageShell = ({ memberId }: { memberId: string }) => {
                 Skill constellation
               </p>
               <div className="flex gap-2">
+                {isReadingCategory ? (
+                  <span
+                    className="rounded-md border px-3 py-1 text-[10px] uppercase tracking-[0.14em]"
+                    style={{
+                      borderColor: "rgba(74,122,186,0.34)",
+                      color: palette.azureLight,
+                      background: "rgba(42,90,154,0.08)",
+                    }}
+                  >
+                    Reading...
+                  </span>
+                ) : null}
                 <span
                   className="rounded-md border px-3 py-1 text-[10px] uppercase tracking-[0.14em]"
                   style={{
@@ -322,247 +456,348 @@ export const CompetencyStageShell = ({ memberId }: { memberId: string }) => {
               entries={radarData}
               focusCategoryId={focusCategory?.category_id ?? null}
               accentMap={CATEGORY_ACCENT}
-              onSelectCategory={(id) =>
-                updateQuery({ category: id, dimension: null, highlight: id })
-              }
+              onSelectCategory={(id) => {
+                setSelectedDimensionId(null);
+                updateQuery({ category: id, dimension: null, highlight: null });
+              }}
               inkColor={palette.ink}
               inkMuted={palette.inkMuted}
               goldColor={palette.gold}
             />
 
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <div
-                className="rounded-md border px-4 py-3"
-                style={{
-                  borderColor: "rgba(200,150,30,0.22)",
-                  background: "rgba(255,255,255,0.05)",
-                }}
-              >
-                <p
-                  className="text-[10px] uppercase tracking-[0.16em]"
-                  style={{ color: palette.inkMuted }}
-                >
-                  Included lanes
-                </p>
-                <p
-                  className="mt-2 font-display text-sm uppercase tracking-[0.08em]"
-                  style={{ color: palette.ink }}
-                >
-                  {includedCount}
-                </p>
-              </div>
-              <div
-                className="rounded-md border px-4 py-3"
-                style={{
-                  borderColor: "rgba(200,150,30,0.22)",
-                  background: "rgba(255,255,255,0.05)",
-                }}
-              >
-                <p
-                  className="text-[10px] uppercase tracking-[0.16em]"
-                  style={{ color: palette.inkMuted }}
-                >
-                  Awaiting proof
-                </p>
-                <p
-                  className="mt-2 font-display text-sm uppercase tracking-[0.08em]"
-                  style={{ color: palette.ink }}
-                >
-                  {excludedCount}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div
-            className="rounded-[22px] border p-5"
-            style={{
-              borderColor: "rgba(200,150,30,0.25)",
-              background:
-                "linear-gradient(180deg, rgba(200,150,30,0.08), rgba(200,150,30,0.03))",
-            }}
-          >
-            <p
-              className="font-display text-[10px] uppercase tracking-[0.18em]"
-              style={{ color: palette.gold }}
+            <div
+              className="overflow-hidden rounded-2xl border px-4 py-4"
+              style={{
+                borderColor: "rgba(255,149,0,0.20)",
+                background:
+                  "linear-gradient(180deg, rgba(255,149,0,0.055), rgba(255,255,255,0.02))",
+              }}
             >
-              Branch lattice
-            </p>
-            <p
-              className="mt-3 text-sm leading-7"
-              style={{ color: palette.inkSoft }}
-            >
-              {hasMeasuredDimensions
-                ? "These branches already carry scored readings, so the drawer can follow each node."
-                : "These branches are known lanes inside the focus category, but they have not reached scored inclusion yet."}
-            </p>
-
-            <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {seedDimensions.length > 0 ? (
-                seedDimensions.map((dimension) => {
-                  const isActive = activeDimensionId === dimension.id;
-
-                  return (
-                    <button
-                      key={dimension.id}
-                      className="rounded-md border px-4 py-4 text-left transition-all duration-200 hover:-translate-y-0.5"
-                      onClick={() =>
-                        updateQuery({
-                          dimension: dimension.id,
-                          highlight: dimension.id,
-                        })
-                      }
-                      style={{
-                        borderColor: isActive
-                          ? palette.gold
-                          : dimension.tone.border,
-                        borderLeftWidth: "3px",
-                        background: isActive
-                          ? "linear-gradient(135deg, rgba(200,150,30,0.22), rgba(200,150,30,0.08))"
-                          : dimension.tone.background,
-                        color: isActive ? palette.ink : palette.inkMuted,
-                        boxShadow: isActive
-                          ? "0 0 28px rgba(200,150,30,0.24), 0 8px 24px rgba(200,150,30,0.16)"
-                          : "none",
-                      }}
-                      type="button"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <p
-                          className="font-display text-xs uppercase tracking-[0.08em]"
-                          style={{ color: isActive ? palette.gold : "inherit" }}
-                        >
-                          {dimension.label}
-                        </p>
-                        {isActive ? (
-                          <span
-                            className="shrink-0 rounded-full border px-2 py-1 text-[9px] uppercase tracking-[0.14em]"
-                            style={{
-                              borderColor: palette.gold,
-                              color: palette.gold,
-                            }}
-                          >
-                            Active
-                          </span>
-                        ) : null}
-                      </div>
-                      <p
-                        className="mt-2 text-xs"
-                        style={{
-                          color: isActive
-                            ? dimension.tone.text
-                            : "rgba(138,112,88,0.6)",
-                        }}
-                      >
-                        {dimension.subtitle}
-                      </p>
-                      <p
-                        className="mt-3 text-xs leading-5"
-                        style={{
-                          color: isActive
-                            ? palette.inkMuted
-                            : "rgba(138,112,88,0.45)",
-                        }}
-                      >
-                        {hasMeasuredDimensions
-                          ? "This branch is ready to drive the evidence drawer."
-                          : "Observed as a lane in this category, but still waiting for enough proof to score."}
-                      </p>
-                      {isActive &&
-                      hasMeasuredDimensions &&
-                      selectedDimension &&
-                      evidenceSignalTotal > 0 ? (
-                        <div className="mt-4 flex gap-2">
-                          <div
-                            className="min-w-11 rounded border px-2 py-2 text-center"
-                            style={{
-                              borderColor: "rgba(34,197,94,0.35)",
-                              background: "rgba(34,197,94,0.10)",
-                            }}
-                          >
-                            <p
-                              className="text-[9px] uppercase"
-                              style={{ color: "rgba(34,197,94,0.9)" }}
-                            >
-                              +
-                            </p>
-                            <p
-                              className="mt-0.5 font-display text-sm"
-                              style={{ color: palette.ink }}
-                            >
-                              {selectedDimension.positive_signals}
-                            </p>
-                          </div>
-                          <div
-                            className="min-w-11 rounded border px-2 py-2 text-center"
-                            style={{
-                              borderColor: "rgba(200,80,30,0.35)",
-                              background: "rgba(200,80,30,0.10)",
-                            }}
-                          >
-                            <p
-                              className="text-[9px] uppercase"
-                              style={{ color: palette.ember }}
-                            >
-                              &minus;
-                            </p>
-                            <p
-                              className="mt-0.5 font-display text-sm"
-                              style={{ color: palette.ink }}
-                            >
-                              {selectedDimension.negative_signals}
-                            </p>
-                          </div>
-                          <div
-                            className="min-w-11 rounded border px-2 py-2 text-center"
-                            style={{
-                              borderColor: "rgba(154,171,184,0.35)",
-                              background: "rgba(154,171,184,0.10)",
-                            }}
-                          >
-                            <p
-                              className="text-[9px] uppercase"
-                              style={{ color: palette.silver }}
-                            >
-                              ~
-                            </p>
-                            <p
-                              className="mt-0.5 font-display text-sm"
-                              style={{ color: palette.ink }}
-                            >
-                              {selectedDimension.mixed_signals}
-                            </p>
-                          </div>
-                        </div>
-                      ) : null}
-                    </button>
-                  );
-                })
-              ) : (
-                <div
-                  className="rounded-md border px-4 py-5 text-sm leading-7 sm:col-span-2 xl:col-span-3"
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p
+                    className="font-display text-[10px] uppercase tracking-[0.18em]"
+                    style={{ color: palette.gold }}
+                  >
+                    Branch lattice
+                  </p>
+                  <p
+                    className="mt-1 text-xs leading-5"
+                    style={{ color: palette.inkMuted }}
+                  >
+                    {hasMeasuredDimensions
+                      ? "Scored nodes route into the evidence drawer."
+                      : "Category is scored, but branch-level evidence is still pending."}
+                  </p>
+                </div>
+                <span
+                  className="rounded-md border px-2.5 py-1 text-[9px] uppercase tracking-[0.14em]"
                   style={{
-                    borderColor: "rgba(200,150,30,0.22)",
-                    background: "rgba(255,255,255,0.05)",
-                    color: palette.inkSoft,
+                    borderColor: hasMeasuredDimensions
+                      ? "rgba(74,122,186,0.34)"
+                      : "rgba(154,171,184,0.28)",
+                    color: hasMeasuredDimensions
+                      ? palette.azureLight
+                      : palette.silver,
+                    background: hasMeasuredDimensions
+                      ? "rgba(42,90,154,0.08)"
+                      : "rgba(154,171,184,0.06)",
                   }}
                 >
-                  No branches have landed in the chamber yet. The category layer
-                  is still the only readable structure.
-                </div>
-              )}
+                  {hasMeasuredDimensions ? "Scored nodes" : "Awaiting proof"}
+                </span>
+              </div>
+
+              <div className="relative mt-5 overflow-x-auto pb-2">
+                {hasMeasuredDimensions && seedDimensions.length > 0 ? (
+                  <div
+                    key={focusCategory?.category_id ?? "lattice"}
+                    className="relative flex min-w-max items-start gap-8 px-4 py-4"
+                  >
+                    {seedDimensions.length > 1 &&
+                      (() => {
+                        const step = 144; // w-28(112) + gap-8(32)
+                        const pts = seedDimensions.map((_, i) => ({
+                          x: 72 + i * step, // px-4(16) + half-w-28(56) + i*step
+                          y: i % 2 === 0 ? 48 : 64, // py-4(16)+h-16/2(32) ± offset(16)
+                        }));
+                        const svgW =
+                          72 + (seedDimensions.length - 1) * step + 56;
+                        return (
+                          <svg
+                            aria-hidden="true"
+                            className="pointer-events-none absolute left-0 top-0"
+                            height={90}
+                            style={{ overflow: "visible" }}
+                            width={svgW}
+                          >
+                            {pts.slice(0, -1).map((p1, i) => {
+                              const p2 = pts[i + 1];
+                              const len = Math.round(
+                                Math.hypot(p2.x - p1.x, p2.y - p1.y),
+                              );
+                              const delay = (i + 1) * 80 + 300;
+                              return (
+                                <g key={i}>
+                                  {/* ghost trail — always visible */}
+                                  <line
+                                    stroke="rgba(255,149,0,0.09)"
+                                    strokeWidth="1"
+                                    x1={p1.x}
+                                    x2={p2.x}
+                                    y1={p1.y}
+                                    y2={p2.y}
+                                  />
+                                  {/* draw line */}
+                                  <line
+                                    data-lattice-line=""
+                                    stroke="rgba(255,149,0,0.75)"
+                                    strokeDasharray={len}
+                                    strokeWidth="1"
+                                    x1={p1.x}
+                                    x2={p2.x}
+                                    y1={p1.y}
+                                    y2={p2.y}
+                                    style={
+                                      {
+                                        "--seg-len": len,
+                                        animation: `lineDrawForward 340ms ease-out ${delay}ms both`,
+                                      } as React.CSSProperties
+                                    }
+                                  />
+                                  {/* glow halo */}
+                                  <line
+                                    data-lattice-line=""
+                                    stroke="rgba(255,149,0,0.28)"
+                                    strokeDasharray={len}
+                                    strokeLinecap="round"
+                                    strokeWidth="6"
+                                    x1={p1.x}
+                                    x2={p2.x}
+                                    y1={p1.y}
+                                    y2={p2.y}
+                                    style={
+                                      {
+                                        "--seg-len": len,
+                                        animation: `lineDrawForward 340ms ease-out ${delay}ms both, lineGlowFloat 2.6s ease-in-out ${delay + 340}ms infinite`,
+                                      } as React.CSSProperties
+                                    }
+                                  />
+                                </g>
+                              );
+                            })}
+                            {pts.map((p, i) => (
+                              <circle
+                                key={i}
+                                data-lattice-dot=""
+                                cx={p.x}
+                                cy={p.y}
+                                fill="rgba(255,149,0,0.70)"
+                                r="3.5"
+                                style={
+                                  {
+                                    transformBox: "fill-box",
+                                    transformOrigin: "center",
+                                    animation: `nodeDotAppear 360ms cubic-bezier(0.22, 1, 0.36, 1) ${i * 90 + 200}ms both`,
+                                  } as React.CSSProperties
+                                }
+                              />
+                            ))}
+                          </svg>
+                        );
+                      })()}
+                    {seedDimensions.map((dimension, index) => {
+                      const isActive = activeDimensionId === dimension.id;
+                      const nodeColor = isActive
+                        ? palette.gold
+                        : dimension.scored
+                          ? dimension.tone.border
+                          : "rgba(154,171,184,0.42)";
+
+                      const nodeOffset = index % 2 === 0 ? 0 : 16;
+
+                      return (
+                        <button
+                          key={dimension.id}
+                          data-node-item
+                          className="group relative flex w-28 shrink-0 flex-col items-center text-center hover:-translate-y-1"
+                          onClick={() => setSelectedDimensionId(dimension.id)}
+                          style={
+                            {
+                              "--node-offset": `${nodeOffset}px`,
+                              animation: `nodeReveal 600ms cubic-bezier(0.22, 1, 0.36, 1) ${index * 90}ms both`,
+                            } as React.CSSProperties
+                          }
+                          type="button"
+                        >
+                          {isActive ? (
+                            <span
+                              className="pointer-events-none absolute top-11 h-14 w-px"
+                              style={{
+                                background:
+                                  "linear-gradient(180deg, rgba(255,149,0,0.80), transparent)",
+                              }}
+                            />
+                          ) : null}
+                          <span
+                            className="relative flex h-16 w-16 rotate-45 items-center justify-center border transition-all duration-200"
+                            style={{
+                              borderColor: nodeColor,
+                              background: isActive
+                                ? "radial-gradient(circle, rgba(255,149,0,0.30), rgba(255,149,0,0.08))"
+                                : dimension.scored
+                                  ? "radial-gradient(circle, rgba(42,90,154,0.20), rgba(255,255,255,0.035))"
+                                  : "radial-gradient(circle, rgba(154,171,184,0.10), rgba(255,255,255,0.02))",
+                              boxShadow: isActive
+                                ? "0 0 32px rgba(255,149,0,0.28)"
+                                : "0 10px 22px rgba(0,0,0,0.20)",
+                            }}
+                          >
+                            <span
+                              className="-rotate-45 font-display text-xs uppercase tracking-[0.12em]"
+                              style={{ color: nodeColor }}
+                            >
+                              {dimension.scored ? "◆" : "◇"}
+                            </span>
+                          </span>
+                          <span
+                            className="mt-4 min-h-10 font-display text-[10px] uppercase leading-5 tracking-[0.10em]"
+                            style={{
+                              color: isActive ? palette.gold : palette.ink,
+                            }}
+                          >
+                            {dimension.shortLabel}
+                          </span>
+                          <span
+                            className="mt-1 rounded-full border px-2 py-0.5 text-[8px] uppercase tracking-[0.12em]"
+                            style={{
+                              borderColor: dimension.scored
+                                ? dimension.tone.border
+                                : "rgba(154,171,184,0.26)",
+                              color: dimension.scored
+                                ? dimension.tone.text
+                                : palette.silver,
+                            }}
+                          >
+                            {dimension.scored ? dimension.subtitle : "Proof"}
+                          </span>
+                          {dimension.scored ? (
+                            <span
+                              className="mt-2 text-[9px] uppercase tracking-[0.08em]"
+                              style={{ color: "rgba(255,184,77,0.58)" }}
+                            >
+                              +{dimension.positiveSignals} -
+                              {dimension.negativeSignals} ~
+                              {dimension.mixedSignals}
+                            </span>
+                          ) : (
+                            <span
+                              className="mt-2 text-[9px] uppercase tracking-[0.08em]"
+                              style={{ color: "rgba(255,184,77,0.44)" }}
+                            >
+                              Not sealed
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : seedDimensions.length > 0 ? (
+                  <div className="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.4fr)]">
+                    <div
+                      className="rounded-xl border px-4 py-4"
+                      style={{
+                        borderColor: "rgba(154,171,184,0.24)",
+                        background:
+                          "linear-gradient(180deg, rgba(154,171,184,0.08), rgba(255,255,255,0.025))",
+                      }}
+                    >
+                      <p
+                        className="font-display text-xs uppercase tracking-[0.14em]"
+                        style={{ color: palette.ink }}
+                      >
+                        Branch proof pending
+                      </p>
+                      <p
+                        className="mt-3 text-sm leading-6"
+                        style={{ color: palette.inkSoft }}
+                      >
+                        This category has a readable score, but its individual
+                        dimensions have not gathered enough evidence for scored
+                        branch readings yet.
+                      </p>
+                    </div>
+                    <div
+                      className="rounded-xl border px-4 py-4"
+                      style={{
+                        borderColor: "rgba(255,149,0,0.18)",
+                        background: "rgba(255,149,0,0.035)",
+                      }}
+                    >
+                      <p
+                        className="font-display text-[10px] uppercase tracking-[0.16em]"
+                        style={{ color: palette.gold }}
+                      >
+                        Known lanes
+                      </p>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {seedDimensions.map((dimension) => (
+                          <button
+                            key={dimension.id}
+                            className="rounded-full border px-3 py-1.5 text-[10px] uppercase tracking-[0.10em] transition-colors"
+                            onClick={() => setSelectedDimensionId(dimension.id)}
+                            style={{
+                              borderColor:
+                                activeDimensionId === dimension.id
+                                  ? palette.gold
+                                  : "rgba(154,171,184,0.30)",
+                              color:
+                                activeDimensionId === dimension.id
+                                  ? palette.gold
+                                  : palette.silver,
+                              background:
+                                activeDimensionId === dimension.id
+                                  ? "rgba(255,149,0,0.10)"
+                                  : "rgba(154,171,184,0.055)",
+                            }}
+                            type="button"
+                          >
+                            {dimension.shortLabel}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    className="rounded-md border px-4 py-5 text-sm leading-7"
+                    style={{
+                      borderColor: "rgba(200,150,30,0.22)",
+                      background: "rgba(255,255,255,0.05)",
+                      color: palette.inkSoft,
+                    }}
+                  >
+                    No branches have landed in the chamber yet. The category
+                    layer is still the only readable structure.
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      <style>{DRAWER_KEYFRAMES}</style>
 
       <aside
         className="border-t px-5 py-6 2xl:border-l 2xl:border-t-0"
         style={{
           background: palette.parchmentMid,
           borderColor: "rgba(200, 150, 30, 0.35)",
+          boxShadow: `inset 3px 0 0 ${activeBranchAccent}40`,
         }}
       >
+        {/* Title zone */}
         <div className="flex items-center gap-3">
           <p
             className="font-display text-[10px] uppercase tracking-[0.18em]"
@@ -584,23 +819,43 @@ export const CompetencyStageShell = ({ memberId }: { memberId: string }) => {
         </div>
 
         {activeDimensionId ? (
-          <>
+          /* Wipe-in wrapper — key causes re-mount → clip-path wipe animation */
+          <div
+            key={activeDimensionId}
+            data-drawer-reveal
+            style={{
+              animation: "drawerReveal 340ms cubic-bezier(0.4,0,0.2,1) both",
+            }}
+          >
+            {/* Accent rule */}
             <div
               className="mt-4"
               style={{
                 height: "2px",
                 borderRadius: "1px",
-                background: selectedDimension
-                  ? getMaturityTone(selectedDimension.maturity_level).border
-                  : palette.gold,
+                background: activeBranchAccent,
+                boxShadow: `0 0 8px ${activeBranchAccent}66`,
               }}
             />
-            <p
-              className="mt-4 font-display text-base uppercase tracking-[0.08em]"
-              style={{ color: palette.ink }}
-            >
-              {activeDimensionLabel}
-            </p>
+
+            {/* Sigil + dimension title */}
+            <div className="mt-4 flex items-start gap-2">
+              <span
+                className="mt-0.5 flex-none text-base leading-none"
+                style={{ color: focusAccent.color, opacity: 0.85 }}
+                aria-hidden="true"
+              >
+                {CATEGORY_SIGIL[focusCategory?.category_id ?? ""] ?? "◈"}
+              </span>
+              <p
+                className="font-display text-base uppercase tracking-[0.08em]"
+                style={{ color: palette.ink }}
+              >
+                {activeDimensionLabel}
+              </p>
+            </div>
+
+            {/* Maturity badge */}
             {selectedDimension?.maturity_level ? (
               <span
                 className="mt-2 inline-block rounded-full border px-2 py-0.5 text-[9px] uppercase tracking-[0.12em]"
@@ -623,22 +878,119 @@ export const CompetencyStageShell = ({ memberId }: { memberId: string }) => {
                 Pending scoring
               </span>
             )}
+
+            {/* Score — large number + animated bar */}
             {selectedDimension?.normalized_score !== null &&
             selectedDimension?.normalized_score !== undefined ? (
+              <>
+                <p
+                  className="mt-3 font-display text-3xl leading-none"
+                  style={{ color: palette.gold }}
+                >
+                  {Math.round(selectedDimension.normalized_score * 100)}
+                  <span
+                    className="ml-1 text-sm"
+                    style={{ color: palette.inkSoft }}
+                  >
+                    /100
+                  </span>
+                </p>
+                <ScoreBar
+                  key={activeDimensionId}
+                  score={Math.round(selectedDimension.normalized_score * 100)}
+                  accentColor={focusAccent.color}
+                />
+              </>
+            ) : null}
+
+            {/* Dimension reading parchment */}
+            <div
+              className="mt-4 rounded-xl border px-4 py-4"
+              style={{
+                borderColor: "rgba(200,150,30,0.25)",
+                background:
+                  "linear-gradient(180deg, rgba(200,150,30,0.10), rgba(200,150,30,0.04))",
+                boxShadow: "0 16px 30px rgba(0,0,0,0.16)",
+              }}
+            >
               <p
-                className="mt-3 font-display text-2xl"
+                className="text-[10px] uppercase tracking-[0.16em]"
                 style={{ color: palette.gold }}
               >
-                {Math.round(selectedDimension.normalized_score * 100)}
-                <span
-                  className="ml-1 text-sm"
-                  style={{ color: palette.inkSoft }}
-                >
-                  /100
-                </span>
+                {hasMeasuredDimensions
+                  ? "Dimension reading"
+                  : "Coverage reading"}
               </p>
+              <p
+                className="mt-3 text-sm leading-6"
+                style={{ color: palette.inkSoft }}
+              >
+                {selectedDimension?.ui_summary ??
+                  selectedDimension?.explanation_summary ??
+                  (hasMeasuredDimensions
+                    ? "This branch is ready to drive the evidence drawer."
+                    : "This lane is visible inside the chamber, but it is still waiting for enough evidence to become a scored dimension.")}
+              </p>
+            </div>
+
+            {/* Signal counters */}
+            {hasMeasuredDimensions &&
+            selectedDimension &&
+            evidenceSignalTotal > 0 ? (
+              <SignalCounters
+                key={activeDimensionId}
+                positive={selectedDimension.positive_signals ?? 0}
+                negative={selectedDimension.negative_signals ?? 0}
+                mixed={selectedDimension.mixed_signals ?? 0}
+              />
             ) : null}
-          </>
+
+            {/* Confidence + Coverage meters */}
+            <div className="mt-4 grid gap-3">
+              <MeterStrip
+                key={`confidence-${activeDimensionId}`}
+                label="Confidence"
+                text={
+                  selectedDimension?.confidence_label ??
+                  focusCategory?.confidence_label ??
+                  "Awaiting"
+                }
+                fill={
+                  CONFIDENCE_FILL[
+                    (
+                      selectedDimension?.confidence_label ??
+                      focusCategory?.confidence_label ??
+                      ""
+                    ).toLowerCase()
+                  ] ?? 40
+                }
+                accentColor={focusAccent.color}
+              />
+              <MeterStrip
+                key={`coverage-${focusCategory?.category_id}`}
+                label="Coverage"
+                text={`${includedCount} of ${includedCount + excludedCount}`}
+                fill={
+                  includedCount + excludedCount > 0
+                    ? Math.round(
+                        (includedCount / (includedCount + excludedCount)) * 100,
+                      )
+                    : 0
+                }
+                accentColor={palette.silver}
+              />
+            </div>
+
+            {/* Wax seal verdict — ritual interaction */}
+            {hasMeasuredDimensions && runId ? (
+              <WaxSealVerdict
+                memberId={memberId}
+                runId={runId}
+                dimensionId={activeDimensionId}
+                accentColor={focusAccent.color}
+              />
+            ) : null}
+          </div>
         ) : (
           <p
             className="mt-4 text-sm leading-7"
@@ -647,159 +999,205 @@ export const CompetencyStageShell = ({ memberId }: { memberId: string }) => {
             Choose a branch from the lattice to open the evidence drawer.
           </p>
         )}
-
-        <div
-          className="mt-5 rounded-xl border px-4 py-4"
-          style={{
-            borderColor: "rgba(200,150,30,0.25)",
-            background:
-              "linear-gradient(180deg, rgba(200,150,30,0.10), rgba(200,150,30,0.04))",
-            boxShadow: "0 16px 30px rgba(0,0,0,0.16)",
-          }}
-        >
-          <p
-            className="text-[10px] uppercase tracking-[0.16em]"
-            style={{ color: palette.gold }}
-          >
-            {hasMeasuredDimensions ? "Dimension reading" : "Coverage reading"}
-          </p>
-          <p
-            className="mt-3 text-sm leading-6"
-            style={{ color: palette.inkSoft }}
-          >
-            {selectedDimension?.ui_summary ??
-              selectedDimension?.explanation_summary ??
-              (activeDimensionId
-                ? hasMeasuredDimensions
-                  ? "This branch is ready to drive the evidence drawer."
-                  : "This lane is visible inside the chamber, but it is still waiting for enough evidence to become a scored dimension."
-                : "Choose a branch to see how the chamber is reading it.")}
-          </p>
-        </div>
-
-        {hasMeasuredDimensions &&
-        selectedDimension &&
-        evidenceSignalTotal > 0 ? (
-          <div className="mt-4">
-            <p
-              className="mb-2 text-[10px] uppercase tracking-[0.16em]"
-              style={{ color: palette.inkMuted }}
-            >
-              Signal breakdown
-            </p>
-            <div className="grid grid-cols-3 gap-2">
-              <div
-                className="rounded-lg border px-2 py-3 text-center"
-                style={{
-                  borderColor: "rgba(34,197,94,0.35)",
-                  background: "rgba(34,197,94,0.08)",
-                }}
-              >
-                <p
-                  className="text-[9px] uppercase tracking-widest"
-                  style={{ color: "rgba(34,197,94,0.9)" }}
-                >
-                  Pos
-                </p>
-                <p
-                  className="mt-1 font-display text-lg"
-                  style={{ color: palette.ink }}
-                >
-                  {selectedDimension.positive_signals}
-                </p>
-              </div>
-              <div
-                className="rounded-lg border px-2 py-3 text-center"
-                style={{
-                  borderColor: "rgba(200,80,30,0.35)",
-                  background: "rgba(200,80,30,0.08)",
-                }}
-              >
-                <p
-                  className="text-[9px] uppercase tracking-widest"
-                  style={{ color: palette.ember }}
-                >
-                  Neg
-                </p>
-                <p
-                  className="mt-1 font-display text-lg"
-                  style={{ color: palette.ink }}
-                >
-                  {selectedDimension.negative_signals}
-                </p>
-              </div>
-              <div
-                className="rounded-lg border px-2 py-3 text-center"
-                style={{
-                  borderColor: "rgba(154,171,184,0.35)",
-                  background: "rgba(154,171,184,0.08)",
-                }}
-              >
-                <p
-                  className="text-[9px] uppercase tracking-widest"
-                  style={{ color: palette.silver }}
-                >
-                  Mix
-                </p>
-                <p
-                  className="mt-1 font-display text-lg"
-                  style={{ color: palette.ink }}
-                >
-                  {selectedDimension.mixed_signals}
-                </p>
-              </div>
-            </div>
-          </div>
-        ) : null}
-
-        <div className="mt-4 grid gap-3">
-          {[
-            {
-              label: "Confidence",
-              value:
-                selectedDimension?.confidence_label ??
-                focusCategory?.confidence_label ??
-                "Awaiting confidence",
-            },
-            {
-              label: "Coverage",
-              value: `${includedCount} included | ${excludedCount} pending`,
-            },
-          ].map((item) => (
-            <div
-              key={item.label}
-              className="rounded-lg border px-4 py-3"
-              style={{
-                borderColor: "rgba(200,150,30,0.22)",
-                background: "rgba(255,255,255,0.05)",
-              }}
-            >
-              <p
-                className="text-[10px] uppercase tracking-[0.16em]"
-                style={{ color: palette.inkMuted }}
-              >
-                {item.label}
-              </p>
-              <p
-                className="mt-2 font-display text-xs uppercase tracking-[0.08em]"
-                style={{ color: palette.ink }}
-              >
-                {item.value}
-              </p>
-            </div>
-          ))}
-        </div>
-
-        {/* Wax seal verdict — ritual interaction */}
-        {hasMeasuredDimensions && activeDimensionId && runId ? (
-          <WaxSealVerdict
-            memberId={memberId}
-            runId={runId}
-            dimensionId={activeDimensionId}
-          />
-        ) : null}
       </aside>
     </section>
+  );
+};
+
+// ─── Score Bar — animates from 0 on dimensionId change (via key) ─────────────
+
+const ScoreBar = ({
+  score,
+  accentColor,
+}: {
+  score: number;
+  accentColor: string;
+}) => {
+  const [fill, setFill] = useState(0);
+  const rafRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    setFill(0);
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = requestAnimationFrame(() => setFill(score));
+    });
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, [score]);
+
+  return (
+    <div className="mt-3">
+      <div
+        className="relative h-1.5 w-full overflow-hidden rounded-full"
+        style={{ background: "rgba(154,171,184,0.15)" }}
+      >
+        <div
+          className="absolute inset-y-0 left-0 rounded-full"
+          style={{
+            width: "100%",
+            transform: `scaleX(${fill / 100})`,
+            transformOrigin: "left",
+            transition: "transform 640ms cubic-bezier(0.4, 0, 0.2, 1)",
+            background: `linear-gradient(90deg, ${accentColor}99, ${accentColor})`,
+            boxShadow: `0 0 8px ${accentColor}66`,
+          }}
+        />
+      </div>
+    </div>
+  );
+};
+
+// ─── Signal Counter — staggered pop-in per signal type ───────────────────────
+
+const SIGNAL_CONFIG = [
+  {
+    key: "positive" as const,
+    icon: "▲",
+    label: "Pos",
+    color: "rgba(34,197,94,0.9)",
+    border: "rgba(34,197,94,0.35)",
+    bg: "rgba(34,197,94,0.08)",
+  },
+  {
+    key: "negative" as const,
+    icon: "▼",
+    label: "Neg",
+    color: "rgba(230,80,40,0.9)",
+    border: "rgba(230,80,40,0.35)",
+    bg: "rgba(230,80,40,0.08)",
+  },
+  {
+    key: "mixed" as const,
+    icon: "◆",
+    label: "Mix",
+    color: "rgba(154,171,184,0.9)",
+    border: "rgba(154,171,184,0.35)",
+    bg: "rgba(154,171,184,0.08)",
+  },
+] as const;
+
+const SignalCounters = ({
+  positive,
+  negative,
+  mixed,
+}: {
+  positive: number;
+  negative: number;
+  mixed: number;
+}) => {
+  const values = { positive, negative, mixed };
+
+  return (
+    <div className="mt-4">
+      <p
+        className="mb-2 text-[10px] uppercase tracking-[0.16em]"
+        style={{ color: palette.inkMuted }}
+      >
+        Signal breakdown
+      </p>
+      <div className="grid grid-cols-3 gap-2">
+        {SIGNAL_CONFIG.map(({ key, icon, label, color, border, bg }, i) => (
+          <div
+            key={key}
+            data-signal-pop
+            className="rounded-lg border px-2 py-3 text-center"
+            style={{
+              borderColor: border,
+              background: bg,
+              animation: `signalPop 320ms cubic-bezier(0.34,1.56,0.64,1) ${i * 60}ms both`,
+            }}
+          >
+            <p
+              className="flex items-center justify-center gap-1 text-[9px] uppercase tracking-widest"
+              style={{ color }}
+            >
+              <span style={{ fontSize: 7 }}>{icon}</span>
+              {label}
+            </p>
+            <p
+              className="mt-1 font-display text-lg"
+              style={{ color: palette.ink }}
+            >
+              {values[key]}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// ─── Meter Strip — confidence / coverage ─────────────────────────────────────
+
+const CONFIDENCE_FILL: Record<string, number> = {
+  high: 90,
+  medium: 58,
+  low: 28,
+};
+
+const MeterStrip = ({
+  label,
+  text,
+  fill,
+  accentColor,
+}: {
+  label: string;
+  text: string;
+  fill: number;
+  accentColor: string;
+}) => {
+  const [width, setWidth] = useState(0);
+  const rafRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    setWidth(0);
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = requestAnimationFrame(() => setWidth(fill));
+    });
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, [fill]);
+
+  return (
+    <div
+      className="rounded-lg border px-4 py-3"
+      style={{
+        borderColor: "rgba(200,150,30,0.22)",
+        background: "rgba(255,255,255,0.04)",
+      }}
+    >
+      <div className="flex items-center justify-between">
+        <p
+          className="text-[10px] uppercase tracking-[0.16em]"
+          style={{ color: palette.inkMuted }}
+        >
+          {label}
+        </p>
+        <p
+          className="text-[10px] font-medium"
+          style={{ color: palette.inkSoft }}
+        >
+          {text}
+        </p>
+      </div>
+      <div
+        className="relative mt-2 h-1 w-full overflow-hidden rounded-full"
+        style={{ background: "rgba(154,171,184,0.12)" }}
+      >
+        <div
+          className="absolute inset-y-0 left-0 rounded-full"
+          style={{
+            width: "100%",
+            transform: `scaleX(${width / 100})`,
+            transformOrigin: "left",
+            transition: "transform 560ms cubic-bezier(0.4, 0, 0.2, 1) 80ms",
+            background: `linear-gradient(90deg, ${accentColor}66, ${accentColor}99)`,
+          }}
+        />
+      </div>
+    </div>
   );
 };
 
@@ -845,18 +1243,23 @@ const WaxSealVerdict = ({
   memberId,
   runId,
   dimensionId,
+  accentColor: _accentColor,
 }: {
   memberId: string;
   runId: string;
   dimensionId: string;
+  accentColor?: string;
 }) => {
-  const [pending, setPending] = useState<Verdict | null>(null);
   const [sealed, setSealed] = useState<Verdict | null>(null);
+  const [hovered, setHovered] = useState<Verdict | null>(null);
+  const [pressing, setPressing] = useState<Verdict | null>(null);
   const createFlag = useCreateAnalysisChamberValidationFlag(memberId, runId);
 
   const handleSeal = async (verdict: Verdict) => {
     if (sealed !== null || createFlag.isPending) return;
-    setPending(verdict);
+    setPressing(verdict);
+    // stamp-press animation plays via CSS keyframe (220ms), then reset
+    setTimeout(() => setPressing(null), 220);
     try {
       await createFlag.mutateAsync({
         analysis_run_id: runId,
@@ -866,12 +1269,17 @@ const WaxSealVerdict = ({
       });
       setSealed(verdict);
     } finally {
-      setPending(null);
+      // no-op
     }
   };
 
+  const sealedMeta = SEAL_META.find((s) => s.verdict === sealed);
+
   return (
-    <div className="mt-5">
+    <div
+      className="mt-6 border-t pt-5"
+      style={{ borderColor: "rgba(200,150,30,0.18)" }}
+    >
       <p
         className="mb-1 text-[10px] uppercase tracking-[0.16em]"
         style={{ color: palette.inkMuted }}
@@ -879,7 +1287,7 @@ const WaxSealVerdict = ({
         Seal verdict
       </p>
       <p
-        className="mb-4 text-[11px] leading-5"
+        className="mb-5 text-[11px] leading-5"
         style={{ color: "rgba(138,112,88,0.65)" }}
       >
         {sealed
@@ -887,42 +1295,72 @@ const WaxSealVerdict = ({
           : "Stamp the council's judgment on this reading."}
       </p>
 
-      <div className="flex items-end gap-4">
+      <div className="flex items-center gap-5">
         {SEAL_META.map(({ verdict, sigil, label, color, border, glow }) => {
           const isSealed = sealed === verdict;
-          const isPending = pending === verdict;
+          const isPressing = pressing === verdict;
+          const isHovered = hovered === verdict;
+          const isOtherSealed = sealed !== null && !isSealed;
           const isDisabled = sealed !== null || createFlag.isPending;
+
+          // FLIP: when something is sealed, non-selected shrink away
+          const scale = isOtherSealed
+            ? 0
+            : isSealed
+              ? 1.35
+              : isHovered
+                ? 1.08
+                : 1;
+          const size = isSealed ? 64 : 48;
 
           return (
             <button
               key={verdict}
               disabled={isDisabled}
               onClick={() => void handleSeal(verdict)}
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: "50%",
-                border: `2px solid ${isSealed ? color : border}`,
-                background: isSealed
-                  ? `radial-gradient(circle, ${glow} 0%, rgba(0,0,0,0) 70%)`
-                  : "rgba(255,255,255,0.04)",
-                color: isSealed ? color : `${color}90`,
-                boxShadow: isSealed
-                  ? `0 0 0 3px ${glow}, 0 0 16px ${glow}`
-                  : "none",
-                cursor: isDisabled ? "not-allowed" : "pointer",
-                opacity: isDisabled && !isSealed ? 0.35 : 1,
-                transform: isPending ? "scale(0.92)" : "scale(1)",
-                transition:
-                  "transform 180ms cubic-bezier(0.34,1.56,0.64,1), box-shadow 200ms ease, opacity 150ms ease",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontFamily: "inherit",
-                fontSize: isSealed ? 20 : 16,
-              }}
+              onMouseEnter={() => !isDisabled && setHovered(verdict)}
+              onMouseLeave={() => setHovered(null)}
               title={label}
               type="button"
+              style={
+                {
+                  "--seal-glow": glow,
+                  width: size,
+                  height: size,
+                  flexShrink: 0,
+                  borderRadius: "50%",
+                  border: `2px solid ${isSealed || isHovered ? color : border}`,
+                  background: isSealed
+                    ? `radial-gradient(circle at 50% 50%, ${glow} 0%, rgba(0,0,0,0) 72%)`
+                    : isHovered
+                      ? `radial-gradient(circle, ${glow} 0%, rgba(0,0,0,0) 80%)`
+                      : "rgba(255,255,255,0.04)",
+                  color: isSealed ? color : isHovered ? color : `${color}90`,
+                  boxShadow: isSealed
+                    ? `0 0 0 3px ${glow}, 0 0 22px ${glow}`
+                    : isHovered
+                      ? `0 0 0 2px ${glow}, 0 0 14px ${glow}`
+                      : "none",
+                  cursor: isDisabled ? "not-allowed" : "pointer",
+                  opacity: isOtherSealed
+                    ? 0
+                    : isDisabled && !isSealed
+                      ? 0.35
+                      : 1,
+                  transform: `scale(${scale})`,
+                  transition: isOtherSealed
+                    ? "transform 260ms cubic-bezier(0.4,0,1,1), opacity 220ms ease"
+                    : "transform 280ms cubic-bezier(0.34,1.56,0.64,1), box-shadow 200ms ease, opacity 180ms ease, width 260ms ease, height 260ms ease",
+                  animation: isPressing
+                    ? "stampPress 220ms cubic-bezier(0.34,1.56,0.64,1) both"
+                    : undefined,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontFamily: "inherit",
+                  fontSize: isSealed ? 22 : 16,
+                } as React.CSSProperties
+              }
             >
               {sigil}
             </button>
@@ -930,13 +1368,12 @@ const WaxSealVerdict = ({
         })}
       </div>
 
-      {sealed ? (
+      {sealed && sealedMeta ? (
         <p
-          className="mt-3 font-display text-[10px] uppercase tracking-[0.14em]"
+          className="mt-4 font-display text-[10px] uppercase tracking-[0.14em]"
           style={{
-            color:
-              SEAL_META.find((s) => s.verdict === sealed)?.color ??
-              palette.gold,
+            color: sealedMeta.color,
+            animation: "signalPop 320ms cubic-bezier(0.34,1.56,0.64,1) both",
           }}
         >
           {sealed.toUpperCase()} · Sealed

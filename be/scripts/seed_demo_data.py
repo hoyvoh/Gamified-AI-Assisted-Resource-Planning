@@ -204,7 +204,7 @@ async def seed_demo_data() -> None:
         dim_score_repo = SqlDimensionScoreRepository(session)
         dimensions = [
             {
-                "dimension_id": "technical_execution",
+                "dimension_id": "implementation_reliability",
                 "score": 8.2,
                 "maturity_level": "advanced",
                 "confidence": 0.92,
@@ -212,7 +212,7 @@ async def seed_demo_data() -> None:
                 "signals": (15, 12, 2, 1),
             },
             {
-                "dimension_id": "code_quality",
+                "dimension_id": "code_quality_discipline",
                 "score": 7.8,
                 "maturity_level": "advanced",
                 "confidence": 0.89,
@@ -220,7 +220,7 @@ async def seed_demo_data() -> None:
                 "signals": (14, 13, 0, 1),
             },
             {
-                "dimension_id": "communication",
+                "dimension_id": "collaboration",
                 "score": 6.5,
                 "maturity_level": "intermediate",
                 "confidence": 0.78,
@@ -236,12 +236,20 @@ async def seed_demo_data() -> None:
                 "signals": (12, 10, 1, 1),
             },
             {
-                "dimension_id": "ownership",
+                "dimension_id": "technical_ownership",
                 "score": 6.8,
                 "maturity_level": "intermediate",
                 "confidence": 0.81,
                 "opportunity": 0.76,
                 "signals": (11, 7, 2, 2),
+            },
+            {
+                "dimension_id": "backend_capability",
+                "score": 7.2,
+                "maturity_level": "advanced",
+                "confidence": 0.84,
+                "opportunity": 0.60,
+                "signals": (13, 10, 1, 2),
             },
         ]
 

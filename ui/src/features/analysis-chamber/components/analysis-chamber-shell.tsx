@@ -96,7 +96,7 @@ const getShellConfidence = (
 };
 
 const chamberBodyClassName =
-  "grid min-h-[calc(100vh-68px)] grid-cols-[56px_1fr] md:min-h-[calc(100vh-88px)]";
+  "grid min-h-[calc(100vh-68px)] grid-cols-[72px_1fr] md:min-h-[calc(100vh-88px)]";
 
 const chamberStageClassName = (showSideHeroIdentity: boolean) =>
   `grid min-h-full ${

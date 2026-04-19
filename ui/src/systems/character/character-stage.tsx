@@ -8,16 +8,24 @@ import type { ColorRepresentation } from "three";
 import type { AnalysisStatus } from "@/types/organization";
 import { CHARACTER_MOTION } from "@/systems/character/character-system.constants";
 import { CharacterCore } from "@/systems/character/character-core";
+import type { CharacterModelConfig } from "@/systems/character/character-model";
 
 interface CharacterStageProps {
   accentColor?: string;
   confidence: number;
   status: AnalysisStatus;
   isFocusMode: boolean;
+  stageMode?: "hero" | "portrait";
 }
 
 interface CharacterCameraRigProps {
   isFocusMode: boolean;
+  stageMode: "hero" | "portrait";
+  targetLookAt: {
+    x: number;
+    y: number;
+    z: number;
+  };
 }
 
 const DEFAULT_CAMERA = {
@@ -32,6 +40,12 @@ const FOCUS_CAMERA = {
   z: 3.5,
 } as const;
 
+const PORTRAIT_CAMERA = {
+  x: 0,
+  y: 0.64,
+  z: 5.15,
+} as const;
+
 const CHARACTER_LOOK_AT = {
   x: 0,
   y: 0.28,
@@ -39,6 +53,35 @@ const CHARACTER_LOOK_AT = {
 } as const;
 
 const TRANSPARENT_CLEAR: ColorRepresentation = "#000000";
+
+const STAGE_PRESETS = {
+  hero: {
+    auraScale: 1,
+    cameraFov: 34,
+    canvasShellClassName: "absolute inset-x-0 bottom-0 top-4 xl:top-5",
+    modelConfig: undefined,
+    stageClassName:
+      "pointer-events-none relative flex min-h-140 flex-1 overflow-visible pt-4 xl:h-full xl:min-h-[calc(100vh-150px)] xl:pt-5",
+    targetLookAt: CHARACTER_LOOK_AT,
+  },
+  portrait: {
+    auraScale: 0.68,
+    cameraFov: 24,
+    canvasShellClassName: "absolute inset-0",
+    modelConfig: {
+      pedestalOffset: -0.8,
+      targetHeight: 1.7,
+    } satisfies Partial<CharacterModelConfig>,
+    orthographicZoom: 66,
+    stageClassName:
+      "pointer-events-none relative h-full min-h-0 w-full overflow-hidden",
+    targetLookAt: {
+      x: 0,
+      y: 0.22,
+      z: 0,
+    },
+  },
+} as const;
 
 const HeroStageFallback = () => (
   <group position={[0, 0.2, 0]}>
@@ -54,11 +97,20 @@ const HeroStageFallback = () => (
   </group>
 );
 
-const CharacterCameraRig = ({ isFocusMode }: CharacterCameraRigProps) => {
+const CharacterCameraRig = ({
+  isFocusMode,
+  stageMode,
+  targetLookAt,
+}: CharacterCameraRigProps) => {
   const { camera } = useThree();
 
   useEffect(() => {
-    const target = isFocusMode ? FOCUS_CAMERA : DEFAULT_CAMERA;
+    const target =
+      stageMode === "portrait"
+        ? PORTRAIT_CAMERA
+        : isFocusMode
+          ? FOCUS_CAMERA
+          : DEFAULT_CAMERA;
 
     const tween = gsap.to(camera.position, {
       x: target.x,
@@ -67,18 +119,14 @@ const CharacterCameraRig = ({ isFocusMode }: CharacterCameraRigProps) => {
       duration: CHARACTER_MOTION.cameraFocusDuration,
       ease: "power3.inOut",
       onUpdate: () => {
-        camera.lookAt(
-          CHARACTER_LOOK_AT.x,
-          CHARACTER_LOOK_AT.y,
-          CHARACTER_LOOK_AT.z,
-        );
+        camera.lookAt(targetLookAt.x, targetLookAt.y, targetLookAt.z);
       },
     });
 
     return () => {
       tween.kill();
     };
-  }, [camera, isFocusMode]);
+  }, [camera, isFocusMode, stageMode, targetLookAt]);
 
   return null;
 };
@@ -88,6 +136,7 @@ export const CharacterStage = ({
   confidence,
   status,
   isFocusMode,
+  stageMode = "hero",
 }: CharacterStageProps) => {
   const loadingVeilRef = useRef<HTMLDivElement | null>(null);
   const [isModelReady, setIsModelReady] = useState(false);
@@ -108,18 +157,43 @@ export const CharacterStage = ({
     });
   }, [isModelReady]);
 
+  const preset = STAGE_PRESETS[stageMode];
+  const cameraPosition =
+    stageMode === "portrait"
+      ? ([PORTRAIT_CAMERA.x, PORTRAIT_CAMERA.y, PORTRAIT_CAMERA.z] as [
+          number,
+          number,
+          number,
+        ])
+      : ([0, 0.72, 4.1] as [number, number, number]);
+  const isPortraitMode = stageMode === "portrait";
+  const cameraConfig = isPortraitMode
+    ? {
+        position: cameraPosition,
+        zoom: STAGE_PRESETS.portrait.orthographicZoom,
+      }
+    : {
+        fov: preset.cameraFov,
+        position: cameraPosition,
+      };
+
   return (
-    <section className="pointer-events-none relative flex min-h-140 flex-1 overflow-visible pt-4 xl:h-full xl:min-h-[calc(100vh-150px)] xl:pt-5">
-      <div className="absolute inset-x-0 bottom-0 top-4 xl:top-5">
+    <section className={preset.stageClassName}>
+      <div className={preset.canvasShellClassName}>
         <Canvas
-          camera={{ position: [0, 0.72, 4.1], fov: 34 }}
+          camera={cameraConfig}
           gl={{ alpha: true, antialias: true }}
           onCreated={({ gl }) => {
             gl.setClearColor(TRANSPARENT_CLEAR, 0);
           }}
+          orthographic={isPortraitMode}
           style={{ background: "transparent", pointerEvents: "none" }}
         >
-          <CharacterCameraRig isFocusMode={isFocusMode} />
+          <CharacterCameraRig
+            isFocusMode={isFocusMode}
+            stageMode={stageMode}
+            targetLookAt={preset.targetLookAt}
+          />
           <ambientLight intensity={1.1} />
           <directionalLight
             color="#ffe7cf"
@@ -139,7 +213,9 @@ export const CharacterStage = ({
           <pointLight color="#ffd7ab" intensity={8} position={[-1.2, 1.8, 2]} />
           <Suspense fallback={<HeroStageFallback />}>
             <CharacterCore
+              auraScale={preset.auraScale}
               confidence={confidence}
+              modelConfig={preset.modelConfig}
               onModelReady={handleModelReady}
               status={status}
             />
