@@ -3,10 +3,11 @@
 import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 
+import { CHARACTER_PARTICLE_AURA } from "@/systems/character/character-system.constants";
 import {
-  DOSSIER_PARTICLE_AURA,
-} from "@/features/dossier/constants/dossier.constants";
-import { normalizeAnalysisStatus, type AnalysisStatus } from "@/types/organization";
+  normalizeAnalysisStatus,
+  type AnalysisStatus,
+} from "@/types/organization";
 import type {
   AnimatedGroupRef,
   BasicMaterialRef,
@@ -56,19 +57,19 @@ export const CharacterParticleAura = ({
     const normalizedConfidence = Math.min(Math.max(confidence, 0), 1);
     const count = Math.round(
       getLerpValue(
-        DOSSIER_PARTICLE_AURA.minCount,
-        DOSSIER_PARTICLE_AURA.maxCount,
+        CHARACTER_PARTICLE_AURA.minCount,
+        CHARACTER_PARTICLE_AURA.maxCount,
         normalizedConfidence,
       ),
     );
     const radius = getLerpValue(
-      DOSSIER_PARTICLE_AURA.minRadius,
-      DOSSIER_PARTICLE_AURA.maxRadius,
+      CHARACTER_PARTICLE_AURA.minRadius,
+      CHARACTER_PARTICLE_AURA.maxRadius,
       normalizedConfidence,
     );
     const height = getLerpValue(
-      DOSSIER_PARTICLE_AURA.minHeight,
-      DOSSIER_PARTICLE_AURA.maxHeight,
+      CHARACTER_PARTICLE_AURA.minHeight,
+      CHARACTER_PARTICLE_AURA.maxHeight,
       normalizedConfidence,
     );
 
@@ -82,8 +83,7 @@ export const CharacterParticleAura = ({
       const particleRadius = radius * radialBias;
 
       positions[index * 3] = Math.cos(orbitAngle) * particleRadius;
-      positions[index * 3 + 1] =
-        -0.2 + progress * height + verticalWave;
+      positions[index * 3 + 1] = -0.2 + progress * height + verticalWave;
       positions[index * 3 + 2] = Math.sin(orbitAngle) * particleRadius * 0.82;
     }
 
@@ -91,12 +91,12 @@ export const CharacterParticleAura = ({
       count,
       positions,
       speed: getLerpValue(
-        DOSSIER_PARTICLE_AURA.minSpeed,
-        DOSSIER_PARTICLE_AURA.maxSpeed,
+        CHARACTER_PARTICLE_AURA.minSpeed,
+        CHARACTER_PARTICLE_AURA.maxSpeed,
         normalizedConfidence,
       ),
       opacity:
-        DOSSIER_PARTICLE_AURA.pointOpacity *
+        CHARACTER_PARTICLE_AURA.pointOpacity *
         STATUS_OPACITY_MULTIPLIER[resolvedStatus],
     };
   }, [confidence, resolvedStatus]);
@@ -108,17 +108,14 @@ export const CharacterParticleAura = ({
 
     if (particleGroupRef.current) {
       particleGroupRef.current.rotation.y = elapsedTime * rotationSpeed;
-      particleGroupRef.current.rotation.z =
-        Math.sin(elapsedTime * 0.24) * 0.16;
+      particleGroupRef.current.rotation.z = Math.sin(elapsedTime * 0.24) * 0.16;
     }
 
     if (particleRef.current) {
       particleRef.current.material.opacity =
-        particleConfig.opacity +
-        Math.sin(elapsedTime * 1.4) * 0.04;
+        particleConfig.opacity + Math.sin(elapsedTime * 1.4) * 0.04;
       particleRef.current.material.size =
-        DOSSIER_PARTICLE_AURA.pointSize +
-        Math.sin(elapsedTime * 1.1) * 0.002;
+        CHARACTER_PARTICLE_AURA.pointSize + Math.sin(elapsedTime * 1.1) * 0.002;
     }
   });
 
@@ -135,7 +132,7 @@ export const CharacterParticleAura = ({
         <pointsMaterial
           color={color}
           opacity={particleConfig.opacity}
-          size={DOSSIER_PARTICLE_AURA.pointSize}
+          size={CHARACTER_PARTICLE_AURA.pointSize}
           sizeAttenuation
           transparent
           depthWrite={false}

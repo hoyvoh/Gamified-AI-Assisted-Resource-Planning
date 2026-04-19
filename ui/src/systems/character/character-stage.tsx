@@ -6,7 +6,7 @@ import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import type { ColorRepresentation } from "three";
 
 import type { AnalysisStatus } from "@/types/organization";
-import { DOSSIER_MOTION } from "@/features/dossier/constants/dossier.constants";
+import { CHARACTER_MOTION } from "@/systems/character/character-system.constants";
 import { CharacterCore } from "@/systems/character/character-core";
 
 interface CharacterStageProps {
@@ -64,7 +64,7 @@ const CharacterCameraRig = ({ isFocusMode }: CharacterCameraRigProps) => {
       x: target.x,
       y: target.y,
       z: target.z,
-      duration: DOSSIER_MOTION.cameraFocusDuration,
+      duration: CHARACTER_MOTION.cameraFocusDuration,
       ease: "power3.inOut",
       onUpdate: () => {
         camera.lookAt(
@@ -109,7 +109,7 @@ export const CharacterStage = ({
   }, [isModelReady]);
 
   return (
-    <section className="pointer-events-none relative flex min-h-[35rem] flex-1 overflow-visible pt-4 xl:h-full xl:min-h-[calc(100vh-150px)] xl:pt-5">
+    <section className="pointer-events-none relative flex min-h-140 flex-1 overflow-visible pt-4 xl:h-full xl:min-h-[calc(100vh-150px)] xl:pt-5">
       <div className="absolute inset-x-0 bottom-0 top-4 xl:top-5">
         <Canvas
           camera={{ position: [0, 0.72, 4.1], fov: 34 }}
@@ -121,9 +121,21 @@ export const CharacterStage = ({
         >
           <CharacterCameraRig isFocusMode={isFocusMode} />
           <ambientLight intensity={1.1} />
-          <directionalLight color="#ffe7cf" intensity={2.2} position={[0, 3, 3]} />
-          <directionalLight color={accentColor} intensity={2.8} position={[1.4, 0.6, 2.6]} />
-          <pointLight color={accentColor} intensity={12} position={[0, -0.1, 2.1]} />
+          <directionalLight
+            color="#ffe7cf"
+            intensity={2.2}
+            position={[0, 3, 3]}
+          />
+          <directionalLight
+            color={accentColor}
+            intensity={2.8}
+            position={[1.4, 0.6, 2.6]}
+          />
+          <pointLight
+            color={accentColor}
+            intensity={12}
+            position={[0, -0.1, 2.1]}
+          />
           <pointLight color="#ffd7ab" intensity={8} position={[-1.2, 1.8, 2]} />
           <Suspense fallback={<HeroStageFallback />}>
             <CharacterCore
@@ -136,7 +148,7 @@ export const CharacterStage = ({
       </div>
 
       <div
-        className="pointer-events-none absolute inset-x-[10%] bottom-[12%] top-[12%] z-[1] rounded-[50%] bg-[radial-gradient(circle,_rgba(98,240,229,0.04)_0%,rgba(63,211,255,0.02)_30%,rgba(5,7,13,0)_78%)] blur-3xl"
+        className="pointer-events-none absolute inset-x-[10%] bottom-[12%] top-[12%] z-1 rounded-[50%] bg-[radial-gradient(circle,rgba(98,240,229,0.04)_0%,rgba(63,211,255,0.02)_30%,rgba(5,7,13,0)_78%)] blur-3xl"
         ref={loadingVeilRef}
         style={{
           background: `radial-gradient(circle, ${accentColor}14 0%, rgba(63,211,255,0.02) 30%, rgba(5,7,13,0) 78%)`,
