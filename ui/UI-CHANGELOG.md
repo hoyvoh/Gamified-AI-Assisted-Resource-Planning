@@ -2,6 +2,234 @@
 
 ---
 
+## Analysis Chamber - Coding Standard Follow-up
+
+### 2026-04-19 21:35 +07:00 - Added API mapper and view-model boundary
+
+**What changed:**
+
+- **`ui/src/features/analysis-chamber/api/analysis-chamber-api.view-models.ts`**
+  - Added camelCase Analysis Chamber view-model types for shell, overview, competency, dimension detail, KPT, cases, journey, and validation flags
+
+- **`ui/src/features/analysis-chamber/api/analysis-chamber-api.mappers.ts`**
+  - Added raw backend response to view-model mappers
+  - Added validation flag input mapper so UI mutation code no longer sends snake_case request bodies directly
+
+- **`ui/src/features/analysis-chamber/api/analysis-chamber-api.ts`**
+  - Kept raw `*Response` types inside the API layer and now returns normalized view models to hooks/components
+
+- **`ui/src/features/analysis-chamber/components/**`**
+  - Converted Analysis Chamber UI usage from backend snake_case fields to camelCase view-model fields
+
+- **`ui/src/features/analysis-chamber/api/analysis-chamber-api.mappers.test.ts`**
+  - Added unit coverage for bootstrap, overview, competency, dimension detail, and validation flag mapping
+
+- **`ui/vitest.config.ts`**
+  - Scoped Vitest to `src/**/*.{test,spec}.{ts,tsx}` so unit tests do not pick up Playwright specs
+
+---
+
+### 2026-04-19 21:25 +07:00 - Fixed review hygiene items
+
+**What changed:**
+
+- **`ui/src/app/page.tsx`**
+  - Moved launcher interactivity into a dedicated client component so the route page can stay server-rendered
+  - Reads the demo member fallback from shared public env config instead of reading `process.env` inline
+
+- **`ui/src/features/analysis-chamber/components/analysis-chamber-launcher.tsx`**
+  - Added a focused client launcher for member ID input and profile navigation
+
+- **`ui/src/features/analysis-chamber/hooks/use-analysis-chamber-route-state.ts`**
+  - Switched route state updates to Next router navigation with `scroll: false`
+
+- **`ui/src/features/analysis-chamber/components/stages/cases-stage-shell.tsx`**
+- **`ui/src/features/analysis-chamber/components/stages/competency-stage-shell.tsx`**
+- **`ui/src/features/analysis-chamber/components/stages/journey-stage-shell.tsx`**
+  - Replaced inline empty-array fallbacks with stable constants to clear hook dependency churn
+
+- **`ui/src/features/analysis-chamber/components/stages/competency-stage-shell.tsx`**
+  - Added accessible names for wax seal verdict buttons
+
+- **`ui/src/components/ui/chart.tsx`**
+  - Documented the trusted-config boundary around chart style injection
+
+- **`ui/src/lib/config/env.ts`**
+  - Added `PUBLIC_DEMO_MEMBER_ID` alongside shared API origin/version config
+
+- **`ui/src/app/profile/[memberId]/loading.tsx`**
+- **`ui/src/app/profile/[memberId]/error.tsx`**
+  - Added explicit route-level loading and error states for profile chamber routes while preserving the persistent chamber layout
+
+---
+
+## Documentation - React and Next.js Coding Standard
+
+### 2026-04-19 - Added frontend coding policy guide
+
+**What changed:**
+
+- **`docs/guides/react-nextjs-coding-standard.md`**
+  - Added ReactJS and Next.js coding standard for frontend development
+  - Covered TypeScript, App Router, Server/Client Components, data fetching, state management, styling, accessibility, security, testing, review checklist, and Definition of Done
+
+- **`docs/guides/contributing.md`**
+  - Added the new coding standard to Further Reading
+
+---
+
+## Character - Portrait Stage Fit Contract
+
+### 2026-04-19 - Added portrait mode for side-rail character rendering
+
+**What changed:**
+
+- **`ui/src/systems/character/character-stage.tsx`**
+  - Added `stageMode="hero" | "portrait"` to separate full hero rendering from compact side-rail rendering
+  - Portrait mode removes the hero `min-h-140` canvas contract so the canvas fits the actual avatar frame
+  - Added portrait camera settings and orthographic projection instead of reusing the full hero camera inside a tiny container
+  - Added portrait-specific model fit values so different character variants are normalized by bounding box height
+  - Keeps existing hero mode as the default for backward compatibility
+
+- **`ui/src/systems/character/character-core.tsx`**
+  - Allows stage-specific model config and aura scale to be passed into the shared character core
+
+- **`ui/src/systems/character/character-particle-aura.tsx`**
+  - Added `visualScale` so compact portrait mode can shrink aura separately from the hero aura
+
+- **`ui/src/features/analysis-chamber/components/analysis-chamber-hero-identity-layer.tsx`**
+  - Uses `stageMode="portrait"` for the side identity rail character
+  - Mounts the WebGL portrait after client hydration to avoid stale SSR/client canvas class mismatches
+  - Increased the portrait frame height from `h-28` to `h-36` so the fitted character remains legible
+
+---
+
+## Competency - Radar Chart Scale and Entry Motion
+
+### 2026-04-19 - Upgraded radar into living constellation
+
+**What changed:**
+
+- **`ui/src/features/analysis-chamber/components/competency-radar-chart.tsx`**
+  - Added a second low-opacity base aura radar layer behind the scored polygon
+  - Added active category hover preview without changing URL state
+  - Added a 1-second hover dwell delay before preview glow activates, preventing accidental flashes while scanning across radar nodes
+  - Added axis energy lines that brighten on active/hovered category
+  - Added a central sigil so the radar reads as a chamber artifact instead of a plain chart
+  - Added slow active-node pulse and SVG glow filters, with reduced-motion guard for CSS breathing animation
+  - Kept score geometry unchanged so hover effects do not imply fake score changes
+
+- **`ui/src/features/analysis-chamber/components/stages/competency-stage-shell.tsx`**
+  - Added a small energy conduit between the radar and Branch lattice
+  - Uses a solid conduit for measured branch data and dashed scan line when branch proof is pending
+
+### 2026-04-19 - Removed repeated coverage cards from constellation stage
+
+**What changed:**
+
+- **`ui/src/features/analysis-chamber/components/stages/competency-stage-shell.tsx`**
+  - Removed the large `Included lanes` and `Awaiting proof` cards below the branch section
+  - Kept coverage meaning in the Branch lattice pending state and Evidence Drawer instead
+  - Reduced dashboard-card feel and saved vertical space under the radar
+
+### 2026-04-19 - Clarified pending branch proof state
+
+**What changed:**
+
+- **`ui/src/features/analysis-chamber/components/stages/competency-stage-shell.tsx`**
+  - Only renders constellation node belt when `dimension_scores` are available
+  - Replaced fake/pending node graph with a `Branch proof pending` panel when branch-level score data is missing
+  - Shows fallback dimensions as ghost `Known lanes` chips instead of pretending they are scored nodes
+  - Removed misleading connector line and active node glow from pending branch state
+  - Keeps lane chips clickable so the Evidence Drawer can still explain the selected pending lane
+
+### 2026-04-19 - Pulled Branch lattice into constellation stage
+
+**What changed:**
+
+- **`ui/src/features/analysis-chamber/components/stages/competency-stage-shell.tsx`**
+  - Moved the Branch lattice directly under the radar inside the constellation stage so it appears closer to the primary chart
+  - Reworked dimension branches from mini-cards into compact seal nodes with diamond glyphs
+  - Kept horizontal constellation spine, but reduced node body weight and card-like framing
+  - Added active node connector trail and synchronized Evidence Drawer accent with the active branch
+  - Removed the separate lower Branch lattice panel to reduce vertical scrolling and make the category-to-dimension relationship clearer
+
+### 2026-04-19 - Replaced Branch lattice grid with Constellation Node Belt
+
+**What changed:**
+
+- **`ui/src/features/analysis-chamber/components/stages/competency-stage-shell.tsx`**
+  - Replaced the dashboard-style branch card grid with a horizontal constellation node belt
+  - Added a spine line connecting dimension nodes under the radar stage
+  - Added short labels for dimension nodes while preserving full labels in the evidence drawer
+  - Rendered scored nodes as filled seals with signal counters (`+`, `-`, `~`)
+  - Rendered pending nodes as hollow/quiet proof slots
+  - Active branch now reads as a glowing selected node rather than a selected card
+  - Kept the existing API/data source unchanged
+
+### 2026-04-19 - Moved dimension/highlight interaction state out of URL
+
+**What changed:**
+
+- **`ui/src/features/analysis-chamber/components/stages/competency-stage-shell.tsx`**
+  - Added local `selectedDimensionId` state for branch/drawer selection
+  - Kept only `category` as URL state for shareable competency category links
+  - Branch lattice clicks now update the local drawer selection without adding `dimension` or `highlight` query params
+  - Radar category clicks clear local dimension selection and write only `category` to the URL
+  - Legacy `dimension` / `highlight` params are stripped from the URL after they initialize local state
+
+### 2026-04-19 - Reduced category-click rerender flicker
+
+**What changed:**
+
+- **`ui/src/features/analysis-chamber/hooks/use-analysis-chamber-shell-data.ts`**
+  - Added TanStack Query `keepPreviousData` for competency data so category switches keep the last successful reading while the next category loads
+  - Prevents transient `PENDING / UNSCORED / No category data available yet` flashes during radar category clicks
+
+- **`ui/src/features/analysis-chamber/hooks/use-analysis-chamber-route-state.ts`**
+  - Uses native `window.history.pushState/replaceState` for client-side query updates when available
+  - Reduces unnecessary Next RSC route refreshes for UI-only query state changes
+
+- **`ui/src/features/analysis-chamber/components/competency-radar-chart.tsx`**
+  - Prevents the SVG/radar surface from taking the large default browser focus rectangle after category clicks
+
+- **`ui/src/features/analysis-chamber/components/stages/competency-stage-shell.tsx`**
+  - Adds a compact `Reading...` seal during background category refetch instead of clearing the chart state
+
+### 2026-04-19 - Enlarged constellation wrapper and locked radar to 0-100 scale
+
+**What changed:**
+
+- **`ui/src/features/analysis-chamber/components/competency-radar-chart.tsx`**
+  - Added `PolarRadiusAxis` with fixed `0..100` domain and `25/50/75/100` ticks so score gaps are visible instead of auto-fitting the polygon
+  - Increased chart height from `296px` to `420px`
+  - Increased radar outer radius from `62%` to `76%`
+  - Increased chart margins so larger axis labels have room
+  - Added Recharts mount animation (`1100ms`, ease-out) so the radar grows from center into its measured points when the page opens
+  - Improved axis label readability and fixed previous unused prop issues in this component
+
+- **`ui/src/features/analysis-chamber/components/stages/competency-stage-shell.tsx`**
+  - Enlarged the visual constellation wrapper
+  - Moved score/confidence into compact seal badges inside the chart wrapper
+  - Removed the large dashboard-style score/confidence cards from the title header
+  - Strengthened radial background treatment behind the radar so the chart reads as the primary object
+
+### 2026-04-19 - Fixed radar score normalization after Playwright review
+
+**What changed:**
+
+- **`ui/src/features/analysis-chamber/components/stages/competency-stage-shell.tsx`**
+  - Added `normalizeScoreToPercent()` so category scores render correctly whether API returns `0..1`, `0..10`, or `0..100`
+  - Fixed `800 / 100` display bug by normalizing `8` to `80 / 100`
+  - Radar data now clamps into `0..100`, preventing the chart from auto-scaling around invalid large values
+
+- **`ui/src/features/analysis-chamber/components/competency-radar-chart.tsx`**
+  - Increased chart height from `420px` to `470px`
+  - Increased radar outer radius from `76%` to `88%`
+  - Reduced vertical margins and increased horizontal label room so the radar polygon is visibly larger
+
+---
+
 ## Phase 2 — Competency: Radar Chart Dimension (Recharts)
 
 ### 2026-04-19 · Replaced orbit ring with radar chart in `competency-stage-shell.tsx`
@@ -512,3 +740,125 @@
 - Removed description paragraph below headline
 - `memberName` + `roleName` rendered in new identity block below hero, above CTAs
 - CTA buttons moved to `pb-8 pt-3` zone at bottom — no longer compete for vertical space with character
+---
+
+## Phase 1 - Core Chamber Shell: Persistent Frame Proportions
+
+### 2026-04-19 - Rebalanced Analysis Chamber shell frame and rails
+
+**What changed:**
+
+- **`ui/src/features/analysis-chamber/components/analysis-chamber-frame.tsx`**
+  - Expanded shell max width from `1560px` to `1720px`
+  - Reduced outer viewport padding so the chamber reads as the primary screen, not a centered dashboard card
+  - Replaced isolated blurred decorative spots with broader chamber aura gradients
+  - Reduced frame radius slightly while keeping the ritual border treatment
+
+- **`ui/src/features/analysis-chamber/components/analysis-chamber-shell.tsx`**
+  - Centralized shell grid classes into shared constants for loading, error, and ready states
+  - Narrowed route rail from `64px` to `56px`
+  - Narrowed side identity rail from `208px` to `176px/188px` so stage content gets more focal space
+
+- **`ui/src/features/analysis-chamber/components/analysis-chamber-top-bar.tsx`**
+  - Tightened top-bar spacing
+  - Added a subtle chamber-mode sublabel under the active route
+  - Changed status badge from pill to compact seal-style rectangle
+
+- **`ui/src/features/analysis-chamber/components/analysis-chamber-route-rail.tsx`**
+  - Reworked rail into a darker dossier spine with a persistent center line
+  - Reduced route artifact button size and active glow
+
+- **`ui/src/features/analysis-chamber/components/analysis-chamber-hero-identity-layer.tsx`**
+  - Reduced side identity rail visual weight
+  - Tightened portrait stage height and identity typography
+  - Changed confidence badge from pill to compact seal-style rectangle
+
+---
+
+## Review Fixes - Build and Lint Blockers
+
+### 2026-04-19 20:53 +07:00 - Clear first code-review blocker
+
+**What changed:**
+
+- **`ui/src/features/analysis-chamber/components/stages/kpt-stage-shell.tsx`**
+  - Replaced unsafe `typeof kpt.data.keep_items` with explicit `ChamberKptItemResponse[]`
+  - Keeps the KPT columns typed even while query data is still undefined
+
+- **`ui/src/features/analysis-chamber/components/stages/journey-stage-shell.tsx`**
+  - Removed unused `ChamberMilestoneResponse` import
+
+- **`ui/eslint.config.mjs`**
+  - Added flat-config ignores for generated Next.js output and local artifact folders
+  - Prevents `lint:ci` from linting `.next`, Playwright artifacts, debug output, and temp folders
+
+- **`ui/src/features/analysis-chamber/components/competency-radar-chart.tsx`**
+  - Replaced `as any` Recharts renderer casts with typed tick and dot renderer props
+  - Keeps radar interaction typed while preserving the custom SVG tick and node rendering
+
+### 2026-04-19 20:53 +07:00 - Align Analysis Chamber API base URL with integration guide
+
+**What changed:**
+
+- **`ui/src/features/analysis-chamber/api/analysis-chamber-api.client.ts`**
+  - Normalized `NEXT_PUBLIC_API_URL` so `http://localhost:8000` resolves to `http://localhost:8000/api/v1`
+  - Kept compatibility for env values that already include `/api/v1`
+  - Preserves the existing `{ data: T }` envelope unwrap behavior
+
+### 2026-04-19 20:53 +07:00 - Wire Competency evidence drawer to dimension detail API
+
+**What changed:**
+
+- **`ui/src/features/analysis-chamber/components/stages/competency-stage-shell.tsx`**
+  - Connected the evidence drawer to `useAnalysisChamberDimensionDetail`
+  - Prioritized `dimension_score` detail summary when a dimension is selected
+  - Added trace rendering for supporting evidence, counter evidence, and behavioral events
+  - Added drawer loading, error, and empty states for trace-level evidence
+
+### 2026-04-19 20:53 +07:00 - Remove hardcoded root demo member link
+
+**What changed:**
+
+- **`ui/src/app/page.tsx`**
+  - Replaced the hardcoded `/profile/{memberId}` CTA with a member ID launcher form
+  - Supports optional `NEXT_PUBLIC_DEMO_MEMBER_ID` prefill for local demos
+  - Prevents the root page from linking to a stale seeded member after DB resets
+
+### 2026-04-19 20:53 +07:00 - Add Overview query error state
+
+**What changed:**
+
+- **`ui/src/features/analysis-chamber/components/stages/overview-stage-shell.tsx`**
+  - Added an explicit Overview error panel when profile overview data fails
+  - Preserves the persistent chamber shell while showing the stage-level failure
+  - Added a retry action wired to `overview.refetch()`
+
+### 2026-04-19 20:53 +07:00 - Defer character model loading
+
+**What changed:**
+
+- **`ui/src/systems/character/character-model.tsx`**
+  - Removed eager `useGLTF.preload()` for the 19MB character model
+  - Defers model loading until the character stage is actually rendered
+
+### 2026-04-19 21:03 +07:00 - Centralize public API env config
+
+**What changed:**
+
+- **`ui/src/lib/config/env.ts`**
+  - Added centralized public env config for `PUBLIC_API_ORIGIN`
+  - Supports `NEXT_PUBLIC_API_ORIGIN` and keeps backward compatibility with `NEXT_PUBLIC_API_URL`
+
+- **`ui/src/features/analysis-chamber/api/analysis-chamber-api.client.ts`**
+  - Removed direct `process.env` reads from the feature API client
+  - Uses centralized `PUBLIC_API_ORIGIN` before appending `/api/v1`
+
+### 2026-04-19 21:03 +07:00 - Move API version path into env config
+
+**What changed:**
+
+- **`ui/src/lib/config/env.ts`**
+  - Added `PUBLIC_API_VERSION_PATH` beside `PUBLIC_API_ORIGIN`
+
+- **`ui/src/features/analysis-chamber/api/analysis-chamber-api.client.ts`**
+  - Replaced local `API_VERSION_PATH` with centralized `PUBLIC_API_VERSION_PATH`

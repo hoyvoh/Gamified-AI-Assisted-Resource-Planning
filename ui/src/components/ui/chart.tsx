@@ -91,6 +91,7 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
   }
 
   return (
+    // Chart config is trusted internal config; do not pass backend/user-controlled keys here.
     <style
       dangerouslySetInnerHTML={{
         __html: Object.entries(THEMES)

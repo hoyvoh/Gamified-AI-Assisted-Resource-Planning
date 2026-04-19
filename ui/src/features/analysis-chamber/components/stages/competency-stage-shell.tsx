@@ -3,14 +3,20 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
 import type {
-  ChamberCategoryScoreResponse,
-  ChamberDimensionScoreResponse,
-} from "@/features/analysis-chamber/api/analysis-chamber-api.types";
+  ChamberCategoryScore,
+  ChamberDimensionScore,
+} from "@/features/analysis-chamber/api/analysis-chamber-api.view-models";
 import { useAnalysisChamberCompetencyData } from "@/features/analysis-chamber/hooks/use-analysis-chamber-shell-data";
 import { useAnalysisChamberRouteState } from "@/features/analysis-chamber/hooks/use-analysis-chamber-route-state";
-import { useCreateAnalysisChamberValidationFlag } from "@/features/analysis-chamber/hooks/use-analysis-chamber-data";
+import {
+  useAnalysisChamberDimensionDetail,
+  useCreateAnalysisChamberValidationFlag,
+} from "@/features/analysis-chamber/hooks/use-analysis-chamber-data";
 import { ANALYSIS_CHAMBER_SHELL_PALETTE as palette } from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
 import { CompetencyRadarChart } from "@/features/analysis-chamber/components/competency-radar-chart";
+
+const EMPTY_DIMENSION_SCORES: ChamberDimensionScore[] = [];
+const EMPTY_CATEGORY_SCORES: ChamberCategoryScore[] = [];
 
 const CATEGORY_LABELS: Record<string, string> = {
   core_technical_execution: "Core technical execution",
@@ -151,6 +157,31 @@ const humanizeId = (value: string | null | undefined) => {
     .join(" ");
 };
 
+const formatTraceTime = (timestamp: string | null | undefined) => {
+  if (!timestamp) {
+    return "Undated";
+  }
+
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) {
+    return "Undated";
+  }
+
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
+
+const getEvidenceText = ({
+  contentExcerpt,
+  contentSummary,
+}: {
+  contentExcerpt?: string | null;
+  contentSummary?: string | null;
+}) => contentSummary || contentExcerpt || "No evidence excerpt available.";
+
 const getCategoryLabel = (categoryId: string | null | undefined) =>
   CATEGORY_LABELS[categoryId ?? ""] ?? humanizeId(categoryId);
 
@@ -212,7 +243,7 @@ const getMaturityTone = (maturityLevel: string) => {
 };
 
 const getSelectedDimensionFromScores = (
-  dimensions: ChamberDimensionScoreResponse[],
+  dimensions: ChamberDimensionScore[],
   dimensionId: string | null,
 ) => {
   if (dimensions.length === 0) {
@@ -221,29 +252,29 @@ const getSelectedDimensionFromScores = (
 
   if (dimensionId) {
     return (
-      dimensions.find((dimension) => dimension.dimension_id === dimensionId) ??
+      dimensions.find((dimension) => dimension.dimensionId === dimensionId) ??
       null
     );
   }
 
   return [...dimensions].sort((left, right) => {
-    const leftScore = left.opportunity_score ?? left.normalized_score ?? 0;
-    const rightScore = right.opportunity_score ?? right.normalized_score ?? 0;
+    const leftScore = left.opportunityScore ?? left.normalizedScore ?? 0;
+    const rightScore = right.opportunityScore ?? right.normalizedScore ?? 0;
 
     return rightScore - leftScore;
   })[0];
 };
 
 const getFallbackDimensionIds = (
-  focusCategory: ChamberCategoryScoreResponse | null,
+  focusCategory: ChamberCategoryScore | null,
 ) => {
   if (!focusCategory) {
     return [];
   }
 
   return [
-    ...focusCategory.included_dimensions,
-    ...focusCategory.excluded_dimensions,
+    ...focusCategory.includedDimensions,
+    ...focusCategory.excludedDimensions,
   ];
 };
 
@@ -253,13 +284,13 @@ export const CompetencyStageShell = ({ memberId }: { memberId: string }) => {
     state.dimension,
   );
   const competency = useAnalysisChamberCompetencyData(memberId, state.category);
-  const runId = competency.data?.run_id ?? null;
-  const dimensions = competency.data?.dimension_scores ?? [];
-  const categoryScores = competency.data?.category_scores ?? [];
-  const focusCategory = useMemo<ChamberCategoryScoreResponse | null>(
+  const runId = competency.data?.runId ?? null;
+  const dimensions = competency.data?.dimensionScores ?? EMPTY_DIMENSION_SCORES;
+  const categoryScores = competency.data?.categoryScores ?? EMPTY_CATEGORY_SCORES;
+  const focusCategory = useMemo<ChamberCategoryScore | null>(
     () =>
       categoryScores.find(
-        (category) => category.category_id === state.category,
+        (category) => category.categoryId === state.category,
       ) ??
       categoryScores[0] ??
       null,
@@ -283,7 +314,7 @@ export const CompetencyStageShell = ({ memberId }: { memberId: string }) => {
     [dimensions, selectedDimensionId],
   );
 
-  const focusAccent = getCategoryAccent(focusCategory?.category_id);
+  const focusAccent = getCategoryAccent(focusCategory?.categoryId);
   const hasMeasuredDimensions = dimensions.length > 0;
   const fallbackDimensionIds = useMemo(
     () => getFallbackDimensionIds(focusCategory),
@@ -294,36 +325,61 @@ export const CompetencyStageShell = ({ memberId }: { memberId: string }) => {
       ? selectedDimensionId
       : (fallbackDimensionIds[0] ?? null);
   const activeDimensionId =
-    selectedDimension?.dimension_id ?? selectedFallbackDimension;
+    selectedDimension?.dimensionId ?? selectedFallbackDimension;
   const activeDimensionLabel = humanizeId(activeDimensionId);
   const evidenceSignalTotal =
-    (selectedDimension?.positive_signals ?? 0) +
-    (selectedDimension?.negative_signals ?? 0) +
-    (selectedDimension?.mixed_signals ?? 0);
-  const includedCount = focusCategory?.included_dimensions.length ?? 0;
-  const excludedCount = focusCategory?.excluded_dimensions.length ?? 0;
+    (selectedDimension?.positiveSignals ?? 0) +
+    (selectedDimension?.negativeSignals ?? 0) +
+    (selectedDimension?.mixedSignals ?? 0);
+  const includedCount = focusCategory?.includedDimensions.length ?? 0;
+  const excludedCount = focusCategory?.excludedDimensions.length ?? 0;
   const isReadingCategory = competency.isFetching && Boolean(competency.data);
   const activeBranchAccent = selectedDimension
-    ? getMaturityTone(selectedDimension.maturity_level).border
+    ? getMaturityTone(selectedDimension.maturityLevel).border
     : focusAccent.border;
   const radarData = categoryScores.slice(0, 4).map((cat) => ({
-    categoryId: cat.category_id,
+    categoryId: cat.categoryId,
     score: normalizeScoreToPercent(cat.score) ?? 0,
     fullMark: 100,
   }));
+  const dimensionDetail = useAnalysisChamberDimensionDetail(
+    memberId,
+    activeDimensionId,
+  );
+  const detailScore = dimensionDetail.data?.dimensionScore;
+  const drawerSummary =
+    detailScore?.uiSummary ??
+    detailScore?.explanationSummary ??
+    selectedDimension?.uiSummary ??
+    selectedDimension?.explanationSummary ??
+    (hasMeasuredDimensions
+      ? "This branch is ready to drive the evidence drawer."
+      : "This lane is visible inside the chamber, but it is still waiting for enough evidence to become a scored dimension.");
+  const supportingEvidence = dimensionDetail.data?.supportingEvidence ?? [];
+  const counterEvidence = dimensionDetail.data?.counterEvidence ?? [];
+  const behavioralEvents = dimensionDetail.data?.behavioralEvents ?? [];
+  const categoryDimensionIds = useMemo(
+    () => new Set(getFallbackDimensionIds(focusCategory)),
+    [focusCategory],
+  );
   const seedDimensions = (
     hasMeasuredDimensions
-      ? dimensions.slice(0, 6).map((dimension) => ({
-          id: dimension.dimension_id,
-          label: humanizeId(dimension.dimension_id),
-          shortLabel: getDimensionShortLabel(dimension.dimension_id),
-          tone: getMaturityTone(dimension.maturity_level),
-          subtitle: dimension.maturity_level,
-          scored: true,
-          positiveSignals: dimension.positive_signals,
-          negativeSignals: dimension.negative_signals,
-          mixedSignals: dimension.mixed_signals,
-        }))
+      ? dimensions
+          .filter((d) =>
+            focusCategory ? categoryDimensionIds.has(d.dimensionId) : true,
+          )
+          .slice(0, 6)
+          .map((dimension) => ({
+            id: dimension.dimensionId,
+            label: humanizeId(dimension.dimensionId),
+            shortLabel: getDimensionShortLabel(dimension.dimensionId),
+            tone: getMaturityTone(dimension.maturityLevel),
+            subtitle: dimension.maturityLevel,
+            scored: true,
+            positiveSignals: dimension.positiveSignals,
+            negativeSignals: dimension.negativeSignals,
+            mixedSignals: dimension.mixedSignals,
+          }))
       : fallbackDimensionIds.slice(0, 6).map((dimensionId) => ({
           id: dimensionId,
           label: humanizeId(dimensionId),
@@ -365,7 +421,7 @@ export const CompetencyStageShell = ({ memberId }: { memberId: string }) => {
               color: focusAccent.color,
             }}
           >
-            {getCategoryLabel(focusCategory?.category_id)}
+            {getCategoryLabel(focusCategory?.categoryId)}
           </span>
           {activeDimensionId ? (
             <span
@@ -448,13 +504,13 @@ export const CompetencyStageShell = ({ memberId }: { memberId: string }) => {
                     background: "rgba(154,171,184,0.06)",
                   }}
                 >
-                  {focusCategory?.confidence_label ?? "Awaiting confidence"}
+                  {focusCategory?.confidenceLabel ?? "Awaiting confidence"}
                 </span>
               </div>
             </div>
             <CompetencyRadarChart
               entries={radarData}
-              focusCategoryId={focusCategory?.category_id ?? null}
+              focusCategoryId={focusCategory?.categoryId ?? null}
               accentMap={CATEGORY_ACCENT}
               onSelectCategory={(id) => {
                 setSelectedDimensionId(null);
@@ -511,7 +567,7 @@ export const CompetencyStageShell = ({ memberId }: { memberId: string }) => {
               <div className="relative mt-5 overflow-x-auto pb-2">
                 {hasMeasuredDimensions && seedDimensions.length > 0 ? (
                   <div
-                    key={focusCategory?.category_id ?? "lattice"}
+                    key={focusCategory?.categoryId ?? "lattice"}
                     className="relative flex min-w-max items-start gap-8 px-4 py-4"
                   >
                     {seedDimensions.length > 1 &&
@@ -845,7 +901,7 @@ export const CompetencyStageShell = ({ memberId }: { memberId: string }) => {
                 style={{ color: focusAccent.color, opacity: 0.85 }}
                 aria-hidden="true"
               >
-                {CATEGORY_SIGIL[focusCategory?.category_id ?? ""] ?? "◈"}
+                {CATEGORY_SIGIL[focusCategory?.categoryId ?? ""] ?? "◈"}
               </span>
               <p
                 className="font-display text-base uppercase tracking-[0.08em]"
@@ -856,16 +912,16 @@ export const CompetencyStageShell = ({ memberId }: { memberId: string }) => {
             </div>
 
             {/* Maturity badge */}
-            {selectedDimension?.maturity_level ? (
+            {selectedDimension?.maturityLevel ? (
               <span
                 className="mt-2 inline-block rounded-full border px-2 py-0.5 text-[9px] uppercase tracking-[0.12em]"
                 style={{
-                  borderColor: getMaturityTone(selectedDimension.maturity_level)
+                  borderColor: getMaturityTone(selectedDimension.maturityLevel)
                     .border,
-                  color: getMaturityTone(selectedDimension.maturity_level).text,
+                  color: getMaturityTone(selectedDimension.maturityLevel).text,
                 }}
               >
-                {selectedDimension.maturity_level}
+                {selectedDimension.maturityLevel}
               </span>
             ) : (
               <span
@@ -880,14 +936,14 @@ export const CompetencyStageShell = ({ memberId }: { memberId: string }) => {
             )}
 
             {/* Score — large number + animated bar */}
-            {selectedDimension?.normalized_score !== null &&
-            selectedDimension?.normalized_score !== undefined ? (
+            {selectedDimension?.normalizedScore !== null &&
+            selectedDimension?.normalizedScore !== undefined ? (
               <>
                 <p
                   className="mt-3 font-display text-3xl leading-none"
                   style={{ color: palette.gold }}
                 >
-                  {Math.round(selectedDimension.normalized_score * 100)}
+                  {Math.round(selectedDimension.normalizedScore * 100)}
                   <span
                     className="ml-1 text-sm"
                     style={{ color: palette.inkSoft }}
@@ -897,7 +953,7 @@ export const CompetencyStageShell = ({ memberId }: { memberId: string }) => {
                 </p>
                 <ScoreBar
                   key={activeDimensionId}
-                  score={Math.round(selectedDimension.normalized_score * 100)}
+                  score={Math.round(selectedDimension.normalizedScore * 100)}
                   accentColor={focusAccent.color}
                 />
               </>
@@ -925,13 +981,134 @@ export const CompetencyStageShell = ({ memberId }: { memberId: string }) => {
                 className="mt-3 text-sm leading-6"
                 style={{ color: palette.inkSoft }}
               >
-                {selectedDimension?.ui_summary ??
-                  selectedDimension?.explanation_summary ??
-                  (hasMeasuredDimensions
-                    ? "This branch is ready to drive the evidence drawer."
-                    : "This lane is visible inside the chamber, but it is still waiting for enough evidence to become a scored dimension.")}
+                {drawerSummary}
               </p>
             </div>
+
+            {hasMeasuredDimensions ? (
+              <div
+                className="mt-4 rounded-xl border px-4 py-4"
+                style={{
+                  borderColor: "rgba(154,171,184,0.24)",
+                  background: "rgba(255,255,255,0.035)",
+                }}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <p
+                    className="text-[10px] uppercase tracking-[0.16em]"
+                    style={{ color: palette.azure }}
+                  >
+                    Evidence trace
+                  </p>
+                  {dimensionDetail.isFetching ? (
+                    <span
+                      className="text-[9px] uppercase tracking-[0.12em]"
+                      style={{ color: palette.inkMuted }}
+                    >
+                      Reading
+                    </span>
+                  ) : null}
+                </div>
+
+                {dimensionDetail.isError ? (
+                  <p
+                    className="mt-3 text-xs leading-5"
+                    style={{ color: palette.crimson }}
+                  >
+                    Evidence trace could not be loaded for this dimension.
+                  </p>
+                ) : supportingEvidence.length === 0 &&
+                  counterEvidence.length === 0 &&
+                  behavioralEvents.length === 0 &&
+                  !dimensionDetail.isFetching ? (
+                  <p
+                    className="mt-3 text-xs leading-5"
+                    style={{ color: palette.inkMuted }}
+                  >
+                    No trace-level evidence has been attached to this dimension
+                    yet.
+                  </p>
+                ) : (
+                  <div className="mt-3 space-y-3">
+                    {supportingEvidence.slice(0, 2).map((evidence) => (
+                      <div
+                        key={evidence.id}
+                        className="rounded-md border px-3 py-3"
+                        style={{
+                          borderColor: "rgba(42,106,58,0.3)",
+                          background: "rgba(42,106,58,0.08)",
+                        }}
+                      >
+                        <p
+                          className="text-[9px] uppercase tracking-[0.12em]"
+                          style={{ color: palette.vert }}
+                        >
+                          Supporting proof |{" "}
+                          {formatTraceTime(evidence.timestamp)}
+                        </p>
+                        <p
+                          className="mt-1.5 text-xs leading-5"
+                          style={{ color: palette.inkSoft }}
+                        >
+                          {getEvidenceText(evidence)}
+                        </p>
+                      </div>
+                    ))}
+
+                    {counterEvidence.slice(0, 2).map((evidence) => (
+                      <div
+                        key={evidence.id}
+                        className="rounded-md border px-3 py-3"
+                        style={{
+                          borderColor: "rgba(182,68,53,0.3)",
+                          background: "rgba(182,68,53,0.08)",
+                        }}
+                      >
+                        <p
+                          className="text-[9px] uppercase tracking-[0.12em]"
+                          style={{ color: palette.crimson }}
+                        >
+                          Counter proof | {formatTraceTime(evidence.timestamp)}
+                        </p>
+                        <p
+                          className="mt-1.5 text-xs leading-5"
+                          style={{ color: palette.inkSoft }}
+                        >
+                          {getEvidenceText(evidence)}
+                        </p>
+                      </div>
+                    ))}
+
+                    {behavioralEvents.slice(0, 2).map((event) => (
+                      <div
+                        key={event.id}
+                        className="rounded-md border px-3 py-3"
+                        style={{
+                          borderColor: "rgba(200,150,30,0.22)",
+                          background: "rgba(200,150,30,0.06)",
+                        }}
+                      >
+                        <p
+                          className="text-[9px] uppercase tracking-[0.12em]"
+                          style={{ color: palette.gold }}
+                        >
+                          Event | {humanizeId(event.eventType)} |{" "}
+                          {formatTraceTime(event.timestamp)}
+                        </p>
+                        <p
+                          className="mt-1.5 text-xs leading-5"
+                          style={{ color: palette.inkSoft }}
+                        >
+                          {event.eventSummary ??
+                            event.whyItMatters ??
+                            "No event summary available."}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : null}
 
             {/* Signal counters */}
             {hasMeasuredDimensions &&
@@ -939,9 +1116,9 @@ export const CompetencyStageShell = ({ memberId }: { memberId: string }) => {
             evidenceSignalTotal > 0 ? (
               <SignalCounters
                 key={activeDimensionId}
-                positive={selectedDimension.positive_signals ?? 0}
-                negative={selectedDimension.negative_signals ?? 0}
-                mixed={selectedDimension.mixed_signals ?? 0}
+                positive={selectedDimension.positiveSignals ?? 0}
+                negative={selectedDimension.negativeSignals ?? 0}
+                mixed={selectedDimension.mixedSignals ?? 0}
               />
             ) : null}
 
@@ -951,15 +1128,15 @@ export const CompetencyStageShell = ({ memberId }: { memberId: string }) => {
                 key={`confidence-${activeDimensionId}`}
                 label="Confidence"
                 text={
-                  selectedDimension?.confidence_label ??
-                  focusCategory?.confidence_label ??
+                  selectedDimension?.confidenceLabel ??
+                  focusCategory?.confidenceLabel ??
                   "Awaiting"
                 }
                 fill={
                   CONFIDENCE_FILL[
                     (
-                      selectedDimension?.confidence_label ??
-                      focusCategory?.confidence_label ??
+                      selectedDimension?.confidenceLabel ??
+                      focusCategory?.confidenceLabel ??
                       ""
                     ).toLowerCase()
                   ] ?? 40
@@ -967,7 +1144,7 @@ export const CompetencyStageShell = ({ memberId }: { memberId: string }) => {
                 accentColor={focusAccent.color}
               />
               <MeterStrip
-                key={`coverage-${focusCategory?.category_id}`}
+                key={`coverage-${focusCategory?.categoryId}`}
                 label="Coverage"
                 text={`${includedCount} of ${includedCount + excludedCount}`}
                 fill={
@@ -1262,8 +1439,8 @@ const WaxSealVerdict = ({
     setTimeout(() => setPressing(null), 220);
     try {
       await createFlag.mutateAsync({
-        analysis_run_id: runId,
-        dimension_id: dimensionId,
+        analysisRunId: runId,
+        dimensionId: dimensionId,
         verdict,
         note: null,
       });
@@ -1315,6 +1492,7 @@ const WaxSealVerdict = ({
 
           return (
             <button
+              aria-label={`Seal verdict as ${label}`}
               key={verdict}
               disabled={isDisabled}
               onClick={() => void handleSeal(verdict)}

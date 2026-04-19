@@ -3,11 +3,13 @@
 import { useMemo } from "react";
 import Link from "next/link";
 
-import type { ChamberCaseResponse } from "@/features/analysis-chamber/api/analysis-chamber-api.types";
+import type { ChamberCase } from "@/features/analysis-chamber/api/analysis-chamber-api.view-models";
 import { useAnalysisChamberCasesData } from "@/features/analysis-chamber/hooks/use-analysis-chamber-shell-data";
 import { useAnalysisChamberRouteState } from "@/features/analysis-chamber/hooks/use-analysis-chamber-route-state";
 import { ANALYSIS_CHAMBER_SHELL_PALETTE as palette } from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
 import { buildAnalysisChamberRouteHref } from "@/features/analysis-chamber/lib/analysis-chamber-route-links";
+
+const EMPTY_CASES: ChamberCase[] = [];
 
 /** CASE-01, CASE-02… short archive reference */
 const formatCaseRef = (index: number) =>
@@ -27,10 +29,10 @@ const getImpactTone = (impactLevel: string | null) => {
 export const CasesStageShell = ({ memberId }: { memberId: string }) => {
   const cases = useAnalysisChamberCasesData(memberId);
   const { state, updateQuery } = useAnalysisChamberRouteState();
-  const caseList = cases.data?.cases ?? [];
+  const caseList = cases.data?.cases ?? EMPTY_CASES;
   const selectedCase = useMemo(
     () =>
-      caseList.find((entry) => entry.case_id === state.caseId) ??
+      caseList.find((entry) => entry.id === state.caseId) ??
       caseList[0] ??
       null,
     [caseList, state.caseId],
@@ -69,17 +71,17 @@ export const CasesStageShell = ({ memberId }: { memberId: string }) => {
           <div className="divide-y divide-[rgba(200,150,30,0.10)]">
             {caseList.length > 0 ? (
               caseList.slice(0, 8).map((entry, index) => {
-                const isSelected = selectedCase?.case_id === entry.case_id;
-                const impactTone = getImpactTone(entry.impact_level);
+                const isSelected = selectedCase?.id === entry.id;
+                const impactTone = getImpactTone(entry.impactLevel);
 
                 return (
                   <button
-                    key={entry.case_id}
+                    key={entry.id}
                     className="grid w-full grid-cols-[80px_1fr_120px] gap-3 px-4 py-4 text-left"
                     onClick={() =>
                       updateQuery({
-                        caseId: entry.case_id,
-                        highlight: entry.case_id,
+                        caseId: entry.id,
+                        highlight: entry.id,
                       })
                     }
                     style={{
@@ -138,7 +140,7 @@ export const CasesStageShell = ({ memberId }: { memberId: string }) => {
                         color: impactTone.color,
                       }}
                     >
-                      {entry.impact_level ?? "—"}
+                      {entry.impactLevel ?? "—"}
                     </span>
                   </button>
                 );
@@ -233,13 +235,13 @@ const OpenRecord = ({
 }: {
   memberId: string;
   caseRef: string;
-  entry: ChamberCaseResponse;
+  entry: ChamberCase;
 }) => {
-  const impactTone = getImpactTone(entry.impact_level);
+  const impactTone = getImpactTone(entry.impactLevel);
   const sections = [
-    { label: "Observed pattern", value: entry.observed_pattern },
-    { label: "Better alternative", value: entry.better_alternative },
-    { label: "Next-time guidance", value: entry.next_time_guidance },
+    { label: "Observed pattern", value: entry.observedPattern },
+    { label: "Better alternative", value: entry.betterAlternative },
+    { label: "Next-time guidance", value: entry.nextTimeGuidance },
   ].filter((s) => s.value !== null && s.value !== undefined);
 
   return (
@@ -281,7 +283,7 @@ const OpenRecord = ({
               {entry.category}
             </span>
           ) : null}
-          {entry.impact_level ? (
+          {entry.impactLevel ? (
             <span
               className="rounded-full border px-2 py-0.5 text-[9px] uppercase tracking-widest"
               style={{
@@ -289,14 +291,14 @@ const OpenRecord = ({
                 color: impactTone.color,
               }}
             >
-              {entry.impact_level}
+              {entry.impactLevel}
             </span>
           ) : null}
         </div>
       </div>
 
       {/* Why it matters — primary reading */}
-      {(entry.why_it_matters ?? entry.summary) ? (
+      {(entry.whyItMatters ?? entry.summary) ? (
         <div
           className="mt-5 rounded-xl border px-4 py-4"
           style={{
@@ -306,7 +308,7 @@ const OpenRecord = ({
             boxShadow: "0 8px 24px rgba(0,0,0,0.14)",
           }}
         >
-          {entry.why_it_matters ? (
+          {entry.whyItMatters ? (
             <p
               className="text-[10px] uppercase tracking-[0.16em]"
               style={{ color: palette.gold }}
@@ -318,7 +320,7 @@ const OpenRecord = ({
             className="mt-3 text-sm leading-6"
             style={{ color: palette.inkSoft }}
           >
-            {entry.why_it_matters ?? entry.summary}
+            {entry.whyItMatters ?? entry.summary}
           </p>
         </div>
       ) : null}
@@ -384,7 +386,7 @@ const OpenRecord = ({
       <Link
         className="mt-5 inline-flex items-center gap-2 rounded-full border px-3 py-2 font-display text-[10px] uppercase tracking-[0.12em] transition-opacity hover:opacity-80"
         href={buildAnalysisChamberRouteHref(memberId, "journey", {
-          milestone: entry.case_id.toLowerCase(),
+          milestone: entry.id.toLowerCase(),
         })}
         style={{ borderColor: palette.azure, color: palette.azure }}
       >

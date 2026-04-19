@@ -3,13 +3,13 @@ import {
   ANALYSIS_CHAMBER_SHELL_PALETTE as palette,
 } from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
 import type { AnalysisChamberRouteKey } from "@/features/analysis-chamber/lib/analysis-chamber-shell.types";
-import type { ChamberBootstrapData } from "@/features/analysis-chamber/api/analysis-chamber-api.types";
+import type { ChamberBootstrap } from "@/features/analysis-chamber/api/analysis-chamber-api.view-models";
 
 export const AnalysisChamberTopBar = ({
   bootstrap,
   route,
 }: {
-  bootstrap: ChamberBootstrapData;
+  bootstrap: ChamberBootstrap;
   route: AnalysisChamberRouteKey;
 }) => (
   <header
@@ -40,13 +40,13 @@ export const AnalysisChamberTopBar = ({
 
     <div className="min-w-0 flex-1">
       <p className="truncate font-display text-sm uppercase tracking-[0.18em]">
-        {bootstrap.member.display_name}
+        {bootstrap.member.displayName}
       </p>
       <p
         className="truncate text-xs italic"
         style={{ color: palette.inkMuted }}
       >
-        {bootstrap.role_name ?? "Role pending"} | {bootstrap.team_name}
+        {bootstrap.roleName ?? "Role pending"} | {bootstrap.teamName}
       </p>
     </div>
 
@@ -73,7 +73,7 @@ export const AnalysisChamberTopBar = ({
         background: "rgba(42,106,58,0.08)",
       }}
     >
-      {bootstrap.analysis_status}
+      {bootstrap.analysisStatus}
     </div>
   </header>
 );

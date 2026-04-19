@@ -6,7 +6,7 @@ import { useMemo } from "react";
 
 import { usePathname } from "next/navigation";
 
-import type { ChamberBootstrapData } from "@/features/analysis-chamber/api/analysis-chamber-api.types";
+import type { ChamberBootstrap } from "@/features/analysis-chamber/api/analysis-chamber-api.view-models";
 
 import { AnalysisChamberFrame } from "@/features/analysis-chamber/components/analysis-chamber-frame";
 
@@ -49,50 +49,50 @@ const createShellPlaceholderBootstrap = (
   memberId: string,
 
   analysisStatus: AnalysisStatus,
-): ChamberBootstrapData => ({
+): ChamberBootstrap => ({
   member: {
-    member_id: memberId,
+    id: memberId,
 
-    team_id: "pending-team",
+    teamId: "pending-team",
 
-    organization_id: "pending-org",
+    organizationId: "pending-org",
 
-    display_name: "Analysis Chamber",
+    displayName: "Analysis Chamber",
 
-    external_id: null,
+    externalId: null,
 
-    role_profile_id: null,
+    roleProfileId: null,
 
-    analysis_status: analysisStatus,
+    analysisStatus: analysisStatus,
 
-    last_analysis_at: null,
+    lastAnalysisAt: null,
 
-    created_at: "",
+    createdAt: "",
 
-    updated_at: "",
+    updatedAt: "",
   },
 
-  role_name: "Loading",
+  roleName: "Loading",
 
-  team_name: "Shell placeholder",
+  teamName: "Shell placeholder",
 
-  latest_run: null,
+  latestRun: null,
 
-  analysis_status: analysisStatus,
+  analysisStatus: analysisStatus,
 });
 
 const getShellConfidence = (
-  bootstrap: ChamberBootstrapData | null | undefined,
+  bootstrap: ChamberBootstrap | null | undefined,
 ) => {
-  if (!bootstrap?.latest_run) {
-    return bootstrap?.analysis_status === "completed" ? 0.7 : 0.36;
+  if (!bootstrap?.latestRun) {
+    return bootstrap?.analysisStatus === "completed" ? 0.7 : 0.36;
   }
 
-  if (bootstrap.latest_run.status === "analyzing") {
-    return bootstrap.latest_run.progress_pct / 100;
+  if (bootstrap.latestRun.status === "analyzing") {
+    return bootstrap.latestRun.progressPct / 100;
   }
 
-  return bootstrap.analysis_status === "completed" ? 0.78 : 0.44;
+  return bootstrap.analysisStatus === "completed" ? 0.78 : 0.44;
 };
 
 const chamberBodyClassName =
@@ -120,9 +120,9 @@ export const AnalysisChamberShell = ({
   const route = getActiveRoute(pathname);
 
   const roleName = useMemo(
-    () => bootstrap.data?.role_name ?? "Role pending",
+    () => bootstrap.data?.roleName ?? "Role pending",
 
-    [bootstrap.data?.role_name],
+    [bootstrap.data?.roleName],
   );
 
   const loadingBootstrap = useMemo(
@@ -167,9 +167,9 @@ export const AnalysisChamberShell = ({
             {showSideHeroIdentity ? (
               <AnalysisChamberHeroIdentityLayer
                 confidence={getShellConfidence(loadingBootstrap)}
-                memberName={loadingBootstrap.member.display_name}
-                roleName={loadingBootstrap.role_name ?? "Loading"}
-                status={loadingBootstrap.analysis_status}
+                memberName={loadingBootstrap.member.displayName}
+                roleName={loadingBootstrap.roleName ?? "Loading"}
+                status={loadingBootstrap.analysisStatus}
               />
             ) : null}
           </div>
@@ -206,9 +206,9 @@ export const AnalysisChamberShell = ({
             {showSideHeroIdentity ? (
               <AnalysisChamberHeroIdentityLayer
                 confidence={getShellConfidence(errorBootstrap)}
-                memberName={errorBootstrap.member.display_name}
-                roleName={errorBootstrap.role_name ?? "Unavailable"}
-                status={errorBootstrap.analysis_status}
+                memberName={errorBootstrap.member.displayName}
+                roleName={errorBootstrap.roleName ?? "Unavailable"}
+                status={errorBootstrap.analysisStatus}
               />
             ) : null}
           </div>
@@ -229,9 +229,9 @@ export const AnalysisChamberShell = ({
           {showSideHeroIdentity ? (
             <AnalysisChamberHeroIdentityLayer
               confidence={getShellConfidence(bootstrap.data)}
-              memberName={bootstrap.data.member.display_name}
+              memberName={bootstrap.data.member.displayName}
               roleName={roleName}
-              status={bootstrap.data.analysis_status}
+              status={bootstrap.data.analysisStatus}
             />
           ) : null}
         </div>

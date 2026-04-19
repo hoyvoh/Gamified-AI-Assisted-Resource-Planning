@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 
+import type { ChamberKptItem } from "@/features/analysis-chamber/api/analysis-chamber-api.view-models";
 import { useAnalysisChamberKptData } from "@/features/analysis-chamber/hooks/use-analysis-chamber-shell-data";
 import { ANALYSIS_CHAMBER_SHELL_PALETTE as palette } from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
 import { buildAnalysisChamberRouteHref } from "@/features/analysis-chamber/lib/analysis-chamber-route-links";
@@ -38,16 +39,16 @@ export const KptStageShell = ({ memberId }: { memberId: string }) => {
 
   const columns: Array<{
     key: ColumnKey;
-    items: typeof kpt.data.keep_items;
+    items: ChamberKptItem[];
     tone: string;
   }> = [
-    { key: "Keep", items: kpt.data?.keep_items ?? [], tone: palette.vert },
+    { key: "Keep", items: kpt.data?.keepItems ?? [], tone: palette.vert },
     {
       key: "Problem",
-      items: kpt.data?.problem_items ?? [],
+      items: kpt.data?.problemItems ?? [],
       tone: palette.crimson,
     },
-    { key: "Try", items: kpt.data?.try_items ?? [], tone: palette.azure },
+    { key: "Try", items: kpt.data?.tryItems ?? [], tone: palette.azure },
   ];
 
   return (
@@ -110,7 +111,7 @@ export const KptStageShell = ({ memberId }: { memberId: string }) => {
                 {limitedItems.length > 0 ? (
                   limitedItems.map((item, index) => (
                     <div
-                      key={item.kpt_id}
+                      key={item.id}
                       className="rounded-md border px-4 py-4"
                       style={{
                         borderColor: `${tone}28`,
@@ -141,27 +142,27 @@ export const KptStageShell = ({ memberId }: { memberId: string }) => {
                         </p>
                       ) : null}
                       {/* Linked problem badges (Try items) */}
-                      {key === "Try" && item.linked_problem_ids.length > 0 ? (
+                      {key === "Try" && item.linkedProblemIds.length > 0 ? (
                         <p
                           className="mt-3 text-[10px] uppercase tracking-widest"
                           style={{ color: palette.crimson }}
                         >
-                          Addresses {item.linked_problem_ids.length}{" "}
-                          {item.linked_problem_ids.length === 1
+                          Addresses {item.linkedProblemIds.length}{" "}
+                          {item.linkedProblemIds.length === 1
                             ? "problem"
                             : "problems"}
                         </p>
                       ) : null}
                       {/* Competency link */}
-                      {item.linked_dimension_ids[0] ? (
+                      {item.linkedDimensionIds[0] ? (
                         <Link
                           className="mt-3 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-display text-[10px] uppercase tracking-[0.12em] transition-opacity hover:opacity-80"
                           href={buildAnalysisChamberRouteHref(
                             memberId,
                             "competency",
                             {
-                              dimension: item.linked_dimension_ids[0],
-                              highlight: item.linked_dimension_ids[0],
+                              dimension: item.linkedDimensionIds[0],
+                              highlight: item.linkedDimensionIds[0],
                             },
                           )}
                           style={{

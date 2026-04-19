@@ -2,10 +2,12 @@
 
 import { useMemo } from "react";
 
-import type { ChamberMilestoneResponse } from "@/features/analysis-chamber/api/analysis-chamber-api.types";
 import { useAnalysisChamberJourneyData } from "@/features/analysis-chamber/hooks/use-analysis-chamber-shell-data";
 import { useAnalysisChamberRouteState } from "@/features/analysis-chamber/hooks/use-analysis-chamber-route-state";
 import { ANALYSIS_CHAMBER_SHELL_PALETTE as palette } from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
+import type { ChamberMilestone } from "@/features/analysis-chamber/api/analysis-chamber-api.view-models";
+
+const EMPTY_MILESTONES: ChamberMilestone[] = [];
 
 const MILESTONE_POSITIONS: Array<{ left: string; top: string }> = [
   { left: "10%", top: "64%" },
@@ -46,11 +48,11 @@ const getMilestoneTypeAccent = (milestoneType: string) => {
 export const JourneyStageShell = ({ memberId }: { memberId: string }) => {
   const journey = useAnalysisChamberJourneyData(memberId);
   const { state, updateQuery } = useAnalysisChamberRouteState();
-  const milestones = journey.data?.milestones ?? [];
+  const milestones = journey.data?.milestones ?? EMPTY_MILESTONES;
   const focusedMilestone = useMemo(
     () =>
       milestones.find(
-        (milestone) => milestone.milestone_id === state.milestone,
+        (milestone) => milestone.id === state.milestone,
       ) ??
       milestones[0] ??
       null,
@@ -58,7 +60,7 @@ export const JourneyStageShell = ({ memberId }: { memberId: string }) => {
   );
   const focusedIndex = focusedMilestone
     ? milestones.findIndex(
-        (m) => m.milestone_id === focusedMilestone.milestone_id,
+        (m) => m.id === focusedMilestone.id,
       )
     : -1;
   const prevMilestone =
@@ -118,19 +120,19 @@ export const JourneyStageShell = ({ memberId }: { memberId: string }) => {
                   const position =
                     MILESTONE_POSITIONS[index] ?? MILESTONE_POSITIONS[0];
                   const isFocused =
-                    focusedMilestone?.milestone_id === milestone.milestone_id;
+                    focusedMilestone?.id === milestone.id;
                   const accent = getMilestoneTypeAccent(
-                    milestone.milestone_type,
+                    milestone.milestoneType,
                   );
 
                   return (
                     <button
-                      key={milestone.milestone_id}
+                      key={milestone.id}
                       className="absolute -translate-x-1/2 -translate-y-1/2 text-left transition-all duration-200"
                       onClick={() =>
                         updateQuery({
-                          milestone: milestone.milestone_id,
-                          highlight: milestone.milestone_id,
+                          milestone: milestone.id,
+                          highlight: milestone.id,
                         })
                       }
                       style={position}
@@ -178,7 +180,7 @@ export const JourneyStageShell = ({ memberId }: { memberId: string }) => {
                             color: isFocused ? palette.gold : accent.dot,
                           }}
                         >
-                          {humanizeMilestoneType(milestone.milestone_type)}
+                          {humanizeMilestoneType(milestone.milestoneType)}
                         </p>
                         <p
                           className="mt-1 font-display text-[11px] uppercase tracking-[0.06em] leading-4"
@@ -189,14 +191,14 @@ export const JourneyStageShell = ({ memberId }: { memberId: string }) => {
                           {milestone.title}
                         </p>
                         {isFocused &&
-                        milestone.impact_score !== null &&
-                        milestone.impact_score !== undefined ? (
+                        milestone.impactScore !== null &&
+                        milestone.impactScore !== undefined ? (
                           <p
                             className="mt-1 text-[10px]"
                             style={{ color: palette.gold }}
                           >
                             Impact{" "}
-                            {Math.round((milestone.impact_score ?? 0) * 100)}
+                            {Math.round((milestone.impactScore ?? 0) * 100)}
                           </p>
                         ) : null}
                       </div>
@@ -275,14 +277,14 @@ export const JourneyStageShell = ({ memberId }: { memberId: string }) => {
                         className="rounded-full border px-2 py-0.5 text-[9px] uppercase tracking-widest"
                         style={{
                           borderColor: getMilestoneTypeAccent(
-                            focusedMilestone.milestone_type,
+                            focusedMilestone.milestoneType,
                           ).border,
                           color: getMilestoneTypeAccent(
-                            focusedMilestone.milestone_type,
+                            focusedMilestone.milestoneType,
                           ).dot,
                         }}
                       >
-                        {humanizeMilestoneType(focusedMilestone.milestone_type)}
+                        {humanizeMilestoneType(focusedMilestone.milestoneType)}
                       </span>
                     </div>
                     <div
@@ -310,8 +312,8 @@ export const JourneyStageShell = ({ memberId }: { memberId: string }) => {
                     ) : null}
                   </div>
 
-                  {focusedMilestone.impact_score !== null &&
-                  focusedMilestone.impact_score !== undefined ? (
+                  {focusedMilestone.impactScore !== null &&
+                  focusedMilestone.impactScore !== undefined ? (
                     <div
                       className="rounded-md border px-3 py-2"
                       style={{
@@ -329,7 +331,7 @@ export const JourneyStageShell = ({ memberId }: { memberId: string }) => {
                         className="mt-1 font-display text-xl"
                         style={{ color: palette.gold }}
                       >
-                        {Math.round((focusedMilestone.impact_score ?? 0) * 100)}
+                        {Math.round((focusedMilestone.impactScore ?? 0) * 100)}
                         <span
                           className="ml-1 text-xs"
                           style={{ color: palette.inkSoft }}
@@ -356,8 +358,8 @@ export const JourneyStageShell = ({ memberId }: { memberId: string }) => {
                           className="rounded border px-3 py-2 text-[10px] uppercase tracking-widest"
                           onClick={() =>
                             updateQuery({
-                              milestone: prevMilestone.milestone_id,
-                              highlight: prevMilestone.milestone_id,
+                              milestone: prevMilestone.id,
+                              highlight: prevMilestone.id,
                             })
                           }
                           style={{
@@ -375,8 +377,8 @@ export const JourneyStageShell = ({ memberId }: { memberId: string }) => {
                           className="rounded border px-3 py-2 text-[10px] uppercase tracking-widest"
                           onClick={() =>
                             updateQuery({
-                              milestone: nextMilestone.milestone_id,
-                              highlight: nextMilestone.milestone_id,
+                              milestone: nextMilestone.id,
+                              highlight: nextMilestone.id,
                             })
                           }
                           style={{
@@ -406,7 +408,7 @@ export const JourneyStageShell = ({ memberId }: { memberId: string }) => {
                   >
                     {hasMap
                       ? "Select a landmark on the map to anchor the chamber."
-                      : (journey.data?.growth_journey_summary ??
+                      : (journey.data?.growthJourneySummary ??
                         "The expedition has not yet produced landmark data for this period.")}
                   </p>
                 </div>
@@ -433,20 +435,20 @@ export const JourneyStageShell = ({ memberId }: { memberId: string }) => {
           <div className="mt-3 flex flex-wrap items-center gap-1">
             {milestones.slice(0, 5).map((milestone, index) => {
               const isFocused =
-                focusedMilestone?.milestone_id === milestone.milestone_id;
-              const accent = getMilestoneTypeAccent(milestone.milestone_type);
+                focusedMilestone?.id === milestone.id;
+              const accent = getMilestoneTypeAccent(milestone.milestoneType);
 
               return (
                 <div
-                  key={milestone.milestone_id}
+                  key={milestone.id}
                   className="flex items-center gap-1"
                 >
                   <button
                     className="flex items-center gap-2 rounded border px-3 py-2 transition-all duration-150"
                     onClick={() =>
                       updateQuery({
-                        milestone: milestone.milestone_id,
-                        highlight: milestone.milestone_id,
+                        milestone: milestone.id,
+                        highlight: milestone.id,
                       })
                     }
                     style={{

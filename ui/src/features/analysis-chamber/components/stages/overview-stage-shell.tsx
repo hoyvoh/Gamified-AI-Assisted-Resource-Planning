@@ -12,7 +12,7 @@ import {
   ANALYSIS_CHAMBER_SHELL_PALETTE as palette,
   DIMENSION_LABELS,
 } from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
-import type { ChamberCategoryScoreResponse } from "@/features/analysis-chamber/api/analysis-chamber-api.types";
+import type { ChamberCategoryScore } from "@/features/analysis-chamber/api/analysis-chamber-api.view-models";
 
 const CATEGORY_LABELS: Record<string, string> = {
   core_technical_execution: "Core technical execution",
@@ -29,25 +29,25 @@ const getCategoryLabel = (categoryId: string | null | undefined) => {
   return CATEGORY_LABELS[categoryId] ?? categoryId.replaceAll("_", " ");
 };
 
-const getFocusCategory = (categories: ChamberCategoryScoreResponse[]) =>
+const getFocusCategory = (categories: ChamberCategoryScore[]) =>
   [...categories].sort((left, right) => {
-    const leftIncluded = left.included_dimensions.length;
-    const rightIncluded = right.included_dimensions.length;
+    const leftIncluded = left.includedDimensions.length;
+    const rightIncluded = right.includedDimensions.length;
 
     if (rightIncluded !== leftIncluded) {
       return rightIncluded - leftIncluded;
     }
 
-    return right.confidence_score - left.confidence_score;
+    return right.confidenceScore - left.confidenceScore;
   })[0] ?? null;
 
-const getCoverageLabel = (categories: ChamberCategoryScoreResponse[]) => {
+const getCoverageLabel = (categories: ChamberCategoryScore[]) => {
   const included = categories.reduce(
-    (total, category) => total + category.included_dimensions.length,
+    (total, category) => total + category.includedDimensions.length,
     0,
   );
   const excluded = categories.reduce(
-    (total, category) => total + category.excluded_dimensions.length,
+    (total, category) => total + category.excludedDimensions.length,
     0,
   );
 
@@ -70,7 +70,7 @@ const getSummaryText = ({
 }: {
   profileSummary: string | null | undefined;
   growthJourneySummary: string | null | undefined;
-  categories: ChamberCategoryScoreResponse[];
+  categories: ChamberCategoryScore[];
   isCompleted: boolean;
 }) => {
   if (profileSummary) {
@@ -88,14 +88,14 @@ const getSummaryText = ({
       : "The chamber is still gathering enough signal to reveal this hero cleanly.";
   }
 
-  if (focusCategory.included_dimensions.length === 0) {
+  if (focusCategory.includedDimensions.length === 0) {
     return `The record leans toward ${getCategoryLabel(
-      focusCategory.category_id,
+      focusCategory.categoryId,
     )}, but the evidence is still too sparse to make that reading hold.`;
   }
 
   return `Early evidence clusters around ${getCategoryLabel(
-    focusCategory.category_id,
+    focusCategory.categoryId,
   )}, and that is the cleanest lane to open next.`;
 };
 
@@ -105,7 +105,7 @@ const getGrowthPathLabel = ({
   isCompleted,
 }: {
   currentGrowthPath: string | null | undefined;
-  focusCategory: ChamberCategoryScoreResponse | null;
+  focusCategory: ChamberCategoryScore | null;
   isCompleted: boolean;
 }) => {
   if (currentGrowthPath) {
@@ -118,9 +118,9 @@ const getGrowthPathLabel = ({
       : "Analysis still gathering";
   }
 
-  return focusCategory.included_dimensions.length > 0
-    ? `Advance ${getCategoryLabel(focusCategory.category_id)}`
-    : `Open ${getCategoryLabel(focusCategory.category_id)} first`;
+  return focusCategory.includedDimensions.length > 0
+    ? `Advance ${getCategoryLabel(focusCategory.categoryId)}`
+    : `Open ${getCategoryLabel(focusCategory.categoryId)} first`;
 };
 
 const getReadinessLabel = ({
@@ -130,14 +130,14 @@ const getReadinessLabel = ({
 }: {
   confidence: number | null | undefined;
   isCompleted: boolean;
-  categories: ChamberCategoryScoreResponse[];
+  categories: ChamberCategoryScore[];
 }) => {
   if (confidence !== null && confidence !== undefined && confidence > 0) {
     return `${Math.round(confidence * 100)}% confidence`;
   }
 
   const included = categories.reduce(
-    (total, category) => total + category.included_dimensions.length,
+    (total, category) => total + category.includedDimensions.length,
     0,
   );
 
@@ -156,7 +156,7 @@ const getHeadline = ({
   isCompleted,
 }: {
   confidence: number | null | undefined;
-  focusCategory: ChamberCategoryScoreResponse | null;
+  focusCategory: ChamberCategoryScore | null;
   isCompleted: boolean;
 }) => {
   if ((confidence ?? 0) >= 0.75) {
@@ -169,7 +169,7 @@ const getHeadline = ({
 
   if (focusCategory) {
     return `${getCategoryLabel(
-      focusCategory.category_id,
+      focusCategory.categoryId,
     )} is the strongest reading in the chamber right now.`;
   }
 
@@ -183,7 +183,7 @@ const getHeroCaption = ({
   coverageLabel,
   isCompleted,
 }: {
-  focusCategory: ChamberCategoryScoreResponse | null;
+  focusCategory: ChamberCategoryScore | null;
   coverageLabel: string;
   isCompleted: boolean;
 }) => {
@@ -193,9 +193,9 @@ const getHeroCaption = ({
       : "The hero is still emerging while the chamber gathers enough signal.";
   }
 
-  if (focusCategory.included_dimensions.length === 0) {
+  if (focusCategory.includedDimensions.length === 0) {
     return `${getCategoryLabel(
-      focusCategory.category_id,
+      focusCategory.categoryId,
     )} is the leading lane so far, but it still needs stronger proof.`;
   }
 
@@ -205,49 +205,97 @@ const getHeroCaption = ({
 export const OverviewStageShell = ({ memberId }: { memberId: string }) => {
   const overview = useAnalysisChamberOverviewData(memberId);
   const shell = useAnalysisChamberShellData(memberId);
-  const categories = overview.data?.category_scores ?? [];
+  const categories = overview.data?.categoryScores ?? [];
   const focusCategory = getFocusCategory(categories);
-  const isCompleted = shell.data?.analysis_status === "completed";
-  const realConfidence = overview.data?.overall_confidence ?? null;
+  const isCompleted = shell.data?.analysisStatus === "completed";
+  const realConfidence = overview.data?.overallConfidence ?? null;
   const confidence = realConfidence ?? 0;
-  const memberName = shell.data?.member.display_name ?? "Analysis Chamber";
-  const roleName = shell.data?.role_name ?? "Role pending";
-  const teamName = shell.data?.team_name ?? "Team pending";
-  const status = shell.data?.analysis_status ?? "not_analyzed";
+  const memberName = shell.data?.member.displayName ?? "Analysis Chamber";
+  const roleName = shell.data?.roleName ?? "Role pending";
+  const teamName = shell.data?.teamName ?? "Team pending";
+  const status = shell.data?.analysisStatus ?? "not_analyzed";
   const summaryText = getSummaryText({
-    profileSummary: overview.data?.profile_summary,
-    growthJourneySummary: overview.data?.growth_journey_summary,
+    profileSummary: overview.data?.profileSummary,
+    growthJourneySummary: overview.data?.growthJourneySummary,
     categories,
     isCompleted,
   });
   const growthPathLabel = getGrowthPathLabel({
-    currentGrowthPath: overview.data?.current_growth_path,
+    currentGrowthPath: overview.data?.currentGrowthPath,
     focusCategory,
     isCompleted,
   });
   const readinessLabel = getReadinessLabel({
-    confidence: overview.data?.overall_confidence,
+    confidence: overview.data?.overallConfidence,
     isCompleted,
     categories,
   });
   const headline = getHeadline({
-    confidence: overview.data?.overall_confidence,
+    confidence: overview.data?.overallConfidence,
     focusCategory,
     isCompleted,
   });
   const fairnessNotes =
-    overview.data?.fairness_notes.filter(Boolean).slice(0, 3) ?? [];
-  const strengthDimIds = overview.data?.top_strength_dimension_ids ?? [];
-  const growthDimIds = overview.data?.top_growth_dimension_ids ?? [];
-  const archetypeBadge = overview.data?.current_growth_path ?? null;
+    overview.data?.fairnessNotes.filter(Boolean).slice(0, 3) ?? [];
+  const strengthDimIds = overview.data?.topStrengthDimensionIds ?? [];
+  const growthDimIds = overview.data?.topGrowthDimensionIds ?? [];
+  const archetypeBadge = overview.data?.currentGrowthPath ?? null;
   const categoryTarget =
-    focusCategory?.category_id ?? categories[0]?.category_id ?? null;
+    focusCategory?.categoryId ?? categories[0]?.categoryId ?? null;
   const coverageLabel = getCoverageLabel(categories);
   const heroCaption = getHeroCaption({
     focusCategory,
     coverageLabel,
     isCompleted,
   });
+
+  if (overview.isError) {
+    return (
+      <section className="relative flex h-full items-center justify-center overflow-hidden px-6 py-10 text-center">
+        <div
+          className="pointer-events-none absolute inset-x-[28%] top-14 h-52 rounded-full blur-3xl"
+          style={{ background: "rgba(182,68,53,0.09)" }}
+        />
+        <div
+          className="relative max-w-xl rounded-xl border px-6 py-6"
+          style={{
+            background: "rgba(255,255,255,0.035)",
+            borderColor: "rgba(182,68,53,0.32)",
+            color: palette.ink,
+          }}
+        >
+          <p
+            className="font-display text-[10px] uppercase tracking-[0.18em]"
+            style={{ color: palette.crimson }}
+          >
+            Overview unavailable
+          </p>
+          <h1 className="mt-3 font-display text-lg uppercase tracking-[0.08em]">
+            The chamber could not load this reading.
+          </h1>
+          <p
+            className="font-body-serif mt-3 text-sm leading-7"
+            style={{ color: palette.inkMuted }}
+          >
+            Profile overview data failed to resolve. The shell is still active,
+            but this mode needs another read from the archive.
+          </p>
+          <button
+            className="mt-5 rounded-md border px-4 py-2 font-display text-[10px] uppercase tracking-[0.16em] transition enabled:hover:-translate-y-0.5 disabled:opacity-50"
+            disabled={overview.isFetching}
+            onClick={() => void overview.refetch()}
+            style={{
+              borderColor: "rgba(200,150,30,0.34)",
+              color: palette.gold,
+            }}
+            type="button"
+          >
+            Retry overview
+          </button>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="relative h-full overflow-hidden">

@@ -2,14 +2,18 @@ import type {
   ApiErrorResponse,
   DataEnvelope,
 } from "@/features/analysis-chamber/api/analysis-chamber-api.types";
+import { PUBLIC_API_ORIGIN, PUBLIC_API_VERSION_PATH } from "@/lib/config/env";
 
-const DEFAULT_API_BASE_URL = "http://localhost:8000/api/v1";
+const normalizeBaseUrl = (value: string | undefined): string => {
+  const baseUrl = (value?.trim() || PUBLIC_API_ORIGIN).replace(/\/+$/, "");
 
-const normalizeBaseUrl = (value: string | undefined): string =>
-  (value ?? DEFAULT_API_BASE_URL).replace(/\/+$/, "");
+  return baseUrl.endsWith(PUBLIC_API_VERSION_PATH)
+    ? baseUrl
+    : `${baseUrl}${PUBLIC_API_VERSION_PATH}`;
+};
 
 export const ANALYSIS_CHAMBER_API_BASE_URL = normalizeBaseUrl(
-  process.env.NEXT_PUBLIC_API_URL,
+  PUBLIC_API_ORIGIN,
 );
 
 export class AnalysisChamberApiError extends Error {

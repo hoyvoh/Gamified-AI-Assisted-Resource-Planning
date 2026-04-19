@@ -223,5 +223,3 @@ export const CharacterModel = ({
     </group>
   );
 };
-
-useGLTF.preload(CHARACTER_MODEL_DEFAULT_CONFIG.src);

@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
+  type BaseTickContentProps,
+  type DotItemDotProps,
   PolarAngleAxis,
   PolarGrid,
   PolarRadiusAxis,
@@ -69,6 +71,14 @@ const CORE_SIGIL_GRADIENT_ID = "competency-radar-core-sigil";
 
 const HOVER_PREVIEW_DELAY_MS = 1000;
 
+const toNumber = (value: number | string | undefined): number =>
+  Number(value ?? 0) || 0;
+
+type PolarTickContentProps = BaseTickContentProps & {
+  cx?: number | string;
+  cy?: number | string;
+};
+
 export function CompetencyRadarChart({
   entries,
 
@@ -132,19 +142,13 @@ export function CompetencyRadarChart({
   // Custom polar-angle axis tick — clickable category label
 
   const renderTick = useCallback(
-    (props: {
-      x?: number;
-
-      y?: number;
-
-      cx?: number;
-
-      cy?: number;
-
-      payload?: { value: string };
-    }) => {
-      const { x = 0, y = 0, cx = 0, cy = 0, payload } = props;
-      const categoryId = payload?.value ?? "";
+    (props: BaseTickContentProps) => {
+      const polarProps = props as PolarTickContentProps;
+      const x = toNumber(props.x);
+      const y = toNumber(props.y);
+      const cx = toNumber(polarProps.cx);
+      const cy = toNumber(polarProps.cy);
+      const categoryId = String(props.payload?.value ?? "");
       const isActive = categoryId === activeCategoryId;
       const accent = accentMap[categoryId];
       const textColor = isActive ? (accent?.color ?? goldColor) : inkColor;
@@ -264,16 +268,10 @@ export function CompetencyRadarChart({
   // Custom dot renderer — per-category accent color
 
   const renderDot = useCallback(
-    (props: {
-      cx?: number;
-
-      cy?: number;
-
-      index?: number;
-
-      payload?: { categoryId: string; score: number };
-    }) => {
-      const { cx = 0, cy = 0, payload } = props;
+    (props: DotItemDotProps) => {
+      const cx = toNumber(props.cx);
+      const cy = toNumber(props.cy);
+      const payload = props.payload as Partial<RadarEntry> | undefined;
 
       const categoryId = payload?.categoryId ?? "";
 
@@ -496,9 +494,7 @@ export function CompetencyRadarChart({
           {/* Axis labels — clickable category names */}
           <PolarAngleAxis
             dataKey="categoryId"
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-
-            tick={renderTick as any}
+            tick={renderTick}
             tickLine={false}
             axisLine={false}
           />
@@ -526,8 +522,7 @@ export function CompetencyRadarChart({
             stroke={strokeColor}
             strokeWidth={1.8}
             strokeOpacity={0.9}
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            dot={renderDot as any}
+            dot={renderDot}
             activeDot={false}
             isAnimationActive
             animationBegin={120}

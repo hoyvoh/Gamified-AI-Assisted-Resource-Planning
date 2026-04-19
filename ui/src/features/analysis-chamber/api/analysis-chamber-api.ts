@@ -4,7 +4,6 @@ import {
 } from "@/features/analysis-chamber/api/analysis-chamber-api.client";
 import type {
   ChamberAnalysisRunResponse,
-  ChamberBootstrapData,
   ChamberCaseResponse,
   ChamberCasesResponse,
   ChamberCompetencyResponse,
@@ -18,6 +17,30 @@ import type {
   ChamberValidationFlagRequest,
   ChamberValidationFlagResponse,
 } from "@/features/analysis-chamber/api/analysis-chamber-api.types";
+import {
+  mapChamberBootstrap,
+  mapChamberCase,
+  mapChamberCases,
+  mapChamberCompetency,
+  mapChamberDimensionDetail,
+  mapChamberJourney,
+  mapChamberKpt,
+  mapChamberOverview,
+  mapChamberValidationFlag,
+  mapChamberValidationFlagInput,
+} from "@/features/analysis-chamber/api/analysis-chamber-api.mappers";
+import type {
+  ChamberBootstrap,
+  ChamberCase,
+  ChamberCases,
+  ChamberCompetency,
+  ChamberDimensionDetail,
+  ChamberJourney,
+  ChamberKpt,
+  ChamberOverview,
+  ChamberValidationFlag,
+  ChamberValidationFlagInput,
+} from "@/features/analysis-chamber/api/analysis-chamber-api.view-models";
 import { normalizeAnalysisStatus } from "@/types/organization";
 
 const getRoleName = (
@@ -36,7 +59,7 @@ const getTeamName = (
 
 export const getAnalysisChamberBootstrap = async (
   memberId: string,
-): Promise<ChamberBootstrapData> => {
+): Promise<ChamberBootstrap> => {
   const member = await fetchEnvelope<ChamberMemberResponse>(
     `/members/${memberId}`,
   );
@@ -53,64 +76,97 @@ export const getAnalysisChamberBootstrap = async (
     ).catch(() => null),
   ]);
 
-  return {
+  return mapChamberBootstrap({
     member,
     role_name: getRoleName(member, roles),
     team_name: getTeamName(member, organization),
     latest_run: latestRuns[0] ?? null,
     analysis_status: normalizeAnalysisStatus(member.analysis_status),
-  };
+  });
 };
 
-export const getChamberOverview = (memberId: string) =>
-  fetchEnvelope<ChamberOverviewResponse>(
-    `/members/${memberId}/profile/overview`,
+export const getChamberOverview = async (
+  memberId: string,
+): Promise<ChamberOverview> =>
+  mapChamberOverview(
+    await fetchEnvelope<ChamberOverviewResponse>(
+      `/members/${memberId}/profile/overview`,
+    ),
   );
 
-export const getChamberCompetency = (
+export const getChamberCompetency = async (
   memberId: string,
   filters?: { category?: string | null; maturity?: string | null },
-) =>
-  fetchEnvelope<ChamberCompetencyResponse>(
-    `/members/${memberId}/profile/competency`,
-    undefined,
-    {
-      category: filters?.category,
-      maturity: filters?.maturity,
-    },
+): Promise<ChamberCompetency> =>
+  mapChamberCompetency(
+    await fetchEnvelope<ChamberCompetencyResponse>(
+      `/members/${memberId}/profile/competency`,
+      undefined,
+      {
+        category: filters?.category,
+        maturity: filters?.maturity,
+      },
+    ),
   );
 
-export const getChamberDimensionDetail = (
+export const getChamberDimensionDetail = async (
   memberId: string,
   dimensionId: string,
-) =>
-  fetchEnvelope<ChamberDimensionDetailResponse>(
-    `/members/${memberId}/profile/competency/${dimensionId}`,
+): Promise<ChamberDimensionDetail> =>
+  mapChamberDimensionDetail(
+    await fetchEnvelope<ChamberDimensionDetailResponse>(
+      `/members/${memberId}/profile/competency/${dimensionId}`,
+    ),
   );
 
-export const getChamberKpt = (memberId: string) =>
-  fetchEnvelope<ChamberKptResponse>(`/members/${memberId}/profile/kpt`);
-
-export const getChamberCases = (memberId: string) =>
-  fetchEnvelope<ChamberCasesResponse>(`/members/${memberId}/profile/cases`);
-
-export const getChamberCaseDetail = (memberId: string, caseId: string) =>
-  fetchEnvelope<ChamberCaseResponse>(
-    `/members/${memberId}/profile/cases/${caseId}`,
+export const getChamberKpt = async (memberId: string): Promise<ChamberKpt> =>
+  mapChamberKpt(
+    await fetchEnvelope<ChamberKptResponse>(`/members/${memberId}/profile/kpt`),
   );
 
-export const getChamberJourney = (memberId: string) =>
-  fetchEnvelope<ChamberJourneyResponse>(`/members/${memberId}/profile/journey`);
-
-export const getChamberValidationFlags = (runId: string) =>
-  fetchEnvelope<ChamberValidationFlagResponse[]>(
-    `/analysis-runs/${runId}/validation-flags`,
+export const getChamberCases = async (
+  memberId: string,
+): Promise<ChamberCases> =>
+  mapChamberCases(
+    await fetchEnvelope<ChamberCasesResponse>(
+      `/members/${memberId}/profile/cases`,
+    ),
   );
 
-export const createChamberValidationFlag = (
-  body: ChamberValidationFlagRequest,
-) =>
-  postEnvelope<ChamberValidationFlagResponse, ChamberValidationFlagRequest>(
-    "/validation-flags",
-    body,
+export const getChamberCaseDetail = async (
+  memberId: string,
+  caseId: string,
+): Promise<ChamberCase> =>
+  mapChamberCase(
+    await fetchEnvelope<ChamberCaseResponse>(
+      `/members/${memberId}/profile/cases/${caseId}`,
+    ),
+  );
+
+export const getChamberJourney = async (
+  memberId: string,
+): Promise<ChamberJourney> =>
+  mapChamberJourney(
+    await fetchEnvelope<ChamberJourneyResponse>(
+      `/members/${memberId}/profile/journey`,
+    ),
+  );
+
+export const getChamberValidationFlags = async (
+  runId: string,
+): Promise<ChamberValidationFlag[]> =>
+  (
+    await fetchEnvelope<ChamberValidationFlagResponse[]>(
+      `/analysis-runs/${runId}/validation-flags`,
+    )
+  ).map(mapChamberValidationFlag);
+
+export const createChamberValidationFlag = async (
+  body: ChamberValidationFlagInput,
+): Promise<ChamberValidationFlag> =>
+  mapChamberValidationFlag(
+    await postEnvelope<ChamberValidationFlagResponse, ChamberValidationFlagRequest>(
+      "/validation-flags",
+      mapChamberValidationFlagInput(body),
+    ),
   );

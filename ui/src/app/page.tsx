@@ -1,4 +1,5 @@
-import Link from "next/link";
+import { AnalysisChamberLauncher } from "@/features/analysis-chamber/components/analysis-chamber-launcher";
+import { PUBLIC_DEMO_MEMBER_ID } from "@/lib/config/env";
 
 export default function Home() {
   return (
@@ -16,12 +17,7 @@ export default function Home() {
         </p>
       </div>
 
-      <Link
-        className="rounded-full border border-white/10 bg-white/5 px-5 py-3 font-display uppercase tracking-[0.16em] text-text-primary transition duration-300 hover:-translate-y-0.5"
-        href="/profile/95822897-33ad-4aa7-aa7c-1bd3ca8081cd"
-      >
-        Open analysis chamber
-      </Link>
+      <AnalysisChamberLauncher initialMemberId={PUBLIC_DEMO_MEMBER_ID} />
     </main>
   );
 }

@@ -49,17 +49,6 @@ export const useAnalysisChamberRouteState = () => {
         ? `${pathname}?${next.toString()}`
         : pathname;
 
-      if (typeof window !== "undefined") {
-        const nextUrl = `${window.location.origin}${target}`;
-        if (history === "push") {
-          window.history.pushState(null, "", nextUrl);
-          return;
-        }
-
-        window.history.replaceState(null, "", nextUrl);
-        return;
-      }
-
       if (history === "push") {
         router.push(target, { scroll: false });
         return;
