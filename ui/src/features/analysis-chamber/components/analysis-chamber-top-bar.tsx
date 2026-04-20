@@ -1,3 +1,5 @@
+"use client";
+
 import {
   ANALYSIS_CHAMBER_ROUTE_TITLE,
   ANALYSIS_CHAMBER_SHELL_PALETTE as palette,
@@ -8,9 +10,11 @@ import type { ChamberBootstrap } from "@/features/analysis-chamber/api/analysis-
 export const AnalysisChamberTopBar = ({
   bootstrap,
   route,
+  onRefresh,
 }: {
   bootstrap: ChamberBootstrap;
   route: AnalysisChamberRouteKey;
+  onRefresh?: () => void;
 }) => (
   <header
     className="relative z-10 flex min-h-14 items-center gap-3 border-b px-3 py-2.5 md:px-5"
@@ -65,15 +69,33 @@ export const AnalysisChamberTopBar = ({
       </p>
     </div>
 
-    <div
-      className="rounded-md border px-2.5 py-1 text-[10px] font-display uppercase tracking-[0.14em]"
-      style={{
-        borderColor: palette.vert,
-        color: palette.vert,
-        background: "rgba(42,106,58,0.08)",
-      }}
-    >
-      {bootstrap.analysisStatus}
+    <div className="flex items-center gap-2">
+      {onRefresh ? (
+        <button
+          className="rounded-md border px-2.5 py-1 text-sm font-display transition-all duration-150 hover:brightness-125 active:scale-95"
+          onClick={onRefresh}
+          style={{
+            borderColor: "rgba(200,150,30,0.35)",
+            color: palette.gold,
+            background: "rgba(200,150,30,0.06)",
+          }}
+          title="Refresh data"
+          type="button"
+        >
+          ↺
+        </button>
+      ) : null}
+
+      <div
+        className="rounded-md border px-2.5 py-1 text-[10px] font-display uppercase tracking-[0.14em]"
+        style={{
+          borderColor: palette.vert,
+          color: palette.vert,
+          background: "rgba(42,106,58,0.08)",
+        }}
+      >
+        {bootstrap.analysisStatus}
+      </div>
     </div>
   </header>
 );

@@ -2,21 +2,28 @@ import {
   fetchEnvelope,
   postEnvelope,
 } from "@/features/analysis-chamber/api/analysis-chamber-api.client";
+
 import type {
   ChamberAnalysisRunResponse,
   ChamberCaseResponse,
   ChamberCasesResponse,
   ChamberCompetencyResponse,
+  ChamberCreateMemberRequest,
   ChamberDimensionDetailResponse,
   ChamberJourneyResponse,
   ChamberKptResponse,
   ChamberMemberResponse,
   ChamberOrganizationResponse,
+  ChamberOrganizationSummaryResponse,
+  ChamberOrganizationTeamResponse,
   ChamberOverviewResponse,
   ChamberRoleProfileResponse,
+  ChamberTeamCreateResponse,
+  ChamberTriggerAnalysisRequest,
   ChamberValidationFlagRequest,
   ChamberValidationFlagResponse,
 } from "@/features/analysis-chamber/api/analysis-chamber-api.types";
+
 import {
   mapChamberBootstrap,
   mapChamberCase,
@@ -29,6 +36,7 @@ import {
   mapChamberValidationFlag,
   mapChamberValidationFlagInput,
 } from "@/features/analysis-chamber/api/analysis-chamber-api.mappers";
+
 import type {
   ChamberBootstrap,
   ChamberCase,
@@ -41,10 +49,12 @@ import type {
   ChamberValidationFlag,
   ChamberValidationFlagInput,
 } from "@/features/analysis-chamber/api/analysis-chamber-api.view-models";
+
 import { normalizeAnalysisStatus } from "@/types/organization";
 
 const getRoleName = (
   member: ChamberMemberResponse,
+
   roles: ChamberRoleProfileResponse[],
 ): string | null =>
   roles.find((role) => role.role_profile_id === member.role_profile_id)
@@ -52,6 +62,7 @@ const getRoleName = (
 
 const getTeamName = (
   member: ChamberMemberResponse,
+
   organization: ChamberOrganizationResponse | null,
 ): string =>
   organization?.teams.find((team) => team.team_id === member.team_id)?.name ??
@@ -66,11 +77,15 @@ export const getAnalysisChamberBootstrap = async (
 
   const [roles, latestRuns, organization] = await Promise.all([
     fetchEnvelope<ChamberRoleProfileResponse[]>("/role-profiles"),
+
     fetchEnvelope<ChamberAnalysisRunResponse[]>(
       `/members/${memberId}/analysis-runs`,
+
       undefined,
+
       { limit: 1, offset: 0 },
     ).catch(() => []),
+
     fetchEnvelope<ChamberOrganizationResponse>(
       `/organizations/${member.organization_id}`,
     ).catch(() => null),
@@ -78,9 +93,13 @@ export const getAnalysisChamberBootstrap = async (
 
   return mapChamberBootstrap({
     member,
+
     role_name: getRoleName(member, roles),
+
     team_name: getTeamName(member, organization),
+
     latest_run: latestRuns[0] ?? null,
+
     analysis_status: normalizeAnalysisStatus(member.analysis_status),
   });
 };
@@ -96,14 +115,18 @@ export const getChamberOverview = async (
 
 export const getChamberCompetency = async (
   memberId: string,
+
   filters?: { category?: string | null; maturity?: string | null },
 ): Promise<ChamberCompetency> =>
   mapChamberCompetency(
     await fetchEnvelope<ChamberCompetencyResponse>(
       `/members/${memberId}/profile/competency`,
+
       undefined,
+
       {
         category: filters?.category,
+
         maturity: filters?.maturity,
       },
     ),
@@ -111,6 +134,7 @@ export const getChamberCompetency = async (
 
 export const getChamberDimensionDetail = async (
   memberId: string,
+
   dimensionId: string,
 ): Promise<ChamberDimensionDetail> =>
   mapChamberDimensionDetail(
@@ -135,6 +159,7 @@ export const getChamberCases = async (
 
 export const getChamberCaseDetail = async (
   memberId: string,
+
   caseId: string,
 ): Promise<ChamberCase> =>
   mapChamberCase(
@@ -159,14 +184,130 @@ export const getChamberValidationFlags = async (
     await fetchEnvelope<ChamberValidationFlagResponse[]>(
       `/analysis-runs/${runId}/validation-flags`,
     )
-  ).map(mapChamberValidationFlag);
+  )
+
+    .map(mapChamberValidationFlag);
 
 export const createChamberValidationFlag = async (
   body: ChamberValidationFlagInput,
 ): Promise<ChamberValidationFlag> =>
   mapChamberValidationFlag(
-    await postEnvelope<ChamberValidationFlagResponse, ChamberValidationFlagRequest>(
+    await postEnvelope<
+      ChamberValidationFlagResponse,
+      ChamberValidationFlagRequest
+    >(
       "/validation-flags",
+
       mapChamberValidationFlagInput(body),
     ),
   );
+
+// ─── Org / Team / Member CRUD ────────────────────────────────────────────────
+
+export const listOrganizations = async (): Promise<
+  ChamberOrganizationSummaryResponse[]
+> => fetchEnvelope<ChamberOrganizationSummaryResponse[]>("/organizations");
+
+export const getOrganizationDetail = async (
+  orgId: string,
+): Promise<ChamberOrganizationResponse> =>
+  fetchEnvelope<ChamberOrganizationResponse>(`/organizations/${orgId}`);
+
+export const createOrganization = async (
+  name: string,
+): Promise<ChamberOrganizationSummaryResponse> =>
+  postEnvelope<ChamberOrganizationSummaryResponse, { name: string }>(
+    "/organizations",
+
+    { name },
+  );
+
+export const getOrgTeams = async (
+  orgId: string,
+): Promise<ChamberOrganizationTeamResponse[]> => {
+  const detail = await getOrganizationDetail(orgId);
+
+  return detail.teams;
+};
+
+export const createTeam = async (
+  orgId: string,
+
+  name: string,
+): Promise<ChamberTeamCreateResponse> =>
+  postEnvelope<ChamberTeamCreateResponse, { name: string }>(
+    `/organizations/${orgId}/teams`,
+
+    { name },
+  );
+
+export const createMember = async (
+  orgId: string,
+
+  teamId: string,
+
+  data: ChamberCreateMemberRequest,
+): Promise<ChamberMemberResponse> =>
+  postEnvelope<ChamberMemberResponse, ChamberCreateMemberRequest>(
+    `/organizations/${orgId}/teams/${teamId}/members`,
+
+    data,
+  );
+
+// Trigger a fresh analysis run for a member. period defaults to the last 90 days.
+
+export const triggerAnalysis = async (
+  memberId: string,
+
+  periodStart?: string,
+
+  periodEnd?: string,
+): Promise<ChamberAnalysisRunResponse> => {
+  const end = periodEnd ?? new Date().toISOString().slice(0, 10);
+
+  const start =
+    periodStart ??
+    new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+  return postEnvelope<
+    ChamberAnalysisRunResponse,
+    ChamberTriggerAnalysisRequest
+  >(
+    "/analysis-runs",
+
+    { member_id: memberId, period_start: start, period_end: end },
+  );
+};
+
+// No search-by-external-id API exists, so we scan org trees client-side.
+
+// TODO: replace with a dedicated search endpoint (e.g. GET /members?external_id=<handle>)
+
+//       once the backend adds one — scanning all orgs is O(n_orgs) round-trips.
+
+export const findMemberByGithubHandle = async (
+  githubHandle: string,
+): Promise<string | null> => {
+  const orgs =
+    await fetchEnvelope<ChamberOrganizationSummaryResponse[]>(
+      "/organizations",
+    );
+
+  const handle = githubHandle.trim().toLowerCase();
+
+  for (const org of orgs) {
+    const detail = await fetchEnvelope<ChamberOrganizationResponse>(
+      `/organizations/${org.organization_id}`,
+    );
+
+    for (const team of detail.teams) {
+      const match = team.members.find(
+        (m) => m.external_id?.toLowerCase() === handle,
+      );
+
+      if (match) return match.member_id;
+    }
+  }
+
+  return null;
+};

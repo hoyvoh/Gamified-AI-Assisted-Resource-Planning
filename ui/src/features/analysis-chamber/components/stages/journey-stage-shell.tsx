@@ -3,30 +3,41 @@
 import { useMemo } from "react";
 
 import { useAnalysisChamberJourneyData } from "@/features/analysis-chamber/hooks/use-analysis-chamber-shell-data";
+
 import { useAnalysisChamberRouteState } from "@/features/analysis-chamber/hooks/use-analysis-chamber-route-state";
+
 import { ANALYSIS_CHAMBER_SHELL_PALETTE as palette } from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
+
 import type { ChamberMilestone } from "@/features/analysis-chamber/api/analysis-chamber-api.view-models";
 
 const EMPTY_MILESTONES: ChamberMilestone[] = [];
 
 const MILESTONE_POSITIONS: Array<{ left: string; top: string }> = [
   { left: "10%", top: "64%" },
+
   { left: "28%", top: "38%" },
+
   { left: "48%", top: "22%" },
+
   { left: "68%", top: "36%" },
+
   { left: "84%", top: "18%" },
 ];
 
 const humanizeMilestoneType = (milestoneType: string) =>
   milestoneType
+
     .split("_")
+
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+
     .join(" ");
 
 const formatMilestoneDate = (timestamp: string) => {
   try {
     return new Date(timestamp).toLocaleDateString("en-US", {
       month: "short",
+
       year: "numeric",
     });
   } catch {
@@ -36,19 +47,26 @@ const formatMilestoneDate = (timestamp: string) => {
 
 const getMilestoneTypeAccent = (milestoneType: string) => {
   const t = milestoneType.toLowerCase();
+
   if (t.includes("growth") || t.includes("advance"))
     return { border: palette.azure, dot: palette.azure };
+
   if (t.includes("achiev") || t.includes("complet"))
     return { border: palette.gold, dot: palette.gold };
+
   if (t.includes("challenge") || t.includes("risk"))
     return { border: palette.ember, dot: palette.ember };
+
   return { border: "rgba(154,171,184,0.55)", dot: palette.silver };
 };
 
 export const JourneyStageShell = ({ memberId }: { memberId: string }) => {
   const journey = useAnalysisChamberJourneyData(memberId);
+
   const { state, updateQuery } = useAnalysisChamberRouteState();
+
   const milestones = journey.data?.milestones ?? EMPTY_MILESTONES;
+
   const focusedMilestone = useMemo(
     () =>
       milestones.find(
@@ -56,19 +74,24 @@ export const JourneyStageShell = ({ memberId }: { memberId: string }) => {
       ) ??
       milestones[0] ??
       null,
+
     [milestones, state.milestone],
   );
+
   const focusedIndex = focusedMilestone
     ? milestones.findIndex(
         (m) => m.id === focusedMilestone.id,
       )
     : -1;
+
   const prevMilestone =
     focusedIndex > 0 ? (milestones[focusedIndex - 1] ?? null) : null;
+
   const nextMilestone =
     focusedIndex >= 0 && focusedIndex < milestones.length - 1
       ? (milestones[focusedIndex + 1] ?? null)
       : null;
+
   const hasMap = milestones.length > 0;
 
   return (
@@ -91,6 +114,7 @@ export const JourneyStageShell = ({ memberId }: { memberId: string }) => {
               className="relative min-h-75 overflow-hidden rounded-2xl border p-4"
               style={{
                 borderColor: "rgba(200,150,30,0.2)",
+
                 background: "rgba(255,255,255,0.04)",
               }}
             >
@@ -119,8 +143,9 @@ export const JourneyStageShell = ({ memberId }: { memberId: string }) => {
                 milestones.slice(0, 5).map((milestone, index) => {
                   const position =
                     MILESTONE_POSITIONS[index] ?? MILESTONE_POSITIONS[0];
-                  const isFocused =
-                    focusedMilestone?.id === milestone.id;
+
+                  const isFocused = focusedMilestone?.id === milestone.id;
+
                   const accent = getMilestoneTypeAccent(
                     milestone.milestoneType,
                   );
@@ -128,10 +153,11 @@ export const JourneyStageShell = ({ memberId }: { memberId: string }) => {
                   return (
                     <button
                       key={milestone.id}
-                      className="absolute -translate-x-1/2 -translate-y-1/2 text-left transition-all duration-200"
+                      className="absolute -translate-x-1/2 -translate-y-1/2 text-left transition-all duration-200 hover:scale-105 hover:brightness-110"
                       onClick={() =>
                         updateQuery({
                           milestone: milestone.id,
+
                           highlight: milestone.id,
                         })
                       }
@@ -144,16 +170,21 @@ export const JourneyStageShell = ({ memberId }: { memberId: string }) => {
                           className="rounded-full border-2"
                           style={{
                             width: isFocused ? 28 : 20,
+
                             height: isFocused ? 28 : 20,
+
                             borderColor: isFocused
                               ? palette.gold
                               : accent.border,
+
                             background: isFocused
                               ? "rgba(200,150,30,0.35)"
                               : "rgba(255,255,255,0.08)",
+
                             boxShadow: isFocused
                               ? `0 0 0 8px rgba(200,150,30,0.12), 0 0 0 16px rgba(200,150,30,0.06), 0 0 24px rgba(200,150,30,0.4)`
                               : "none",
+
                             transition: "all 0.2s",
                           }}
                         />
@@ -165,9 +196,11 @@ export const JourneyStageShell = ({ memberId }: { memberId: string }) => {
                           borderColor: isFocused
                             ? palette.gold
                             : "rgba(200,150,30,0.18)",
+
                           background: isFocused
                             ? "rgba(200,150,30,0.18)"
                             : "rgba(255,255,255,0.05)",
+
                           boxShadow: isFocused
                             ? "0 4px 20px rgba(200,150,30,0.22)"
                             : "none",
@@ -207,6 +240,7 @@ export const JourneyStageShell = ({ memberId }: { memberId: string }) => {
                 })
               ) : (
                 /* Empty state — compass rose */
+
                 <div className="flex h-full min-h-55 flex-col items-center justify-center gap-5">
                   <div className="relative flex h-20 w-20 items-center justify-center">
                     {/* Outer ring */}
@@ -260,6 +294,7 @@ export const JourneyStageShell = ({ memberId }: { memberId: string }) => {
               className="flex flex-col gap-4 rounded-2xl border px-4 py-4"
               style={{
                 borderColor: "rgba(200,150,30,0.2)",
+
                 background: "rgba(255,255,255,0.05)",
               }}
             >
@@ -279,6 +314,7 @@ export const JourneyStageShell = ({ memberId }: { memberId: string }) => {
                           borderColor: getMilestoneTypeAccent(
                             focusedMilestone.milestoneType,
                           ).border,
+
                           color: getMilestoneTypeAccent(
                             focusedMilestone.milestoneType,
                           ).dot,
@@ -291,8 +327,11 @@ export const JourneyStageShell = ({ memberId }: { memberId: string }) => {
                       className="mt-2"
                       style={{
                         height: "2px",
+
                         background: palette.gold,
+
                         borderRadius: "1px",
+
                         width: "28px",
                       }}
                     />
@@ -318,6 +357,7 @@ export const JourneyStageShell = ({ memberId }: { memberId: string }) => {
                       className="rounded-md border px-3 py-2"
                       style={{
                         borderColor: "rgba(200,150,30,0.28)",
+
                         background: "rgba(200,150,30,0.08)",
                       }}
                     >
@@ -355,16 +395,19 @@ export const JourneyStageShell = ({ memberId }: { memberId: string }) => {
                     <div className="flex items-center gap-2">
                       {prevMilestone ? (
                         <button
-                          className="rounded border px-3 py-2 text-[10px] uppercase tracking-widest"
+                          className="rounded border px-3 py-2 text-[10px] uppercase tracking-widest transition-all duration-150 hover:brightness-125 active:scale-95"
                           onClick={() =>
                             updateQuery({
                               milestone: prevMilestone.id,
+
                               highlight: prevMilestone.id,
                             })
                           }
                           style={{
                             borderColor: "rgba(200,150,30,0.25)",
+
                             background: "rgba(255,255,255,0.04)",
+
                             color: palette.inkMuted,
                           }}
                           type="button"
@@ -374,16 +417,19 @@ export const JourneyStageShell = ({ memberId }: { memberId: string }) => {
                       ) : null}
                       {nextMilestone ? (
                         <button
-                          className="rounded border px-3 py-2 text-[10px] uppercase tracking-widest"
+                          className="rounded border px-3 py-2 text-[10px] uppercase tracking-widest transition-all duration-150 hover:brightness-125 active:scale-95"
                           onClick={() =>
                             updateQuery({
                               milestone: nextMilestone.id,
+
                               highlight: nextMilestone.id,
                             })
                           }
                           style={{
                             borderColor: palette.gold,
+
                             background: "rgba(200,150,30,0.10)",
+
                             color: palette.ink,
                           }}
                           type="button"
@@ -422,6 +468,7 @@ export const JourneyStageShell = ({ memberId }: { memberId: string }) => {
         className="border-t px-5 py-4 md:px-7"
         style={{
           background: palette.parchmentMid,
+
           borderColor: "rgba(200, 150, 30, 0.35)",
         }}
       >
@@ -434,20 +481,19 @@ export const JourneyStageShell = ({ memberId }: { memberId: string }) => {
         {hasMap ? (
           <div className="mt-3 flex flex-wrap items-center gap-1">
             {milestones.slice(0, 5).map((milestone, index) => {
-              const isFocused =
-                focusedMilestone?.id === milestone.id;
+              const isFocused = focusedMilestone?.id === milestone.id;
+
               const accent = getMilestoneTypeAccent(milestone.milestoneType);
 
               return (
-                <div
-                  key={milestone.id}
-                  className="flex items-center gap-1"
-                >
+                <div key={milestone.id} className="flex items-center gap-1">
+                  {/* Title is hidden by default; expands on hover or when focused */}
                   <button
-                    className="flex items-center gap-2 rounded border px-3 py-2 transition-all duration-150"
+                    className="group flex items-center gap-1.5 rounded border px-2.5 py-2 transition-all duration-150 hover:brightness-110"
                     onClick={() =>
                       updateQuery({
                         milestone: milestone.id,
+
                         highlight: milestone.id,
                       })
                     }
@@ -455,10 +501,13 @@ export const JourneyStageShell = ({ memberId }: { memberId: string }) => {
                       borderColor: isFocused
                         ? palette.gold
                         : "rgba(200,150,30,0.18)",
+
                       background: isFocused
                         ? "rgba(200,150,30,0.18)"
                         : "rgba(255,255,255,0.04)",
+
                       color: isFocused ? palette.ink : palette.inkMuted,
+
                       boxShadow: isFocused
                         ? "0 2px 10px rgba(200,150,30,0.20)"
                         : "none",
@@ -476,13 +525,20 @@ export const JourneyStageShell = ({ memberId }: { memberId: string }) => {
                       {index + 1}
                     </span>
                     <span
-                      className="h-1.5 w-1.5 rounded-full"
+                      className="h-1.5 w-1.5 flex-shrink-0 rounded-full"
                       style={{
                         background: isFocused ? palette.gold : accent.dot,
+
                         opacity: isFocused ? 1 : 0.55,
                       }}
                     />
-                    <span className="text-[11px] uppercase tracking-[0.08em]">
+                    <span
+                      className={`overflow-hidden whitespace-nowrap text-[11px] uppercase tracking-[0.08em] transition-all duration-200 ${
+                        isFocused
+                          ? "max-w-[180px]"
+                          : "max-w-0 group-hover:max-w-[180px]"
+                      }`}
+                    >
                       {milestone.title}
                     </span>
                   </button>

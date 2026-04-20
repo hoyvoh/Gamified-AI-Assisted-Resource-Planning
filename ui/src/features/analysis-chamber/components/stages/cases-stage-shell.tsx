@@ -1,42 +1,59 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+
 import Link from "next/link";
 
 import type { ChamberCase } from "@/features/analysis-chamber/api/analysis-chamber-api.view-models";
+
 import { useAnalysisChamberCasesData } from "@/features/analysis-chamber/hooks/use-analysis-chamber-shell-data";
+
 import { useAnalysisChamberRouteState } from "@/features/analysis-chamber/hooks/use-analysis-chamber-route-state";
+
 import { ANALYSIS_CHAMBER_SHELL_PALETTE as palette } from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
+
 import { buildAnalysisChamberRouteHref } from "@/features/analysis-chamber/lib/analysis-chamber-route-links";
 
 const EMPTY_CASES: ChamberCase[] = [];
 
 /** CASE-01, CASE-02… short archive reference */
+
 const formatCaseRef = (index: number) =>
   `CASE-${String(index + 1).padStart(2, "0")}`;
 
 const getImpactTone = (impactLevel: string | null) => {
   if (!impactLevel)
     return { color: palette.inkMuted, border: "rgba(138,112,88,0.35)" };
+
   const l = impactLevel.toLowerCase();
+
   if (l.includes("high") || l.includes("critical"))
     return { color: palette.crimsonLight, border: `${palette.crimson}55` };
+
   if (l.includes("medium") || l.includes("moderate"))
     return { color: palette.ember, border: `${palette.ember}55` };
+
   return { color: palette.inkSoft, border: "rgba(154,171,184,0.35)" };
 };
 
 export const CasesStageShell = ({ memberId }: { memberId: string }) => {
   const cases = useAnalysisChamberCasesData(memberId);
+
   const { state, updateQuery } = useAnalysisChamberRouteState();
+
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+
   const caseList = cases.data?.cases ?? EMPTY_CASES;
+
   const selectedCase = useMemo(
     () =>
       caseList.find((entry) => entry.id === state.caseId) ??
       caseList[0] ??
       null,
+
     [caseList, state.caseId],
   );
+
   const selectedIndex = selectedCase ? caseList.indexOf(selectedCase) : -1;
 
   return (
@@ -55,6 +72,7 @@ export const CasesStageShell = ({ memberId }: { memberId: string }) => {
           className="mt-6 overflow-hidden rounded-[18px] border"
           style={{
             borderColor: "rgba(200,150,30,0.25)",
+
             background:
               "linear-gradient(180deg, rgba(200,150,30,0.08), rgba(200,150,30,0.03))",
           }}
@@ -72,31 +90,45 @@ export const CasesStageShell = ({ memberId }: { memberId: string }) => {
             {caseList.length > 0 ? (
               caseList.slice(0, 8).map((entry, index) => {
                 const isSelected = selectedCase?.id === entry.id;
+
                 const impactTone = getImpactTone(entry.impactLevel);
+
+                const isHovered = hoveredId === entry.id;
 
                 return (
                   <button
                     key={entry.id}
                     className="grid w-full grid-cols-[80px_1fr_120px] gap-3 px-4 py-4 text-left"
+                    onMouseEnter={() => setHoveredId(entry.id)}
+                    onMouseLeave={() => setHoveredId(null)}
                     onClick={() =>
                       updateQuery({
                         caseId: entry.id,
+
                         highlight: entry.id,
                       })
                     }
                     style={{
                       background: isSelected
                         ? "linear-gradient(90deg, rgba(200,150,30,0.22) 0%, rgba(200,150,30,0.08) 100%)"
-                        : "rgba(255,255,255,0.02)",
+                        : isHovered
+                          ? "rgba(255,255,255,0.06)"
+                          : "rgba(255,255,255,0.02)",
+
                       borderLeftWidth: "3px",
-                      borderLeftColor: isSelected
-                        ? palette.gold
-                        : "transparent",
-                      opacity: isSelected ? 1 : 0.65,
+
+                      borderLeftColor:
+                        isSelected || isHovered ? palette.gold : "transparent",
+
+                      opacity: isSelected || isHovered ? 1 : 0.65,
+
                       transition: "all 160ms ease",
+
                       boxShadow: isSelected
                         ? "0 4px 20px rgba(200,150,30,0.14)"
-                        : "none",
+                        : isHovered
+                          ? "0 2px 10px rgba(200,150,30,0.08)"
+                          : "none",
                     }}
                     type="button"
                   >
@@ -137,6 +169,7 @@ export const CasesStageShell = ({ memberId }: { memberId: string }) => {
                       className="mt-0.5 self-start rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-widest"
                       style={{
                         borderColor: impactTone.border,
+
                         color: impactTone.color,
                       }}
                     >
@@ -176,7 +209,9 @@ export const CasesStageShell = ({ memberId }: { memberId: string }) => {
         className="border-t px-6 py-6 lg:border-l lg:border-t-0"
         style={{
           background: palette.parchmentMid,
+
           borderColor: "rgba(200,150,30,0.35)",
+
           boxShadow: "-8px 0 32px rgba(0,0,0,0.28)",
         }}
       >
@@ -194,6 +229,7 @@ export const CasesStageShell = ({ memberId }: { memberId: string }) => {
               className="flex h-16 w-16 items-center justify-center rounded-full border-2"
               style={{
                 borderColor: "rgba(200,150,30,0.22)",
+
                 background:
                   "radial-gradient(circle, rgba(200,150,30,0.10), transparent 70%)",
               }}
@@ -230,17 +266,24 @@ export const CasesStageShell = ({ memberId }: { memberId: string }) => {
 
 const OpenRecord = ({
   memberId,
+
   caseRef,
+
   entry,
 }: {
   memberId: string;
+
   caseRef: string;
+
   entry: ChamberCase;
 }) => {
   const impactTone = getImpactTone(entry.impactLevel);
+
   const sections = [
     { label: "Observed pattern", value: entry.observedPattern },
+
     { label: "Better alternative", value: entry.betterAlternative },
+
     { label: "Next-time guidance", value: entry.nextTimeGuidance },
   ].filter((s) => s.value !== null && s.value !== undefined);
 
@@ -259,6 +302,7 @@ const OpenRecord = ({
             className="rounded-full border px-2 py-0.5 text-[9px] uppercase tracking-widest"
             style={{
               borderColor: "rgba(200,150,30,0.4)",
+
               color: palette.gold,
             }}
           >
@@ -277,6 +321,7 @@ const OpenRecord = ({
               className="rounded-full border px-2 py-0.5 text-[9px] uppercase tracking-widest"
               style={{
                 borderColor: "rgba(200,150,30,0.35)",
+
                 color: palette.inkSoft,
               }}
             >
@@ -288,6 +333,7 @@ const OpenRecord = ({
               className="rounded-full border px-2 py-0.5 text-[9px] uppercase tracking-widest"
               style={{
                 borderColor: impactTone.border,
+
                 color: impactTone.color,
               }}
             >
@@ -303,8 +349,10 @@ const OpenRecord = ({
           className="mt-5 rounded-xl border px-4 py-4"
           style={{
             borderColor: "rgba(200,150,30,0.28)",
+
             background:
               "linear-gradient(180deg, rgba(200,150,30,0.12), rgba(200,150,30,0.05))",
+
             boxShadow: "0 8px 24px rgba(0,0,0,0.14)",
           }}
         >
@@ -334,6 +382,7 @@ const OpenRecord = ({
               className="rounded-lg border px-4 py-3"
               style={{
                 borderColor: "rgba(200,150,30,0.2)",
+
                 background: "rgba(255,255,255,0.05)",
               }}
             >
@@ -361,6 +410,7 @@ const OpenRecord = ({
                 className="rounded-lg border px-4 py-3"
                 style={{
                   borderColor: "rgba(200,150,30,0.12)",
+
                   background: "rgba(255,255,255,0.03)",
                 }}
               >

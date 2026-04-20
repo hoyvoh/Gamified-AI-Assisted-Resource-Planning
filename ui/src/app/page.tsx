@@ -1,5 +1,4 @@
 import { AnalysisChamberLauncher } from "@/features/analysis-chamber/components/analysis-chamber-launcher";
-import { PUBLIC_DEMO_MEMBER_ID } from "@/lib/config/env";
 
 export default function Home() {
   return (
@@ -12,12 +11,12 @@ export default function Home() {
           Analysis Chamber
         </h1>
         <p className="mt-3 text-text-secondary">
-          Open the analysis chamber to inspect a member profile, competency
+          Enter a GitHub username to open their analysis chamber — competency
           constellation, journey map, and KPT reflection.
         </p>
       </div>
 
-      <AnalysisChamberLauncher initialMemberId={PUBLIC_DEMO_MEMBER_ID} />
+      <AnalysisChamberLauncher />
     </main>
   );
 }
