@@ -69,7 +69,7 @@ const ACTIVE_NODE_GLOW_FILTER_ID = "competency-radar-active-node-glow";
 
 const CORE_SIGIL_GRADIENT_ID = "competency-radar-core-sigil";
 
-const HOVER_PREVIEW_DELAY_MS = 1000;
+const HOVER_PREVIEW_DELAY_MS = 500;
 
 const toNumber = (value: number | string | undefined): number =>
   Number(value ?? 0) || 0;
@@ -165,35 +165,50 @@ export function CompetencyRadarChart({
 
       const offsetX = relX > 12 ? 6 : relX < -12 ? -6 : 0;
 
+      // Compute line endpoint at the score dot position (not at the text label).
+      // Recharts places the tick label at outerRadius + ~5px from center.
+      // We stop the line at score/fullMark fraction of the outer radius boundary.
+      const dx = x - cx;
+      const dy = y - cy;
+      const distToLabel = Math.sqrt(dx * dx + dy * dy);
+      const TICK_PADDING = 5;
+      const outerRadiusPx = Math.max(distToLabel - TICK_PADDING, 0);
+      const entry = entries.find((e) => e.categoryId === categoryId);
+      const scoreFraction = entry ? Math.min(Math.max(entry.score / entry.fullMark, 0), 1) : 1;
+      const dotX = cx + (dx / distToLabel) * outerRadiusPx * scoreFraction;
+      const dotY = cy + (dy / distToLabel) * outerRadiusPx * scoreFraction;
+
       return (
         <g
           key={categoryId}
           onClick={() => onSelectCategory(categoryId)}
           onMouseEnter={() => schedulePreviewCategory(categoryId)}
           onMouseLeave={clearPreviewCategory}
-          style={{ cursor: "pointer" }}
+          style={{ cursor: "pointer", transition: "opacity 0.4s ease-in-out" }}
         >
           <line
             x1={cx}
             y1={cy}
-            x2={x}
-            y2={y}
+            x2={dotX}
+            y2={dotY}
             stroke={accent?.border ?? goldColor}
             strokeDasharray={isActive ? "0" : "3 9"}
             strokeLinecap="round"
             strokeOpacity={isActive ? 0.42 : 0.1}
             strokeWidth={isActive ? 1.2 : 0.8}
+            style={{ transition: "stroke-opacity 0.4s ease-in-out, stroke-width 0.4s ease-in-out" }}
           />
           {isActive && (
             <line
               x1={cx}
               y1={cy}
-              x2={x}
-              y2={y}
+              x2={dotX}
+              y2={dotY}
               stroke={accent?.color ?? goldColor}
               strokeLinecap="round"
               strokeOpacity={0.26}
               strokeWidth={4}
+              style={{ transition: "stroke-opacity 0.4s ease-in-out" }}
             />
           )}
           {/* Active indicator dot */}
