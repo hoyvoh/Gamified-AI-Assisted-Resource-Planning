@@ -20,25 +20,19 @@ export interface BranchLatticeProps {
 }
 
 const LATTICE_KEYFRAMES = `
-  @keyframes nodeReveal {
-    0%   { opacity: 0; transform: translateY(14px) scale(0.88); filter: blur(2px); }
-    40%  { filter: blur(0); }
-    100% { opacity: 1; transform: translateY(var(--node-offset, 0px)) scale(1); }
-  }
   @keyframes lineDrawForward {
     from { stroke-dashoffset: var(--seg-len, 300); }
     to   { stroke-dashoffset: 0; }
   }
   @keyframes lineGlowFloat {
-    0%, 100% { opacity: 0.22; }
-    50%       { opacity: 0.62; }
+    0%, 100% { opacity: 0.20; }
+    50%       { opacity: 0.52; }
   }
   @keyframes nodeDotAppear {
     from { opacity: 0; transform: scale(0); }
     to   { opacity: 1; transform: scale(1); }
   }
   @media (prefers-reduced-motion: reduce) {
-    [data-node-item]     { animation: none !important; }
     [data-lattice-line]  { animation: none !important; stroke-dashoffset: 0 !important; }
     [data-lattice-dot]   { animation: none !important; opacity: 1 !important; }
   }
@@ -56,6 +50,42 @@ export function BranchLattice({
   const latticeRef = useRef<HTMLDivElement>(null);
 
   const activeBranch = branches.find((b) => b.id === popupOpenId) ?? null;
+  const activeIndex = popupOpenId
+    ? branches.findIndex((b) => b.id === popupOpenId)
+    : -1;
+
+  function hexToRgba(hex: string, alpha: number) {
+    const cleaned = hex.replace("#", "");
+    const expanded =
+      cleaned.length === 3
+        ? cleaned
+            .split("")
+            .map((c) => c + c)
+            .join("")
+        : cleaned.length === 8
+          ? cleaned.slice(0, 6)
+          : cleaned;
+    const r = Number.parseInt(expanded.slice(0, 2), 16);
+    const g = Number.parseInt(expanded.slice(2, 4), 16);
+    const b = Number.parseInt(expanded.slice(4, 6), 16);
+    return `rgba(${r},${g},${b},${alpha})`;
+  }
+
+  function withAlpha(color: string, alpha: number) {
+    if (/^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(color)) {
+      return hexToRgba(color, alpha);
+    }
+    if (color.startsWith("rgba(")) {
+      return color.replace(
+        /rgba\(([^)]+),\s*([^)]+)\)/,
+        "rgba($1," + alpha + ")",
+      );
+    }
+    if (color.startsWith("rgb(")) {
+      return color.replace("rgb(", "rgba(").replace(")", `,${alpha})`);
+    }
+    return color;
+  }
 
   const handleNodeClick = useCallback(
     (id: string) => {
@@ -80,7 +110,7 @@ export function BranchLattice({
   const STEP = 144;
   const pts = branches.map((_, i) => ({
     x: 72 + i * STEP,
-    y: i % 2 === 0 ? 48 : 64,
+    y: i % 2 === 0 ? 40 : 56,
   }));
   const svgW = 72 + (branches.length - 1) * STEP + 56;
 
@@ -100,21 +130,51 @@ export function BranchLattice({
                 <svg
                   aria-hidden="true"
                   className="pointer-events-none absolute left-0 top-0"
-                  height={90}
+                  height={96}
                   style={{ overflow: "visible" }}
                   width={svgW}
                 >
+                  <defs>
+                    {pts.slice(0, -1).map((p1, i) => {
+                      const p2 = pts[i + 1];
+                      const b1 = branches[i];
+                      const b2 = branches[i + 1];
+                      const hot = activeIndex === i || activeIndex === i + 1;
+                      const a = hot ? 0.88 : 0.64;
+                      const stop1 = b1?.scored
+                        ? withAlpha(b1.toneBorder, a)
+                        : withAlpha(palette.silver, 0.32);
+                      const stop2 = b2?.scored
+                        ? withAlpha(b2.toneBorder, a)
+                        : withAlpha(palette.silver, 0.32);
+                      return (
+                        <linearGradient
+                          key={i}
+                          id={`lattice-seg-${i}`}
+                          gradientUnits="userSpaceOnUse"
+                          x1={p1.x}
+                          x2={p2.x}
+                          y1={p1.y}
+                          y2={p2.y}
+                        >
+                          <stop offset="0%" stopColor={stop1} />
+                          <stop offset="100%" stopColor={stop2} />
+                        </linearGradient>
+                      );
+                    })}
+                  </defs>
                   {pts.slice(0, -1).map((p1, i) => {
                     const p2 = pts[i + 1];
                     const len = Math.round(
                       Math.hypot(p2.x - p1.x, p2.y - p1.y),
                     );
                     const delay = (i + 1) * 80 + 300;
+                    const hot = activeIndex === i || activeIndex === i + 1;
                     return (
                       <g key={i}>
                         {/* ghost trail */}
                         <line
-                          stroke="rgba(255,149,0,0.09)"
+                          stroke="rgba(0,0,0,0.22)"
                           strokeWidth="1"
                           x1={p1.x} y1={p1.y}
                           x2={p2.x} y2={p2.y}
@@ -122,9 +182,9 @@ export function BranchLattice({
                         {/* animated draw line */}
                         <line
                           data-lattice-line=""
-                          stroke="rgba(255,149,0,0.75)"
+                          stroke={`url(#lattice-seg-${i})`}
                           strokeDasharray={len}
-                          strokeWidth="1"
+                          strokeWidth={hot ? "1.35" : "1.05"}
                           x1={p1.x} y1={p1.y}
                           x2={p2.x} y2={p2.y}
                           style={
@@ -137,10 +197,10 @@ export function BranchLattice({
                         {/* glow halo */}
                         <line
                           data-lattice-line=""
-                          stroke="rgba(255,149,0,0.28)"
+                          stroke={`url(#lattice-seg-${i})`}
                           strokeDasharray={len}
                           strokeLinecap="round"
-                          strokeWidth="6"
+                          strokeWidth={hot ? "8" : "6"}
                           x1={p1.x} y1={p1.y}
                           x2={p2.x} y2={p2.y}
                           style={
@@ -158,7 +218,11 @@ export function BranchLattice({
                       key={i}
                       data-lattice-dot=""
                       cx={p.x} cy={p.y}
-                      fill="rgba(255,149,0,0.70)"
+                      fill={
+                        branches[i]?.scored
+                          ? withAlpha(branches[i].toneBorder, 0.70)
+                          : withAlpha(palette.silver, 0.45)
+                      }
                       r="3.5"
                       style={
                         {

@@ -89,13 +89,26 @@ const MODAL_KEYFRAMES = `
     50%       { box-shadow: 0 0 28px var(--modal-glow); }
   }
 
+  /* ── Ember particle drift (infinite: fade-in → drift → fade-out → repeat) ── */
+  @keyframes emberDrift {
+    0%   { opacity: 0;                       transform: translate(0px, 0px) scale(0.5); }
+    20%  { opacity: var(--ep-peak, 0.35);    transform: translate(0px, 0px) scale(1);   }
+    80%  { opacity: var(--ep-peak, 0.35);    transform: translate(calc(var(--ep-dx,6px)*0.6), calc(var(--ep-dy,-18px)*0.55)); }
+    100% { opacity: 0;                       transform: translate(var(--ep-dx, 6px), var(--ep-dy, -18px)) scale(0.5); }
+  }
+
+  /* ── Aura container enter / exit ── */
+  @keyframes auraIn  { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes auraOut { from { opacity: 1; } to { opacity: 0; } }
+
   /* ── Reduced-motion ── */
   @media (prefers-reduced-motion: reduce) {
-    [data-modal-float]  { animation: none !important; transform: translate(-50%, -50%) !important; }
-    [data-modal-card]   { animation: none !important; transform: none !important; }
-    [data-modal-backdrop] { animation: none !important; }
-    [data-bar-shimmer]  { animation: none !important; }
-    [data-sigil-icon]   { animation: none !important; }
+    [data-modal-float]   { animation: none !important; transform: translate(-50%, -50%) !important; }
+    [data-modal-card]    { animation: none !important; transform: none !important; }
+    [data-modal-backdrop]{ animation: none !important; }
+    [data-bar-shimmer]   { animation: none !important; }
+    [data-sigil-icon]    { animation: none !important; }
+    [data-modal-aura]    { display: none !important; }
   }
 `;
 
@@ -106,6 +119,43 @@ const SPARKLES = [
   { sx: "-18px", sy: "-16px", delay: "30ms",  left: "93%", top: "46%" },
   { sx: "12px",  sy: "-24px", delay: "90ms",  left: "4%",  top: "58%" },
   { sx: "-8px",  sy: "-20px", delay: "150ms", left: "70%", top: "80%" },
+];
+
+/**
+ * Ambient ember / ash particles scattered around the modal aura ring.
+ * Contained inside a 560×620 fixed box — safe on all viewport sizes.
+ * --ep-peak: peak opacity; --ep-dx/dy: drift direction.
+ */
+const EMBER_PARTICLES: {
+  left: string; top: string; size: number;
+  dur: string; delay: string; dx: string; dy: string; peak: number;
+}[] = [
+  // top edge
+  { left: "10%",  top: "6%",  size: 3.5, dur: "3.12s", delay: "0s",    dx: "7px",   dy: "-22px", peak: 0.38 },
+  { left: "28%",  top: "2%",  size: 2.5, dur: "4.08s", delay: "0.4s",  dx: "-5px",  dy: "-26px", peak: 0.24 },
+  { left: "50%",  top: "1%",  size: 4.5, dur: "3.36s", delay: "0.8s",  dx: "4px",   dy: "-24px", peak: 0.20 },
+  { left: "72%",  top: "3%",  size: 2.5, dur: "2.96s", delay: "0.2s",  dx: "6px",   dy: "-20px", peak: 0.32 },
+  { left: "88%",  top: "7%",  size: 3.5, dur: "3.72s", delay: "0.6s",  dx: "-4px",  dy: "-22px", peak: 0.26 },
+  // right side
+  { left: "95%",  top: "26%", size: 2.5, dur: "3.48s", delay: "0.3s",  dx: "10px",  dy: "-14px", peak: 0.30 },
+  { left: "97%",  top: "52%", size: 3.5, dur: "4.2s", delay: "1.0s",   dx: "8px",   dy: "-18px", peak: 0.20 },
+  { left: "94%",  top: "74%", size: 2.5, dur: "3.24s", delay: "0.15s", dx: "6px",   dy: "-16px", peak: 0.28 },
+  // bottom edge
+  { left: "76%",  top: "92%", size: 3.5, dur: "3.84s", delay: "0.7s",  dx: "-6px",  dy: "-20px", peak: 0.26 },
+  { left: "50%",  top: "95%", size: 2.5, dur: "3.0s", delay: "0.5s",   dx: "4px",   dy: "-22px", peak: 0.32 },
+  { left: "24%",  top: "92%", size: 4.5, dur: "3.96s", delay: "0.9s",  dx: "-8px",  dy: "-18px", peak: 0.18 },
+  // left side
+  { left: "5%",   top: "72%", size: 2.5, dur: "3.36s", delay: "0.25s", dx: "-10px", dy: "-14px", peak: 0.24 },
+  { left: "3%",   top: "48%", size: 3.5, dur: "2.76s", delay: "0.55s", dx: "-8px",  dy: "-20px", peak: 0.36 },
+  { left: "6%",   top: "24%", size: 2.5, dur: "4.32s", delay: "0.1s",  dx: "-6px",  dy: "-24px", peak: 0.28 },
+  // accent specks (slightly brighter)
+  { left: "38%",  top: "5%",  size: 2.5, dur: "2.64s", delay: "1.2s",  dx: "3px",   dy: "-16px", peak: 0.48 },
+  { left: "63%",  top: "90%", size: 2.5, dur: "3.54s", delay: "0.35s", dx: "-3px",  dy: "-14px", peak: 0.44 },
+  // additional particles (4 more for 1.25x count)
+  { left: "18%",  top: "14%", size: 2.5, dur: "3.9s",  delay: "0.75s", dx: "5px",   dy: "-20px", peak: 0.30 },
+  { left: "82%",  top: "38%", size: 2.5, dur: "3.6s",  delay: "0.45s", dx: "-6px",  dy: "-16px", peak: 0.28 },
+  { left: "42%",  top: "78%", size: 3.5, dur: "4.15s", delay: "0.2s",  dx: "4px",   dy: "-18px", peak: 0.24 },
+  { left: "68%",  top: "20%", size: 2.5, dur: "3.42s", delay: "0.85s", dx: "-4px",  dy: "-22px", peak: 0.34 },
 ];
 
 const SIGNAL_CONFIG = [
@@ -231,13 +281,57 @@ export function BranchDetailModal({ open, branch, onClose }: BranchDetailModalPr
       />
 
       {/*
+       * ── Ember dust aura ──
+       * Fixed container centered over the modal, z-1001 (above backdrop, below modal).
+       * pointer-events: none — never intercepts clicks.
+       * 560×620 bounds keep particles from bleeding to viewport edges.
+       * NO haze / gradient — only individual floating particle dots.
+       */}
+      <div
+        data-modal-aura=""
+        aria-hidden="true"
+        className="pointer-events-none fixed"
+        style={{
+          top: "50%",
+          left: "50%",
+          width: 560,
+          height: 620,
+          transform: "translate(-50%, -50%)",
+          zIndex: 1001,
+          animation: exiting
+            ? "auraOut 280ms ease forwards"
+            : "auraIn 700ms ease 200ms both",
+        }}
+      >
+        {EMBER_PARTICLES.map((p, i) => (
+          <span
+            key={i}
+            aria-hidden="true"
+            className="pointer-events-none absolute rounded-full"
+            style={{
+              left: p.left,
+              top: p.top,
+              width: `${p.size}px`,
+              height: `${p.size}px`,
+              background: accentColor,
+              boxShadow: p.size >= 2 ? `0 0 ${p.size * 2}px ${accentColor}66` : undefined,
+              ["--ep-peak" as string]: p.peak,
+              ["--ep-dx" as string]: p.dx,
+              ["--ep-dy" as string]: p.dy,
+              animation: `emberDrift ${p.dur} ease-in-out ${p.delay} infinite`,
+            }}
+          />
+        ))}
+      </div>
+
+      {/*
        * ── Float wrapper ──
        * Owns centering (translate -50%,-50%) and the gentle vertical bob.
        * Never changes during card entry — no transform conflict.
        */}
       <div
         data-modal-float=""
-        className="fixed z-[1001] select-none"
+        className="fixed z-[1002] select-none"
         style={{
           top: "50%",
           left: "50%",
