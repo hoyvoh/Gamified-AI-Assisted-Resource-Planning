@@ -102,7 +102,7 @@ export interface ChamberCompetency {
 }
 
 export interface ChamberDimensionScoreDetail extends ChamberDimensionScore {
-  p3Inference: Record<string, unknown>;
+  p3Inference: Record<string, unknown> | null;
 }
 
 export interface ChamberEvidenceUnit {
@@ -130,7 +130,7 @@ export interface ChamberBehavioralEvent {
   eventConfidence: number | null;
   impactLevel: string | null;
   opportunityLevel: string | null;
-  relatedDimensions: Array<Record<string, string | number>>;
+  relatedDimensions: Array<Record<string, unknown>>;
   whyItMatters: string | null;
 }
 

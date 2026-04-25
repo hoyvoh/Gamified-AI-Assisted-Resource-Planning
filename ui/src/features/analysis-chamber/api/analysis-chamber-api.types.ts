@@ -79,15 +79,20 @@ export interface ChamberOrganizationResponse {
 }
 
 // Flat shape returned by GET /organizations (list) and POST /organizations
+// Note: GET /organizations returns OrganizationListItem (includes team_count + member_count, no updated_at)
+// POST /organizations returns OrganizationResponse (no counts, has updated_at)
+// This type represents the GET list shape.
 
 export interface ChamberOrganizationSummaryResponse {
   organization_id: string;
 
   name: string;
 
-  created_at: string;
+  team_count: number;
 
-  updated_at: string;
+  member_count: number;
+
+  created_at: string;
 }
 
 // Shape returned by POST /organizations/:orgId/teams
@@ -95,7 +100,13 @@ export interface ChamberOrganizationSummaryResponse {
 export interface ChamberTeamCreateResponse {
   team_id: string;
 
+  organization_id: string;
+
   name: string;
+
+  created_at: string;
+
+  updated_at: string;
 }
 
 // Request bodies
@@ -238,7 +249,7 @@ export interface ChamberCompetencyResponse {
 
 export interface ChamberDimensionScoreDetailResponse
   extends ChamberDimensionScoreResponse {
-  p3_inference: Record<string, unknown>;
+  p3_inference: Record<string, unknown> | null;
 }
 
 export interface ChamberEvidenceUnitResponse {
@@ -286,7 +297,7 @@ export interface ChamberBehavioralEventResponse {
 
   opportunity_level: string | null;
 
-  related_dimensions: Array<Record<string, string | number>>;
+  related_dimensions: Array<Record<string, unknown>>;
 
   why_it_matters: string | null;
 }
