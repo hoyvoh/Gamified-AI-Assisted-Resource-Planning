@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { AnalysisChamberLauncher } from "@/features/analysis-chamber/components/analysis-chamber-launcher";
 
 export default function Home() {
@@ -17,6 +19,13 @@ export default function Home() {
       </div>
 
       <AnalysisChamberLauncher />
+
+      <Link
+        href="/members"
+        className="font-mono text-xs uppercase tracking-[0.15em] text-white/30 transition hover:text-white/60"
+      >
+        Browse all members →
+      </Link>
     </main>
   );
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import {
   ANALYSIS_CHAMBER_ROUTE_TITLE,
   ANALYSIS_CHAMBER_SHELL_PALETTE as palette,
@@ -26,6 +28,18 @@ export const AnalysisChamberTopBar = ({
     }}
   >
     <div className="flex items-center gap-3">
+      <Link
+        href="/members"
+        className="font-mono text-[10px] uppercase tracking-[0.12em] transition-opacity opacity-40 hover:opacity-80"
+        style={{ color: palette.gold }}
+        title="Back to members"
+      >
+        ← Members
+      </Link>
+      <div
+        className="h-8 w-px"
+        style={{ background: "rgba(255,149,0,0.15)" }}
+      />
       <div
         className="flex h-8 w-8 items-center justify-center rounded-full border text-[11px] font-semibold tracking-[0.16em]"
         style={{

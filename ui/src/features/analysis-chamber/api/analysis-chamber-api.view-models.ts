@@ -1,5 +1,19 @@
 import type { AnalysisStatus } from "@/types/organization";
 
+export interface FlatMemberRow {
+  memberId: string;
+  displayName: string;
+  externalId: string | null;
+  roleProfileId: string | null;
+  roleName: string | null;
+  teamId: string;
+  teamName: string;
+  orgId: string;
+  orgName: string;
+  analysisStatus: AnalysisStatus;
+  lastAnalysisAt: string | null;
+}
+
 export interface ChamberMember {
   id: string;
   teamId: string;

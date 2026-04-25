@@ -25,6 +25,7 @@ import type {
 } from "@/features/analysis-chamber/api/analysis-chamber-api.types";
 
 import {
+  mapChamberAnalysisRun,
   mapChamberBootstrap,
   mapChamberCase,
   mapChamberCases,
@@ -38,11 +39,13 @@ import {
 } from "@/features/analysis-chamber/api/analysis-chamber-api.mappers";
 
 import type {
+  ChamberAnalysisRun,
   ChamberBootstrap,
   ChamberCase,
   ChamberCases,
   ChamberCompetency,
   ChamberDimensionDetail,
+  FlatMemberRow,
   ChamberJourney,
   ChamberKpt,
   ChamberOverview,
@@ -284,6 +287,72 @@ export const triggerAnalysis = async (
 // TODO: replace with a dedicated search endpoint (e.g. GET /members?external_id=<handle>)
 
 //       once the backend adds one — scanning all orgs is O(n_orgs) round-trips.
+
+// ─── Member list (flat, across all orgs) ─────────────────────────────────────
+
+export const getAllMembersAcrossOrgs = async (): Promise<FlatMemberRow[]> => {
+  const [orgs, roles] = await Promise.all([
+    fetchEnvelope<ChamberOrganizationSummaryResponse[]>("/organizations"),
+    fetchEnvelope<ChamberRoleProfileResponse[]>("/role-profiles"),
+  ]);
+
+  const orgDetails = await Promise.all(
+    orgs.map((org) =>
+      fetchEnvelope<ChamberOrganizationResponse>(
+        `/organizations/${org.organization_id}`,
+      ),
+    ),
+  );
+
+  const rows: FlatMemberRow[] = [];
+  for (const org of orgDetails) {
+    for (const team of org.teams) {
+      for (const member of team.members) {
+        rows.push({
+          memberId: member.member_id,
+          displayName: member.display_name,
+          externalId: member.external_id,
+          roleProfileId: member.role_profile_id,
+          roleName:
+            roles.find((r) => r.role_profile_id === member.role_profile_id)
+              ?.role_name ?? null,
+          teamId: team.team_id,
+          teamName: team.name,
+          orgId: org.organization_id,
+          orgName: org.name,
+          analysisStatus: normalizeAnalysisStatus(member.analysis_status),
+          lastAnalysisAt: member.last_analysis_at,
+        });
+      }
+    }
+  }
+  return rows;
+};
+
+// ─── Analysis run by ID (for polling) ────────────────────────────────────────
+
+export const getAnalysisRunById = async (
+  runId: string,
+): Promise<ChamberAnalysisRun> =>
+  mapChamberAnalysisRun(
+    await fetchEnvelope<ChamberAnalysisRunResponse>(`/analysis-runs/${runId}`),
+  );
+
+// ─── Member run history ───────────────────────────────────────────────────────
+
+export const getMemberAnalysisRuns = async (
+  memberId: string,
+  limit = 10,
+): Promise<ChamberAnalysisRun[]> =>
+  (
+    await fetchEnvelope<ChamberAnalysisRunResponse[]>(
+      `/members/${memberId}/analysis-runs`,
+      undefined,
+      { limit, offset: 0 },
+    )
+  ).map(mapChamberAnalysisRun);
+
+// ─── GitHub handle lookup ─────────────────────────────────────────────────────
 
 export const findMemberByGithubHandle = async (
   githubHandle: string,
