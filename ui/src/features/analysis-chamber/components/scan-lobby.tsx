@@ -253,10 +253,14 @@ function NewScanForm({
     <form onSubmit={handleSubmit} className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="mb-1 block font-mono text-[10px] uppercase tracking-[0.15em] text-white/40">
+          <label
+            className="mb-1 block font-mono text-[10px] uppercase tracking-[0.15em] text-white/40"
+            htmlFor="scan-period-start"
+          >
             Period start
           </label>
           <input
+            id="scan-period-start"
             type="date"
             value={periodStart}
             onChange={(e) => setPeriodStart(e.target.value)}
@@ -265,10 +269,14 @@ function NewScanForm({
           />
         </div>
         <div>
-          <label className="mb-1 block font-mono text-[10px] uppercase tracking-[0.15em] text-white/40">
+          <label
+            className="mb-1 block font-mono text-[10px] uppercase tracking-[0.15em] text-white/40"
+            htmlFor="scan-period-end"
+          >
             Period end
           </label>
           <input
+            id="scan-period-end"
             type="date"
             value={periodEnd}
             onChange={(e) => setPeriodEnd(e.target.value)}

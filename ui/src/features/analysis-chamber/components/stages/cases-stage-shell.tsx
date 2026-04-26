@@ -42,8 +42,12 @@ export const CasesStageShell = ({ memberId }: { memberId: string }) => {
   const { state, updateQuery } = useAnalysisChamberRouteState();
 
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [showAll, setShowAll] = useState(false);
 
   const caseList = cases.data?.cases ?? EMPTY_CASES;
+  const visibleCaseLimit = 8;
+  const hasMoreCases = caseList.length > visibleCaseLimit;
+  const visibleCases = showAll ? caseList : caseList.slice(0, visibleCaseLimit);
 
   const selectedCase = useMemo(
     () =>
@@ -88,7 +92,7 @@ export const CasesStageShell = ({ memberId }: { memberId: string }) => {
 
           <div className="divide-y divide-[rgba(200,150,30,0.10)]">
             {caseList.length > 0 ? (
-              caseList.slice(0, 8).map((entry, index) => {
+              visibleCases.map((entry, index) => {
                 const isSelected = selectedCase?.id === entry.id;
 
                 const impactTone = getImpactTone(entry.impactLevel);
@@ -98,7 +102,7 @@ export const CasesStageShell = ({ memberId }: { memberId: string }) => {
                 return (
                   <button
                     key={entry.id}
-                    className="grid w-full grid-cols-[80px_1fr_120px] gap-3 px-4 py-4 text-left"
+                    className="grid w-full cursor-pointer grid-cols-[80px_1fr_120px] gap-3 px-4 py-4 text-left"
                     onMouseEnter={() => setHoveredId(entry.id)}
                     onMouseLeave={() => setHoveredId(null)}
                     onClick={() =>
@@ -201,6 +205,32 @@ export const CasesStageShell = ({ memberId }: { memberId: string }) => {
               </div>
             )}
           </div>
+
+          {hasMoreCases ? (
+            <div
+              className="flex items-center justify-between border-t px-4 py-3 text-[10px] uppercase tracking-widest"
+              style={{
+                borderColor: "rgba(200,150,30,0.12)",
+                color: palette.inkMuted,
+              }}
+            >
+              <span>
+                {showAll
+                  ? `Showing ${caseList.length} cases`
+                  : `Showing ${visibleCaseLimit} of ${caseList.length}`}
+              </span>
+              <button
+                type="button"
+                className="cursor-pointer font-display tracking-[0.14em] hover:brightness-110"
+                onClick={() => setShowAll((current) => !current)}
+                style={{ color: palette.gold }}
+              >
+                {showAll
+                  ? "Show less"
+                  : `Show all (+${caseList.length - visibleCaseLimit})`}
+              </button>
+            </div>
+          ) : null}
         </div>
       </div>
 

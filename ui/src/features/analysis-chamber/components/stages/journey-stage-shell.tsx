@@ -13,7 +13,7 @@ import type { ChamberMilestone } from "@/features/analysis-chamber/api/analysis-
 const EMPTY_MILESTONES: ChamberMilestone[] = [];
 
 const MILESTONE_POSITIONS: Array<{ left: string; top: string }> = [
-  { left: "10%", top: "64%" },
+  { left: "12%", top: "64%" },
 
   { left: "28%", top: "38%" },
 
@@ -21,7 +21,7 @@ const MILESTONE_POSITIONS: Array<{ left: string; top: string }> = [
 
   { left: "68%", top: "36%" },
 
-  { left: "84%", top: "18%" },
+  { left: "82%", top: "18%" },
 ];
 
 const humanizeMilestoneType = (milestoneType: string) =>
@@ -111,7 +111,7 @@ export const JourneyStageShell = ({ memberId }: { memberId: string }) => {
           <div className="grid h-full gap-4 lg:grid-cols-[1fr_280px]">
             {/* Map canvas */}
             <div
-              className="relative min-h-75 overflow-hidden rounded-2xl border p-4"
+              className="relative min-h-75 overflow-visible rounded-2xl border p-4"
               style={{
                 borderColor: "rgba(200,150,30,0.2)",
 
@@ -153,7 +153,7 @@ export const JourneyStageShell = ({ memberId }: { memberId: string }) => {
                   return (
                     <button
                       key={milestone.id}
-                      className="absolute -translate-x-1/2 -translate-y-1/2 text-left transition-all duration-200 hover:scale-105 hover:brightness-110"
+                      className="absolute -translate-x-1/2 -translate-y-1/2 cursor-pointer text-left transition-all duration-200 hover:scale-105 hover:brightness-110"
                       onClick={() =>
                         updateQuery({
                           milestone: milestone.id,
@@ -395,7 +395,7 @@ export const JourneyStageShell = ({ memberId }: { memberId: string }) => {
                     <div className="flex items-center gap-2">
                       {prevMilestone ? (
                         <button
-                          className="rounded border px-3 py-2 text-[10px] uppercase tracking-widest transition-all duration-150 hover:brightness-125 active:scale-95"
+                          className="cursor-pointer rounded border px-3 py-2 text-[10px] uppercase tracking-widest transition-all duration-150 hover:brightness-125 active:scale-95"
                           onClick={() =>
                             updateQuery({
                               milestone: prevMilestone.id,
@@ -417,7 +417,7 @@ export const JourneyStageShell = ({ memberId }: { memberId: string }) => {
                       ) : null}
                       {nextMilestone ? (
                         <button
-                          className="rounded border px-3 py-2 text-[10px] uppercase tracking-widest transition-all duration-150 hover:brightness-125 active:scale-95"
+                          className="cursor-pointer rounded border px-3 py-2 text-[10px] uppercase tracking-widest transition-all duration-150 hover:brightness-125 active:scale-95"
                           onClick={() =>
                             updateQuery({
                               milestone: nextMilestone.id,
@@ -489,7 +489,7 @@ export const JourneyStageShell = ({ memberId }: { memberId: string }) => {
                 <div key={milestone.id} className="flex items-center gap-1">
                   {/* Title is hidden by default; expands on hover or when focused */}
                   <button
-                    className="group flex items-center gap-1.5 rounded border px-2.5 py-2 transition-all duration-150 hover:brightness-110"
+                    className="group flex cursor-pointer items-center gap-1.5 rounded border px-2.5 py-2 transition-all duration-150 hover:brightness-110"
                     onClick={() =>
                       updateQuery({
                         milestone: milestone.id,

@@ -99,6 +99,7 @@ export const CharacterModel = ({
     ...CHARACTER_MODEL_DEFAULT_CONFIG,
     ...config,
   };
+  const onReadyRef = useRef<CharacterModelProps["onReady"]>(onReady);
   const modelGroupRef = useRef<Group | null>(null);
   const gltf = useGLTF(mergedConfig.src);
   const clonedScene = useMemo(() => clone(gltf.scene), [gltf.scene]);
@@ -115,8 +116,12 @@ export const CharacterModel = ({
   const emissiveColor = useMemo(() => new Color(color), [color]);
 
   useEffect(() => {
-    onReady?.();
+    onReadyRef.current = onReady;
   }, [onReady]);
+
+  useEffect(() => {
+    onReadyRef.current?.();
+  }, [mergedConfig.src]);
 
   useEffect(() => {
     clonedScene.traverse((child) => {

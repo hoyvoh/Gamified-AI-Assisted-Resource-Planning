@@ -58,11 +58,11 @@ export const AnalysisChamberRouteRail = ({
               <Link
                 aria-current={isActive ? "page" : undefined}
                 href={buildAnalysisChamberRouteHref(memberId, route.key)}
-                className="group relative flex w-full flex-col items-center gap-1 px-1 py-2.5 outline-none focus-visible:ring-2"
+                className="group relative flex w-full flex-col items-center gap-1 px-1 py-2.5 outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
                 style={
                   {
-                    "--focus-ring": palette.gold,
-                    focusVisibleOutlineColor: palette.gold,
+                    "--tw-ring-color": palette.gold,
+                    "--tw-ring-offset-color": "rgba(21,9,10,0.98)",
                   } as React.CSSProperties
                 }
               >
@@ -103,7 +103,7 @@ export const AnalysisChamberRouteRail = ({
                       ? "drop-shadow(0 0 6px rgba(255,149,0,0.65))"
                       : "none",
                     animation: isActive
-                      ? "railGlowPulse 3.8s ease-in-out infinite"
+                      ? "railGlowPulse 3.8s ease-in-out 2"
                       : "none",
                     transition: "color 200ms ease, filter 200ms ease",
                   }}
