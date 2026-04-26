@@ -40,6 +40,78 @@ export const ANALYSIS_CHAMBER_SHELL_PALETTE = {
   shellShadow: "0 34px 80px rgba(0, 0, 0, 0.65)",
 };
 
+/**
+ * KPT board design tokens — warm charcoal surfaces inside the amber chamber shell.
+ * The base stays dark for readability, with subtle bronze warmth so the stage
+ * feels native to the overall world while semantic K/P/T accents stay crisp.
+ */
+export const KPT_TOKENS = {
+  // ─ Surfaces (warm dark, layered depth) ──────────────────
+  bgColumn:
+    "radial-gradient(circle at 84% 78%, rgba(255,190,120,0.07) 0%, rgba(255,190,120,0.03) 14%, transparent 34%), linear-gradient(180deg, #191411 0%, #120e0c 100%)",
+  bgCard:
+    "radial-gradient(circle at 84% 74%, rgba(255,196,128,0.05) 0%, rgba(255,196,128,0.02) 18%, transparent 40%), linear-gradient(180deg, #181411 0%, #12100e 100%)",
+  bgCardHover:
+    "radial-gradient(circle at 84% 74%, rgba(255,196,128,0.07) 0%, rgba(255,196,128,0.03) 18%, transparent 42%), linear-gradient(180deg, #1b1613 0%, #15110f 100%)",
+  surfaceInset: "rgba(255,255,255,0.03)",
+  surfaceChip: "rgba(255,184,77,0.05)",
+  borderSubtle: "rgba(255,184,77,0.12)",
+  borderStrong: "rgba(255,184,77,0.20)",
+
+  // ─ Text — parchment-tinted white for chamber cohesion ───
+  textPrimary: "#F3EBDD",
+  textSecondary: "#B9AD9B",
+  textMuted: "#8A7C69",
+  textLabel: "#B8AA95",
+
+  // ─ TOP card accent ──────────────────────────────────────
+  accentTop: "#FFD166",
+
+  // ─ KPT semantic accents (primarily icon / bottom bar) ────
+  keep: {
+    main: "#4FD1A5",
+  },
+  problem: {
+    main: "#FF6B6B",
+  },
+  try: {
+    main: "#5B8CFF",
+  },
+} as const;
+
+/** Maps every dimension ID to its parent category ID. */
+export const DIMENSION_TO_CATEGORY: Record<string, string> = {
+  // core_technical_execution
+  implementation_reliability: "core_technical_execution",
+  code_quality_discipline: "core_technical_execution",
+  debugging_root_cause: "core_technical_execution",
+  careless_mistake_control: "core_technical_execution",
+  technical_ownership: "core_technical_execution",
+  technical_learning_adaptability: "core_technical_execution",
+  // technical_depth_breadth
+  backend_capability: "technical_depth_breadth",
+  frontend_capability: "technical_depth_breadth",
+  devops_delivery_capability: "technical_depth_breadth",
+  system_integration_capability: "technical_depth_breadth",
+  data_interface_handling: "technical_depth_breadth",
+  architecture_exposure: "technical_depth_breadth",
+  // engineering_mindset
+  quality_mindset: "engineering_mindset",
+  performance_awareness: "engineering_mindset",
+  security_awareness: "engineering_mindset",
+  maintainability_thinking: "engineering_mindset",
+  risk_awareness: "engineering_mindset",
+  decision_hygiene: "engineering_mindset",
+  // collaboration_growth
+  problem_solving: "collaboration_growth",
+  self_management: "collaboration_growth",
+  horenso_reporting_discipline: "collaboration_growth",
+  user_first: "collaboration_growth",
+  collaboration: "collaboration_growth",
+  mentoring_knowledge_support: "collaboration_growth",
+  ai_leverage_ability: "collaboration_growth",
+};
+
 export const DIMENSION_LABELS: Record<string, string> = {
   // core_technical_execution
   implementation_reliability: "Implementation Reliability",
