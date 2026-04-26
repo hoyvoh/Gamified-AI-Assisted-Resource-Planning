@@ -3,6 +3,9 @@
 import React, { useId, useMemo } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 
+import { type BranchTier } from "@/features/analysis-chamber/lib/branch-tier";
+import { TIER_MASTER_CRIMSON, TIER_MASTER_GOLD, TIER_ADVANCED_BRASS } from "@/features/analysis-chamber/lib/branch-tier-colors";
+
 export interface BranchShieldProps {
   accent: string;
   background: string;
@@ -10,6 +13,7 @@ export interface BranchShieldProps {
   scored: boolean;
   active: boolean;
   size?: number;
+  tier?: BranchTier;
 }
 
 function isHexColor(color: string) {
@@ -48,9 +52,31 @@ export function BranchShield({
   scored,
   active,
   size = 74,
+  tier = "intermediate",
 }: BranchShieldProps) {
   const reducedMotion = useReducedMotion();
   const uid = useId().replace(/:/g, "");
+
+  // Tier-scaled animation timings
+  const pulseDuration =
+    tier === "master" ? (active ? 2.4 : 3.8) :
+    tier === "advanced" ? (active ? 3.8 : 5.4) :
+    (active ? 5.4 : 7.2);
+
+  const shimmerDuration =
+    tier === "master" ? (active ? 2.2 : 3.6) :
+    tier === "advanced" ? (active ? 3.6 : 5.2) :
+    (active ? 5.2 : 6.8);
+
+  const shimmerRepeatDelay =
+    tier === "master" ? (active ? 0.4 : 0.9) :
+    tier === "advanced" ? (active ? 1.1 : 1.6) :
+    (active ? 1.6 : 2.2);
+
+  const rivetR =
+    tier === "master" ? (active ? 3.7 : 3.5) :
+    tier === "advanced" ? (active ? 3.3 : 3.1) :
+    (active ? 2.9 : 2.7);
 
   const ids = useMemo(
     () => ({
@@ -75,19 +101,31 @@ export function BranchShield({
       height={size + 10}
       width={size}
       viewBox="0 0 64 74"
+      overflow="visible"
       style={{ display: "block" }}
     >
       <defs>
         <radialGradient id={ids.fill} cx="28%" cy="18%" r="86%">
           <stop offset="0%" stopColor={plateA} />
           <stop offset="55%" stopColor={plateB} />
-          <stop offset="100%" stopColor="rgba(0,0,0,0.06)" />
+          {tier === "master" ? (
+            <>
+              <stop offset="78%" stopColor={withAlpha(TIER_MASTER_CRIMSON, scored ? 0.22 : 0.12)} />
+              <stop offset="100%" stopColor={withAlpha(TIER_MASTER_CRIMSON, scored ? 0.14 : 0.07)} />
+            </>
+          ) : (
+            <stop offset="100%" stopColor="rgba(0,0,0,0.06)" />
+          )}
         </radialGradient>
 
         <linearGradient id={ids.border} x1="0" x2="0" y1="0" y2="1">
           <stop offset="0%" stopColor={borderA} />
           <stop offset="55%" stopColor={borderB} />
-          <stop offset="100%" stopColor={withAlpha(accent, 0.44)} />
+          <stop offset="100%" stopColor={
+            tier === "master"
+              ? withAlpha(TIER_MASTER_CRIMSON, active ? 0.80 : 0.60)
+              : withAlpha(accent, 0.44)
+          } />
         </linearGradient>
 
         <linearGradient id={ids.inner} x1="0" x2="1" y1="0" y2="1">
@@ -98,8 +136,18 @@ export function BranchShield({
 
         <linearGradient id={ids.shimmer} x1="0" x2="1" y1="0" y2="0">
           <stop offset="0%" stopColor="rgba(255,255,255,0)" />
-          <stop offset="45%" stopColor={withAlpha("#ffffff", active ? 0.26 : 0.16)} />
-          <stop offset="55%" stopColor={withAlpha("#ffffff", active ? 0.18 : 0.10)} />
+          <stop offset="45%" stopColor={
+            tier === "master"
+              ? withAlpha(TIER_MASTER_GOLD, active ? 0.40 : 0.26)
+              : tier === "advanced"
+              ? withAlpha(TIER_ADVANCED_BRASS, active ? 0.32 : 0.20)
+              : withAlpha("#ffffff", active ? 0.26 : 0.16)
+          } />
+          <stop offset="58%" stopColor={
+            tier === "master"
+              ? withAlpha(TIER_MASTER_CRIMSON, active ? 0.24 : 0.14)
+              : withAlpha("#ffffff", active ? 0.18 : 0.10)
+          } />
           <stop offset="100%" stopColor="rgba(255,255,255,0)" />
         </linearGradient>
 
@@ -107,6 +155,30 @@ export function BranchShield({
           <path d="M32 24c6.2 0 10.9 4.1 10.9 9.6 0 5.8-3.4 10.4-10.9 17.1-7.5-6.7-10.9-11.3-10.9-17.1 0-5.5 4.7-9.6 10.9-9.6Z" />
         </clipPath>
       </defs>
+
+      {/* Master halo rings — rendered behind everything */}
+      {tier === "master" && !reducedMotion && (
+        <>
+          {/* Outer crimson halo */}
+          <motion.ellipse
+            cx="32" cy="37" rx="37" ry="40"
+            fill="none"
+            stroke={withAlpha(TIER_MASTER_CRIMSON, 0.48)}
+            strokeWidth="1.4"
+            animate={{ opacity: [0.18, 0.55, 0.18], strokeWidth: [1.2, 1.9, 1.2] }}
+            transition={{ duration: 3.4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
+          />
+          {/* Inner gold halo */}
+          <motion.ellipse
+            cx="32" cy="37" rx="32" ry="35"
+            fill="none"
+            stroke={withAlpha(accent, 0.55)}
+            strokeWidth="0.9"
+            animate={{ opacity: [0.28, 0.72, 0.28] }}
+            transition={{ duration: 2.4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut", delay: 0.6 }}
+          />
+        </>
+      )}
 
       {/* shadow plate */}
       <path
@@ -138,7 +210,7 @@ export function BranchShield({
         transition={
           reducedMotion
             ? undefined
-            : { duration: active ? 3.8 : 5.4, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }
+            : { duration: pulseDuration, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }
         }
       />
 
@@ -146,7 +218,7 @@ export function BranchShield({
       <circle
         cx="32"
         cy="32"
-        r={active ? 3.1 : 2.7}
+        r={rivetR}
         fill={withAlpha(accent, active ? 0.65 : 0.42)}
         stroke={withAlpha("#ffffff", active ? 0.18 : 0.12)}
         strokeWidth="1"
@@ -189,10 +261,10 @@ export function BranchShield({
             opacity={active ? 0.9 : 0.7}
             animate={{ x: ["-24", "76"] }}
             transition={{
-              duration: active ? 3.6 : 5.2,
+              duration: shimmerDuration,
               repeat: Number.POSITIVE_INFINITY,
               ease: "easeInOut",
-              repeatDelay: active ? 0.6 : 1.1,
+              repeatDelay: shimmerRepeatDelay,
             }}
           />
         )}

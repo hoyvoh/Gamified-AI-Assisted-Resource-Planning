@@ -4,6 +4,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { ANALYSIS_CHAMBER_SHELL_PALETTE as palette } from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
+import { resolveTier, getTierEffects } from "@/features/analysis-chamber/lib/branch-tier";
+import { TIER_MASTER_CRIMSON } from "@/features/analysis-chamber/lib/branch-tier-colors";
 
 import type { BranchNodeData } from "./branch-node";
 
@@ -101,24 +103,58 @@ const MODAL_KEYFRAMES = `
   @keyframes auraIn  { from { opacity: 0; } to { opacity: 1; } }
   @keyframes auraOut { from { opacity: 1; } to { opacity: 0; } }
 
+  /* ── Master tier: crimson secondary bloom ── */
+  @keyframes masterCrimsonBloom {
+    0%   { box-shadow: 0 0 0 1px var(--modal-border-bright), 0 0 72px var(--modal-glow-bright), 0 0 140px var(--modal-glow), 0 0 100px rgba(155,28,28,0.55); }
+    100% { box-shadow: 0 0 0 1px var(--modal-border),        0 0 0px transparent,               0 0 0px transparent,     0 0 0px rgba(155,28,28,0); }
+  }
+
+  /* ── Master tier: dual breath glow (deep gold + blood crimson) ── */
+  @keyframes modalBreathGlowMaster {
+    0%, 100% {
+      box-shadow:
+        0 24px 64px rgba(0,0,0,0.72),
+        0 0 0 1px var(--modal-border),
+        0 0 28px var(--modal-glow-dim),
+        0 0 60px rgba(155,28,28,0.06);
+    }
+    50% {
+      box-shadow:
+        0 28px 80px rgba(0,0,0,0.78),
+        0 0 0 1px var(--modal-border-bright),
+        0 0 60px var(--modal-glow),
+        0 0 110px var(--modal-glow-far),
+        0 0 160px rgba(155,28,28,0.28),
+        0 0 260px rgba(155,28,28,0.12);
+    }
+  }
+
   /* ── Reduced-motion ── */
   @media (prefers-reduced-motion: reduce) {
-    [data-modal-float]   { animation: none !important; transform: translate(-50%, -50%) !important; }
-    [data-modal-card]    { animation: none !important; transform: none !important; }
-    [data-modal-backdrop]{ animation: none !important; }
-    [data-bar-shimmer]   { animation: none !important; }
-    [data-sigil-icon]    { animation: none !important; }
-    [data-modal-aura]    { display: none !important; }
+    [data-modal-float]        { animation: none !important; transform: translate(-50%, -50%) !important; }
+    [data-modal-card]         { animation: none !important; transform: none !important; }
+    [data-modal-backdrop]     { animation: none !important; }
+    [data-bar-shimmer]        { animation: none !important; }
+    [data-sigil-icon]         { animation: none !important; }
+    [data-modal-aura]         { display: none !important; }
+    [data-modal-master-halo]  { display: none !important; }
   }
 `;
 
 const SPARKLES = [
+  // base (3) — intermediate
   { sx: "18px",  sy: "-28px", delay: "0ms",   left: "8%",  top: "16%" },
   { sx: "-14px", sy: "-22px", delay: "60ms",  left: "84%", top: "12%" },
   { sx: "10px",  sy: "-32px", delay: "120ms", left: "52%", top: "4%"  },
+  // advanced (+3)
   { sx: "-18px", sy: "-16px", delay: "30ms",  left: "93%", top: "46%" },
   { sx: "12px",  sy: "-24px", delay: "90ms",  left: "4%",  top: "58%" },
   { sx: "-8px",  sy: "-20px", delay: "150ms", left: "70%", top: "80%" },
+  // master (+4)
+  { sx: "14px",  sy: "-26px", delay: "45ms",  left: "30%", top: "8%"  },
+  { sx: "-10px", sy: "-18px", delay: "105ms", left: "62%", top: "72%" },
+  { sx: "16px",  sy: "-30px", delay: "75ms",  left: "18%", top: "34%" },
+  { sx: "-12px", sy: "-22px", delay: "135ms", left: "78%", top: "56%" },
 ];
 
 /**
@@ -156,12 +192,6 @@ const EMBER_PARTICLES: {
   { left: "82%",  top: "38%", size: 2.5, dur: "3.6s",  delay: "0.45s", dx: "-6px",  dy: "-16px", peak: 0.28 },
   { left: "42%",  top: "78%", size: 3.5, dur: "4.15s", delay: "0.2s",  dx: "4px",   dy: "-18px", peak: 0.24 },
   { left: "68%",  top: "20%", size: 2.5, dur: "3.42s", delay: "0.85s", dx: "-4px",  dy: "-22px", peak: 0.34 },
-];
-
-const SIGNAL_CONFIG = [
-  { key: "positiveSignals" as const, label: "Positive", icon: "▲", color: "rgba(34,197,94,0.9)",   border: "rgba(34,197,94,0.28)",   bg: "rgba(34,197,94,0.07)"   },
-  { key: "negativeSignals" as const, label: "Negative", icon: "▼", color: "rgba(230,80,40,0.9)",   border: "rgba(230,80,40,0.28)",   bg: "rgba(230,80,40,0.07)"   },
-  { key: "mixedSignals"    as const, label: "Mixed",    icon: "◆", color: "rgba(154,171,184,0.9)", border: "rgba(154,171,184,0.28)", bg: "rgba(154,171,184,0.07)" },
 ];
 
 function ScoreBar({ score, accentColor }: { score: number; accentColor: string }) {
@@ -257,6 +287,20 @@ export function BranchDetailModal({ open, branch, onClose }: BranchDetailModalPr
   const accentColor  = branch.toneColor  || palette.gold;
   const accentBorder = branch.toneBorder || palette.gold;
 
+  const tier = resolveTier(branch.tier);
+  const effects = getTierEffects(tier);
+
+  const cardOpenAnimation = [
+    "modalCardIn 480ms cubic-bezier(0.22,1,0.36,1) both",
+    "modalOpenBloom 900ms ease-out 160ms forwards",
+    ...(effects.hasCrimsonBloom
+      ? ["masterCrimsonBloom 1200ms ease-out 280ms forwards"]
+      : []),
+    tier === "master"
+      ? `modalBreathGlowMaster ${effects.modalBreathDuration}ms ease-in-out 820ms infinite`
+      : `modalBreathGlow ${effects.modalBreathDuration}ms ease-in-out 820ms infinite`,
+  ].join(", ");
+
   const hasSignals =
     branch.positiveSignals + branch.negativeSignals + branch.mixedSignals > 0;
 
@@ -294,16 +338,16 @@ export function BranchDetailModal({ open, branch, onClose }: BranchDetailModalPr
         style={{
           top: "50%",
           left: "50%",
-          width: 560,
-          height: 620,
+          width: tier === "master" ? 620 : 560,
+          height: tier === "master" ? 680 : 620,
           transform: "translate(-50%, -50%)",
           zIndex: 1001,
           animation: exiting
             ? "auraOut 280ms ease forwards"
-            : "auraIn 700ms ease 200ms both",
+            : `auraIn ${tier === "master" ? 500 : 700}ms ease 200ms both`,
         }}
       >
-        {EMBER_PARTICLES.map((p, i) => (
+        {EMBER_PARTICLES.slice(0, effects.emberCount).map((p, i) => (
           <span
             key={i}
             aria-hidden="true"
@@ -313,9 +357,9 @@ export function BranchDetailModal({ open, branch, onClose }: BranchDetailModalPr
               top: p.top,
               width: `${p.size}px`,
               height: `${p.size}px`,
-              background: accentColor,
-              boxShadow: p.size >= 2 ? `0 0 ${p.size * 2}px ${accentColor}66` : undefined,
-              ["--ep-peak" as string]: p.peak,
+              background: tier === "master" && i >= 12 ? TIER_MASTER_CRIMSON : accentColor,
+              boxShadow: p.size >= 2 ? `0 0 ${p.size * 2}px ${tier === "master" && i >= 12 ? TIER_MASTER_CRIMSON : accentColor}66` : undefined,
+              ["--ep-peak" as string]: Math.min(1, p.peak * effects.emberPeakMultiplier),
               ["--ep-dx" as string]: p.dx,
               ["--ep-dy" as string]: p.dy,
               animation: `emberDrift ${p.dur} ease-in-out ${p.delay} infinite`,
@@ -323,6 +367,24 @@ export function BranchDetailModal({ open, branch, onClose }: BranchDetailModalPr
           />
         ))}
       </div>
+
+      {/* ── Master outer halo ring (box-shadow bloom, breathing, behind card) ── */}
+      {false && tier === "master" && !exiting && (
+        <div
+          data-modal-master-halo=""
+          aria-hidden="true"
+          className="pointer-events-none fixed rounded-[50%]"
+          style={{
+            top: "50%",
+            left: "50%",
+            width: 500,
+            height: 540,
+            transform: "translate(-50%, -50%)",
+            zIndex: 1001,
+            animation: "masterHaloBreath 2.8s ease-in-out 300ms infinite",
+          }}
+        />
+      )}
 
       {/*
        * ── Float wrapper ──
@@ -340,7 +402,7 @@ export function BranchDetailModal({ open, branch, onClose }: BranchDetailModalPr
           transform: "translate(-50%, -50%)",
           animation: exiting
             ? "modalFloatOut 280ms ease-in forwards"
-            : "modalFloat 5200ms ease-in-out 780ms infinite",
+            : `modalFloat ${effects.floatDuration}ms ease-in-out 780ms infinite`,
         }}
       >
       {/*
@@ -369,17 +431,13 @@ export function BranchDetailModal({ open, branch, onClose }: BranchDetailModalPr
             animation: exiting
               ? "modalCardOut 280ms cubic-bezier(0.4,0,1,1) forwards"
               /* bloom first (wins while active), then breathGlow owns box-shadow */
-              : [
-                  "modalCardIn    480ms cubic-bezier(0.22,1,0.36,1) both",
-                  "modalOpenBloom 900ms ease-out 160ms forwards",
-                  "modalBreathGlow 4000ms ease-in-out 820ms infinite",
-                ].join(", "),
+              : cardOpenAnimation,
           } as React.CSSProperties
         }
       >
         {/* Sparkle particles */}
         {!exiting &&
-          SPARKLES.map((s, i) => (
+          SPARKLES.slice(0, effects.sparkleCount).map((s, i) => (
             <span
               key={i}
               aria-hidden="true"
@@ -398,14 +456,23 @@ export function BranchDetailModal({ open, branch, onClose }: BranchDetailModalPr
             />
           ))}
 
-        {/* Top accent strip */}
+        {/* Top accent strip(s) */}
         <div
           style={{
             height: 2,
             background: `linear-gradient(90deg, transparent 0%, ${accentColor}99 40%, ${accentColor} 50%, ${accentColor}99 60%, transparent 100%)`,
-            boxShadow: `0 0 6px ${accentColor}44`,
+            boxShadow: `0 0 ${tier === "master" ? 10 : 6}px ${accentColor}${tier === "master" ? "66" : "44"}`,
           }}
         />
+        {tier === "master" ? (
+          <div
+            style={{
+              height: 1,
+              background: `linear-gradient(90deg, transparent 0%, ${TIER_MASTER_CRIMSON}55 40%, ${TIER_MASTER_CRIMSON}bb 50%, ${TIER_MASTER_CRIMSON}55 60%, transparent 100%)`,
+              boxShadow: `0 0 6px ${TIER_MASTER_CRIMSON}44`,
+            }}
+          />
+        ) : null}
 
         <div className="px-6 py-5">
           {/* ── Header: sigil + names + close ── */}
@@ -478,7 +545,7 @@ export function BranchDetailModal({ open, branch, onClose }: BranchDetailModalPr
             {branch.score !== null && branch.scored ? (
               <span
                 className="font-display text-3xl leading-none"
-                style={{ color: palette.gold }}
+                style={{ color: accentColor }}
               >
                 {branch.score}
                 <span
@@ -501,15 +568,12 @@ export function BranchDetailModal({ open, branch, onClose }: BranchDetailModalPr
           {/* ── Summary reading ── */}
           {branch.summary ? (
             <div
-              className="mt-4 rounded-xl border px-4 py-3"
-              style={{
-                borderColor: `${accentBorder}2a`,
-                background: `linear-gradient(180deg, ${accentColor}0d, ${accentColor}05)`,
-              }}
+              className="mt-4 pl-3"
+              style={{ borderLeft: `2px solid ${palette.silver}33` }}
             >
               <p
                 className="mb-1.5 text-[9px] uppercase tracking-[0.16em]"
-                style={{ color: `${accentColor}bb` }}
+                style={{ color: `${palette.silver}88` }}
               >
                 Reading
               </p>
@@ -522,169 +586,123 @@ export function BranchDetailModal({ open, branch, onClose }: BranchDetailModalPr
             </div>
           ) : null}
 
-          {/* ── Signal breakdown ── */}
+          {/* ── Signal summary ── */}
           {branch.scored && hasSignals ? (
-            <div className="mt-4">
-              <div className="mb-2 flex items-center justify-between">
-                <p
-                  className="text-[9px] uppercase tracking-[0.16em]"
-                  style={{ color: `${accentColor}bb` }}
-                >
-                  Signal breakdown
-                </p>
+            <div className="mt-4 flex items-center justify-between">
+              <p
+                className="text-[9px] uppercase tracking-[0.16em]"
+                style={{ color: `${palette.silver}88` }}
+              >
+                Signals
+              </p>
+              <div className="flex items-center gap-3">
+                <span className="text-[11px]" style={{ color: "rgba(34,197,94,0.7)" }}>
+                  ▲ {branch.positiveSignals}
+                </span>
+                <span className="text-[9px]" style={{ color: "rgba(154,171,184,0.22)" }}>·</span>
+                <span className="text-[11px]" style={{ color: "rgba(230,80,40,0.65)" }}>
+                  ▼ {branch.negativeSignals}
+                </span>
+                <span className="text-[9px]" style={{ color: "rgba(154,171,184,0.22)" }}>·</span>
+                <span className="text-[11px]" style={{ color: "rgba(154,171,184,0.5)" }}>
+                  ◆ {branch.mixedSignals}
+                </span>
                 {branch.totalSignals != null ? (
-                  <p
-                    className="text-[9px]"
-                    style={{ color: palette.inkMuted }}
-                  >
-                    {branch.totalSignals} total
-                  </p>
+                  <span className="text-[9px] ml-1" style={{ color: palette.inkMuted }}>
+                    / {branch.totalSignals}
+                  </span>
                 ) : null}
               </div>
-              <div className="grid grid-cols-3 gap-2">
-                {SIGNAL_CONFIG.map(({ key, label, icon, color, border, bg }) => (
-                  <div
-                    key={key}
-                    className="rounded-lg border px-2 py-3 text-center"
-                    style={{ borderColor: border, background: bg }}
-                  >
-                    <p
-                      className="text-[9px] uppercase tracking-wider"
-                      style={{ color }}
-                    >
-                      <span className="mr-0.5 text-[7px]">{icon}</span>
-                      {label}
-                    </p>
-                    <p
-                      className="mt-1 font-display text-xl"
-                      style={{ color: palette.ink }}
-                    >
-                      {branch[key]}
-                    </p>
-                  </div>
-                ))}
-              </div>
             </div>
           ) : null}
 
-          {/* ── Confidence + Opportunity row ── */}
-          {branch.scored && (branch.confidenceLabel || branch.opportunityLabel) ? (
-            <div className="mt-4 grid grid-cols-2 gap-2">
+          {/* ── Thin rule before meta footer ── */}
+          {branch.scored &&
+          (branch.confidenceLabel || branch.opportunityLabel || branch.deltaLabel) ? (
+            <div
+              className="mt-4"
+              style={{ height: 1, background: `${accentBorder}18` }}
+            />
+          ) : null}
+
+          {/* ── Meta footer: confidence · opportunity · trend ── */}
+          {branch.scored &&
+          (branch.confidenceLabel || branch.opportunityLabel || branch.deltaLabel) ? (
+            <div className="mt-3 flex flex-wrap items-baseline gap-x-6 gap-y-2">
               {branch.confidenceLabel ? (
-                <div
-                  className="rounded-xl border px-3 py-3"
-                  style={{
-                    borderColor: "rgba(74,122,186,0.28)",
-                    background: "rgba(42,90,154,0.06)",
-                  }}
-                >
-                  <p
-                    className="text-[9px] uppercase tracking-[0.14em]"
-                    style={{ color: "rgba(100,150,220,0.8)" }}
+                <span className="text-[12px]" style={{ color: palette.inkSoft }}>
+                  <span
+                    className="mr-1.5 text-[9px] uppercase tracking-[0.14em]"
+                    style={{ color: `${palette.silver}88` }}
                   >
                     Confidence
-                  </p>
-                  <p
-                    className="mt-1.5 text-xs font-semibold leading-5"
-                    style={{ color: palette.ink }}
-                  >
-                    {branch.confidenceLabel}
-                  </p>
+                  </span>
+                  {branch.confidenceLabel}
                   {branch.confidenceScore != null ? (
-                    <p
-                      className="text-[10px]"
-                      style={{ color: palette.inkMuted }}
-                    >
-                      {Math.round(branch.confidenceScore * 100)}%
-                    </p>
+                    <span className="ml-1 text-[11px]" style={{ color: palette.inkMuted }}>
+                      · {Math.round(branch.confidenceScore * 100)}%
+                    </span>
                   ) : null}
-                </div>
+                </span>
               ) : null}
               {branch.opportunityLabel ? (
-                <div
-                  className="rounded-xl border px-3 py-3"
-                  style={{
-                    borderColor: "rgba(255,149,0,0.22)",
-                    background: "rgba(255,149,0,0.05)",
-                  }}
-                >
-                  <p
-                    className="text-[9px] uppercase tracking-[0.14em]"
-                    style={{ color: "rgba(255,149,0,0.8)" }}
+                <span className="text-[12px]" style={{ color: palette.inkSoft }}>
+                  <span
+                    className="mr-1.5 text-[9px] uppercase tracking-[0.14em]"
+                    style={{ color: `${palette.silver}88` }}
                   >
                     Opportunity
-                  </p>
-                  <p
-                    className="mt-1.5 text-xs font-semibold leading-5"
-                    style={{ color: palette.ink }}
-                  >
-                    {branch.opportunityLabel}
-                  </p>
+                  </span>
+                  {branch.opportunityLabel}
                   {branch.opportunityScore != null ? (
-                    <p
-                      className="text-[10px]"
-                      style={{ color: palette.inkMuted }}
-                    >
-                      {Math.round(branch.opportunityScore * 100)}%
-                    </p>
+                    <span className="ml-1 text-[11px]" style={{ color: palette.inkMuted }}>
+                      · {Math.round(branch.opportunityScore * 100)}%
+                    </span>
                   ) : null}
-                </div>
+                </span>
               ) : null}
-            </div>
-          ) : null}
-
-          {/* ── Delta / trend ── */}
-          {branch.scored && branch.deltaLabel ? (
-            <div
-              className="mt-3 flex items-center gap-2 rounded-xl border px-3 py-2.5"
-              style={{
-                borderColor: "rgba(154,171,184,0.18)",
-                background: "rgba(154,171,184,0.04)",
-              }}
-            >
-              <span
-                className="text-[9px] uppercase tracking-[0.14em]"
-                style={{ color: palette.inkMuted }}
-              >
-                Trend
-              </span>
-              <span
-                className="text-xs"
-                style={{ color: palette.inkSoft }}
-              >
-                {branch.deltaLabel}
-              </span>
-              {branch.deltaValue != null ? (
-                <span
-                  className="ml-auto font-display text-sm"
-                  style={{
-                    color:
-                      branch.deltaValue > 0
-                        ? "rgba(34,197,94,0.9)"
-                        : branch.deltaValue < 0
-                          ? "rgba(230,80,40,0.9)"
-                          : palette.silver,
-                  }}
-                >
-                  {branch.deltaValue > 0 ? "+" : ""}
-                  {branch.deltaValue.toFixed(1)}
+              {branch.deltaLabel ? (
+                <span className="text-[12px]" style={{ color: palette.inkSoft }}>
+                  <span
+                    className="mr-1.5 text-[9px] uppercase tracking-[0.14em]"
+                    style={{ color: `${palette.silver}88` }}
+                  >
+                    Trend
+                  </span>
+                  {branch.deltaLabel}
+                  {branch.deltaValue != null ? (
+                    <span
+                      className="ml-1 text-[12px]"
+                      style={{
+                        color:
+                          branch.deltaValue > 0
+                            ? "rgba(34,197,94,0.85)"
+                            : branch.deltaValue < 0
+                              ? "rgba(230,80,40,0.85)"
+                              : palette.silver,
+                      }}
+                    >
+                      {branch.deltaValue > 0 ? "+" : ""}
+                      {branch.deltaValue.toFixed(1)}
+                    </span>
+                  ) : null}
                 </span>
               ) : null}
             </div>
           ) : null}
 
-          {/* ── Limitation notes ── */}
+          {/* ── Analyst notes ── */}
           {branch.limitationNotes && branch.limitationNotes.length > 0 ? (
             <div
-              className="mt-4 rounded-xl border px-4 py-3"
+              className="mt-4 rounded-lg px-3 py-2.5"
               style={{
-                borderColor: "rgba(230,80,40,0.18)",
-                background: "rgba(230,80,40,0.04)",
+              background: `${palette.silver}08`,
+              borderLeft: `2px solid ${palette.silver}44`,
               }}
             >
               <p
-                className="mb-2 text-[9px] uppercase tracking-[0.16em]"
-                style={{ color: "rgba(230,80,40,0.7)" }}
+                className="mb-1.5 text-[9px] uppercase tracking-[0.15em]"
+                style={{ color: `${palette.silver}99` }}
               >
                 Analyst notes
               </p>
@@ -692,10 +710,10 @@ export function BranchDetailModal({ open, branch, onClose }: BranchDetailModalPr
                 {branch.limitationNotes.map((note, i) => (
                   <li
                     key={i}
-                    className="flex gap-2 text-[11px] leading-5"
+                    className="flex gap-2 text-[13px] leading-6"
                     style={{ color: palette.inkSoft }}
                   >
-                    <span style={{ color: "rgba(230,80,40,0.5)" }}>•</span>
+                    <span className="mt-0.5 shrink-0" style={{ color: `${palette.silver}66` }}>·</span>
                     {note}
                   </li>
                 ))}
@@ -707,8 +725,11 @@ export function BranchDetailModal({ open, branch, onClose }: BranchDetailModalPr
         {/* Bottom accent strip */}
         <div
           style={{
-            height: 1,
-            background: `linear-gradient(90deg, transparent, ${accentBorder}33, transparent)`,
+            height: tier === "master" ? 2 : 1,
+            background: tier === "master"
+              ? `linear-gradient(90deg, transparent, ${TIER_MASTER_CRIMSON}44, ${accentBorder}66, ${TIER_MASTER_CRIMSON}44, transparent)`
+              : `linear-gradient(90deg, transparent, ${accentBorder}33, transparent)`,
+            boxShadow: tier === "master" ? `0 0 4px ${TIER_MASTER_CRIMSON}33` : undefined,
           }}
         />
       </div>

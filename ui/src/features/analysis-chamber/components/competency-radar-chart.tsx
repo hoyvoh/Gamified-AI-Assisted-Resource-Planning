@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo } from "react";
 
 import {
   type BaseTickContentProps,
@@ -69,7 +69,7 @@ const ACTIVE_NODE_GLOW_FILTER_ID = "competency-radar-active-node-glow";
 
 const CORE_SIGIL_GRADIENT_ID = "competency-radar-core-sigil";
 
-const HOVER_PREVIEW_DELAY_MS = 500;
+
 
 const toNumber = (value: number | string | undefined): number =>
   Number(value ?? 0) || 0;
@@ -94,37 +94,7 @@ export function CompetencyRadarChart({
 
   goldColor,
 }: CompetencyRadarChartProps) {
-  const [previewCategoryId, setPreviewCategoryId] = useState<string | null>(
-    null,
-  );
-  const previewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const clearPreviewTimer = useCallback(() => {
-    if (previewTimerRef.current) {
-      clearTimeout(previewTimerRef.current);
-      previewTimerRef.current = null;
-    }
-  }, []);
-
-  const schedulePreviewCategory = useCallback(
-    (categoryId: string) => {
-      clearPreviewTimer();
-      previewTimerRef.current = setTimeout(() => {
-        setPreviewCategoryId(categoryId);
-        previewTimerRef.current = null;
-      }, HOVER_PREVIEW_DELAY_MS);
-    },
-    [clearPreviewTimer],
-  );
-
-  const clearPreviewCategory = useCallback(() => {
-    clearPreviewTimer();
-    setPreviewCategoryId(null);
-  }, [clearPreviewTimer]);
-
-  useEffect(() => clearPreviewTimer, [clearPreviewTimer]);
-
-  const activeCategoryId = previewCategoryId ?? focusCategoryId;
+  const activeCategoryId = focusCategoryId;
 
   const focusAccent = activeCategoryId
     ? (accentMap[activeCategoryId] ?? null)
@@ -157,13 +127,15 @@ export function CompetencyRadarChart({
       // Determine text-anchor by horizontal position relative to center
 
       const relX = x - cx;
+      const relY = y - cy;
 
       const textAnchor =
         Math.abs(relX) < 12 ? "middle" : relX > 0 ? "start" : "end";
 
-      // Offset so label doesn't overlap the grid boundary
+      // Offset so label doesn't overlap the grid boundary — apply radial spacing for all angles
 
       const offsetX = relX > 12 ? 6 : relX < -12 ? -6 : 0;
+      const offsetY = relY > 12 ? 6 : relY < -12 ? -6 : 0;
 
       // Compute line endpoint at the score dot position (not at the text label).
       // Recharts places the tick label at outerRadius + ~5px from center.
@@ -182,8 +154,6 @@ export function CompetencyRadarChart({
         <g
           key={categoryId}
           onClick={() => onSelectCategory(categoryId)}
-          onMouseEnter={() => schedulePreviewCategory(categoryId)}
-          onMouseLeave={clearPreviewCategory}
           style={{ cursor: "pointer", transition: "opacity 0.4s ease-in-out" }}
         >
           <line
@@ -209,16 +179,6 @@ export function CompetencyRadarChart({
               strokeOpacity={0.26}
               strokeWidth={4}
               style={{ transition: "stroke-opacity 0.4s ease-in-out" }}
-            />
-          )}
-          {/* Active indicator dot */}
-          {isActive && (
-            <circle
-              cx={x + offsetX + (relX > 12 ? -10 : relX < -12 ? 10 : 0)}
-              cy={y}
-              r={3}
-              fill={textColor}
-              fillOpacity={0.9}
             />
           )}
           {categoryId === entries[0]?.categoryId ? (
@@ -252,7 +212,7 @@ export function CompetencyRadarChart({
           ) : null}
           <text
             x={x + offsetX}
-            y={y}
+            y={y + offsetY}
             dy="0.35em"
             textAnchor={textAnchor}
             fill={textColor}
@@ -270,12 +230,10 @@ export function CompetencyRadarChart({
     [
       activeCategoryId,
       accentMap,
-      clearPreviewCategory,
       onSelectCategory,
       goldColor,
       inkColor,
       entries,
-      schedulePreviewCategory,
       strokeColor,
     ],
   );
@@ -310,8 +268,6 @@ export function CompetencyRadarChart({
             fill={dotColor}
             fillOpacity={0.25}
             stroke="none"
-            onMouseEnter={() => schedulePreviewCategory(categoryId)}
-            onMouseLeave={clearPreviewCategory}
             style={{ cursor: "pointer" }}
             onClick={() => onSelectCategory(categoryId)}
           />
@@ -322,8 +278,6 @@ export function CompetencyRadarChart({
         <g
           key={`dot-${categoryId}`}
           onClick={() => onSelectCategory(categoryId)}
-          onMouseEnter={() => schedulePreviewCategory(categoryId)}
-          onMouseLeave={clearPreviewCategory}
           style={{ cursor: "pointer" }}
         >
           {isActive ? (
@@ -379,10 +333,8 @@ export function CompetencyRadarChart({
     [
       activeCategoryId,
       accentMap,
-      clearPreviewCategory,
       onSelectCategory,
       goldColor,
-      schedulePreviewCategory,
     ],
   );
 

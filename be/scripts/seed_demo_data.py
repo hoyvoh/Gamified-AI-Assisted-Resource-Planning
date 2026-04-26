@@ -205,11 +205,23 @@ async def seed_demo_data() -> None:
         dimensions = [
             {
                 "dimension_id": "implementation_reliability",
-                "score": 8.2,
-                "maturity_level": "advanced",
-                "confidence": 0.92,
-                "opportunity": 0.65,
-                "signals": (15, 12, 2, 1),
+                "score": 9.4,
+                "maturity_level": "master",
+                "confidence": 0.96,
+                "opportunity": 0.30,
+                "signals": (22, 20, 1, 1),
+                "limitation_notes": [],
+                "ui_summary": "Master-level reliability — delivery is consistent, predictable, and clean under pressure.",
+            },
+            {
+                "dimension_id": "debugging_root_cause",
+                "score": 9.1,
+                "maturity_level": "master",
+                "confidence": 0.94,
+                "opportunity": 0.28,
+                "signals": (18, 17, 0, 1),
+                "limitation_notes": [],
+                "ui_summary": "Exceptional root-cause depth — consistently isolates hard bugs others miss.",
             },
             {
                 "dimension_id": "code_quality_discipline",
@@ -218,6 +230,8 @@ async def seed_demo_data() -> None:
                 "confidence": 0.89,
                 "opportunity": 0.72,
                 "signals": (14, 13, 0, 1),
+                "limitation_notes": ["Limited sample size in some time periods"],
+                "ui_summary": None,
             },
             {
                 "dimension_id": "collaboration",
@@ -226,6 +240,8 @@ async def seed_demo_data() -> None:
                 "confidence": 0.78,
                 "opportunity": 0.85,
                 "signals": (9, 5, 2, 2),
+                "limitation_notes": ["Limited sample size in some time periods"],
+                "ui_summary": None,
             },
             {
                 "dimension_id": "problem_solving",
@@ -234,6 +250,8 @@ async def seed_demo_data() -> None:
                 "confidence": 0.86,
                 "opportunity": 0.58,
                 "signals": (12, 10, 1, 1),
+                "limitation_notes": ["Limited sample size in some time periods"],
+                "ui_summary": None,
             },
             {
                 "dimension_id": "technical_ownership",
@@ -242,6 +260,8 @@ async def seed_demo_data() -> None:
                 "confidence": 0.81,
                 "opportunity": 0.76,
                 "signals": (11, 7, 2, 2),
+                "limitation_notes": ["Limited sample size in some time periods"],
+                "ui_summary": None,
             },
             {
                 "dimension_id": "backend_capability",
@@ -250,6 +270,8 @@ async def seed_demo_data() -> None:
                 "confidence": 0.84,
                 "opportunity": 0.60,
                 "signals": (13, 10, 1, 2),
+                "limitation_notes": ["Limited sample size in some time periods"],
+                "ui_summary": None,
             },
         ]
 
@@ -276,13 +298,13 @@ async def seed_demo_data() -> None:
                 negative_signals=negative,
                 mixed_signals=mixed,
                 explanation_summary=f"Strong performance in {dim['dimension_id'].replace('_', ' ')}",
-                limitation_notes=["Limited sample size in some time periods"],
+                limitation_notes=dim.get("limitation_notes", ["Limited sample size in some time periods"]),
                 top_supporting_evidence_ids=[
                     e.evidence_id for e in evidence_units[:2]
                 ],
                 top_counter_evidence_ids=[],
                 p3_inference=None,
-                ui_summary=f"{dim['maturity_level'].capitalize()} proficiency in {dim['dimension_id']}",
+                ui_summary=dim.get("ui_summary") or f"{dim['maturity_level'].capitalize()} proficiency in {dim['dimension_id']}",
                 created_at=utcnow(),
             )
             dimension_scores.append(score)
@@ -427,11 +449,12 @@ async def seed_demo_data() -> None:
                 confidence_label="High",
                 included_dimensions=[
                     "implementation_reliability",
+                    "debugging_root_cause",
                     "code_quality_discipline",
                     "technical_ownership",
                 ],
                 excluded_dimensions=["careless_mistake_control"],
-                explanation_summary="Strong core execution with reliable delivery and quality focus.",
+                explanation_summary="Exceptional core execution — master-tier reliability and debugging, backed by disciplined code quality.",
                 created_at=utcnow(),
             ),
             CategoryScore(
@@ -509,8 +532,8 @@ async def seed_demo_data() -> None:
             ),
             top_strength_dimension_ids=[
                 "implementation_reliability",
+                "debugging_root_cause",
                 "code_quality_discipline",
-                "problem_solving",
             ],
             top_growth_dimension_ids=["collaboration", "horenso_reporting_discipline"],
             current_growth_path="Emerging Owner",

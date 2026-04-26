@@ -10,6 +10,7 @@ import { useAnalysisChamberCompetencyData } from "@/features/analysis-chamber/ho
 import { useAnalysisChamberRouteState } from "@/features/analysis-chamber/hooks/use-analysis-chamber-route-state";
 
 import { ANALYSIS_CHAMBER_SHELL_PALETTE as palette } from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
+import { TIER_MASTER_GOLD, TIER_MASTER_PLATE_BG, TIER_ADVANCED_BRASS, TIER_ADVANCED_PLATE_BG, TIER_INTER_SILVER, TIER_INTER_PLATE_BG } from "@/features/analysis-chamber/lib/branch-tier-colors";
 import { CompetencyRadarChart } from "@/features/analysis-chamber/components/competency-radar-chart";
 import { BranchLattice } from "@/features/analysis-chamber/components/branch-lattice";
 import type { BranchNodeData } from "@/features/analysis-chamber/components/branch-lattice";
@@ -139,25 +140,28 @@ const getMaturityTone = (maturityLevel: string) => {
   const normalized = maturityLevel.toLowerCase();
 
   if (normalized.includes("master")) {
+    // Deep antique gold with blood-red soul — sovereign, legendary
     return {
-      border: palette.gold,
-      background: palette.goldPale,
-      text: palette.ink,
+      border: TIER_MASTER_GOLD,
+      background: TIER_MASTER_PLATE_BG,
+      text: TIER_MASTER_GOLD,
     };
   }
 
   if (normalized.includes("proficient") || normalized.includes("advanced")) {
+    // Warm brass-gold — refined, earned
     return {
-      border: palette.azure,
-      background: "rgba(26,74,122,0.08)",
-      text: palette.azure,
+      border: TIER_ADVANCED_BRASS,
+      background: TIER_ADVANCED_PLATE_BG,
+      text: TIER_ADVANCED_BRASS,
     };
   }
 
+  // Silver steel — nascent, unpolished
   return {
-    border: palette.silver,
-    background: "rgba(154,171,184,0.12)",
-    text: palette.inkSoft,
+    border: TIER_INTER_SILVER,
+    background: TIER_INTER_PLATE_BG,
+    text: TIER_INTER_SILVER,
   };
 };
 

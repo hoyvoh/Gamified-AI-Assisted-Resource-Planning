@@ -1,11 +1,8 @@
 import type { Metadata } from "next";
-import { EB_Garamond, Inter, JetBrains_Mono, Orbitron, Geist } from "next/font/google";
+import { EB_Garamond, Inter, JetBrains_Mono, Orbitron } from "next/font/google";
 
 import "./globals.css";
 import { QueryClientProviderWrapper } from "@/providers/query-client.provider";
-import { cn } from "@/lib/utils";
-
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const inter = Inter({
   subsets: ["latin"],
@@ -22,7 +19,7 @@ const orbitron = Orbitron({
   variable: "--font-orbitron",
 });
 
-// Early Renaissance serif — pairs with Orbitron for body descriptions
+// Early Renaissance serif — pairs with Orbitron for body descriptions in Analysis Chamber
 const ebGaramond = EB_Garamond({
   subsets: ["latin"],
   variable: "--font-eb-garamond",
@@ -40,10 +37,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("font-sans", geist.variable)}>
-      <body
-        className={`${inter.variable} ${jetBrainsMono.variable} ${orbitron.variable} ${ebGaramond.variable}`}
-      >
+    <html
+      lang="en"
+      className={`${inter.variable} ${jetBrainsMono.variable} ${orbitron.variable} ${ebGaramond.variable} font-sans`}
+    >
+      <body>
         <QueryClientProviderWrapper>{children}</QueryClientProviderWrapper>
       </body>
     </html>

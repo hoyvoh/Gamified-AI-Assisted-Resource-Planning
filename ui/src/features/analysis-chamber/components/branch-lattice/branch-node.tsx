@@ -6,6 +6,8 @@ import { motion, useReducedMotion } from "framer-motion";
 import { ANALYSIS_CHAMBER_SHELL_PALETTE as palette } from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
 
 import { BranchShield } from "./branch-shield";
+import { resolveTier } from "@/features/analysis-chamber/lib/branch-tier";
+import { TIER_MASTER_CRIMSON } from "@/features/analysis-chamber/lib/branch-tier-colors";
 
 export interface BranchNodeData {
   id: string;
@@ -55,6 +57,8 @@ export const BranchNode = forwardRef<HTMLButtonElement, BranchNodeProps>(
     const accent = data.scored ? data.toneBorder : "rgba(154,171,184,0.44)";
     const sigilColor = data.scored ? data.toneColor : palette.silver;
     const plate = data.scored ? data.toneBackground : "rgba(154,171,184,0.10)";
+    const nodeTier = data.scored ? resolveTier(data.tier) : "intermediate";
+    const isMaster = nodeTier === "master";
 
     function hexToRgba(hex: string, alpha: number) {
       const cleaned = hex.replace("#", "");
@@ -109,9 +113,14 @@ export const BranchNode = forwardRef<HTMLButtonElement, BranchNodeProps>(
         };
 
     const accentGlow = withAlpha(accent, isActive ? 0.20 : 0.12);
+    const crimsonGlow = isMaster
+      ? (isActive
+          ? ` drop-shadow(0 0 24px ${withAlpha(TIER_MASTER_CRIMSON, 0.22)})`
+          : ` drop-shadow(0 0 16px ${withAlpha(TIER_MASTER_CRIMSON, 0.12)})`)
+      : "";
     const baseGlow = isActive
-      ? `drop-shadow(0 18px 26px rgba(0,0,0,0.35)) drop-shadow(0 0 18px ${accentGlow})`
-      : `drop-shadow(0 18px 26px rgba(0,0,0,0.32)) drop-shadow(0 0 12px ${accentGlow})`;
+      ? `drop-shadow(0 18px 26px rgba(0,0,0,0.35)) drop-shadow(0 0 18px ${accentGlow})${crimsonGlow}`
+      : `drop-shadow(0 18px 26px rgba(0,0,0,0.32)) drop-shadow(0 0 12px ${accentGlow})${crimsonGlow}`;
 
     return (
       <motion.button
@@ -198,6 +207,7 @@ export const BranchNode = forwardRef<HTMLButtonElement, BranchNodeProps>(
             sigilColor={sigilColor}
             scored={data.scored}
             active={isActive}
+            tier={nodeTier}
           />
         </motion.span>
 
