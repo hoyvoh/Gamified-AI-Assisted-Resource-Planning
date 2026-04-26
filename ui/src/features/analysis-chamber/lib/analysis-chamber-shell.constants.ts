@@ -79,6 +79,40 @@ export const KPT_TOKENS = {
   },
 } as const;
 
+/**
+ * Cases stage tokens — warm archive surfaces with more neutral breathing room
+ * so the ledger/detail layout feels consistent with the refined KPT stage.
+ */
+export const CASES_TOKENS = {
+  ledgerShell:
+    "radial-gradient(circle at 18% 0%, rgba(255,184,77,0.08) 0%, transparent 28%), linear-gradient(180deg, rgba(255,184,77,0.05) 0%, rgba(255,184,77,0.02) 100%)",
+  ledgerHeader: "rgba(255,184,77,0.06)",
+  ledgerDivider: "rgba(255,184,77,0.10)",
+  rowIdle: "rgba(255,255,255,0.015)",
+  rowHover: "rgba(255,184,77,0.045)",
+  rowSelected:
+    "linear-gradient(90deg, rgba(255,184,77,0.18) 0%, rgba(255,184,77,0.07) 52%, rgba(255,255,255,0.015) 100%)",
+  rowBorder: "rgba(255,184,77,0.12)",
+  panelSurface:
+    "radial-gradient(circle at 0% 0%, rgba(255,184,77,0.05) 0%, transparent 22%), linear-gradient(180deg, #1a110d 0%, #140d0b 100%)",
+  panelBorder: "rgba(255,184,77,0.16)",
+  cardSurface:
+    "radial-gradient(circle at 84% 30%, rgba(255,196,128,0.05) 0%, rgba(255,196,128,0.02) 18%, transparent 42%), linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.015) 100%)",
+  cardSurfaceStrong:
+    "radial-gradient(circle at 84% 30%, rgba(255,196,128,0.06) 0%, rgba(255,196,128,0.03) 18%, transparent 44%), linear-gradient(180deg, rgba(255,184,77,0.06) 0%, rgba(255,255,255,0.018) 100%)",
+  cardBorder: "rgba(255,184,77,0.14)",
+  cardBorderStrong: "rgba(255,184,77,0.20)",
+  impactNeutralBorder: "rgba(185,173,155,0.24)",
+  mutedText: "rgba(185,173,155,0.72)",
+  softText: "#D8C5A7",
+  pendingText: "rgba(185,173,155,0.48)",
+  emptyIcon: "rgba(255,184,77,0.24)",
+  emptyHalo: "radial-gradient(circle, rgba(255,184,77,0.10), transparent 70%)",
+  journeyBorder: "rgba(91,140,255,0.55)",
+  journeyBg: "rgba(91,140,255,0.08)",
+  journeyText: "#82A9FF",
+} as const;
+
 /** Maps every dimension ID to its parent category ID. */
 export const DIMENSION_TO_CATEGORY: Record<string, string> = {
   // core_technical_execution

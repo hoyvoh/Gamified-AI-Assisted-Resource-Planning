@@ -10,7 +10,10 @@ import { useAnalysisChamberCasesData } from "@/features/analysis-chamber/hooks/u
 
 import { useAnalysisChamberRouteState } from "@/features/analysis-chamber/hooks/use-analysis-chamber-route-state";
 
-import { ANALYSIS_CHAMBER_SHELL_PALETTE as palette } from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
+import {
+  ANALYSIS_CHAMBER_SHELL_PALETTE as palette,
+  CASES_TOKENS,
+} from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
 
 import { buildAnalysisChamberRouteHref } from "@/features/analysis-chamber/lib/analysis-chamber-route-links";
 
@@ -23,7 +26,7 @@ const formatCaseRef = (index: number) =>
 
 const getImpactTone = (impactLevel: string | null) => {
   if (!impactLevel)
-    return { color: palette.inkMuted, border: "rgba(138,112,88,0.35)" };
+    return { color: palette.inkMuted, border: CASES_TOKENS.impactNeutralBorder };
 
   const l = impactLevel.toLowerCase();
 
@@ -33,7 +36,7 @@ const getImpactTone = (impactLevel: string | null) => {
   if (l.includes("medium") || l.includes("moderate"))
     return { color: palette.ember, border: `${palette.ember}55` };
 
-  return { color: palette.inkSoft, border: "rgba(154,171,184,0.35)" };
+  return { color: palette.inkSoft, border: CASES_TOKENS.impactNeutralBorder };
 };
 
 export const CasesStageShell = ({ memberId }: { memberId: string }) => {
@@ -75,22 +78,26 @@ export const CasesStageShell = ({ memberId }: { memberId: string }) => {
         <div
           className="mt-6 overflow-hidden rounded-[18px] border"
           style={{
-            borderColor: "rgba(200,150,30,0.25)",
-
-            background:
-              "linear-gradient(180deg, rgba(200,150,30,0.08), rgba(200,150,30,0.03))",
+            borderColor: CASES_TOKENS.cardBorderStrong,
+            background: CASES_TOKENS.ledgerShell,
+            boxShadow:
+              "inset 0 1px 0 rgba(255,232,192,0.04), 0 16px 32px rgba(0,0,0,0.18)",
           }}
         >
           <div
             className="grid grid-cols-[80px_1fr_120px] border-b px-4 py-3 text-[10px] uppercase tracking-[0.16em]"
-            style={{ borderColor: "rgba(200,150,30,0.2)", color: palette.gold }}
+            style={{
+              borderColor: CASES_TOKENS.ledgerDivider,
+              color: palette.gold,
+              background: CASES_TOKENS.ledgerHeader,
+            }}
           >
             <span>Ref</span>
             <span>Case</span>
             <span>Impact</span>
           </div>
 
-          <div className="divide-y divide-[rgba(200,150,30,0.10)]">
+          <div className="divide-y" style={{ borderColor: CASES_TOKENS.ledgerDivider }}>
             {caseList.length > 0 ? (
               visibleCases.map((entry, index) => {
                 const isSelected = selectedCase?.id === entry.id;
@@ -114,24 +121,24 @@ export const CasesStageShell = ({ memberId }: { memberId: string }) => {
                     }
                     style={{
                       background: isSelected
-                        ? "linear-gradient(90deg, rgba(200,150,30,0.22) 0%, rgba(200,150,30,0.08) 100%)"
+                        ? CASES_TOKENS.rowSelected
                         : isHovered
-                          ? "rgba(255,255,255,0.06)"
-                          : "rgba(255,255,255,0.02)",
+                          ? CASES_TOKENS.rowHover
+                          : CASES_TOKENS.rowIdle,
 
                       borderLeftWidth: "3px",
 
                       borderLeftColor:
                         isSelected || isHovered ? palette.gold : "transparent",
 
-                      opacity: isSelected || isHovered ? 1 : 0.65,
+                      opacity: isSelected || isHovered ? 1 : 0.78,
 
                       transition: "all 160ms ease",
 
                       boxShadow: isSelected
-                        ? "0 4px 20px rgba(200,150,30,0.14)"
+                        ? "inset 0 1px 0 rgba(255,232,192,0.04), 0 8px 24px rgba(255,184,77,0.10)"
                         : isHovered
-                          ? "0 2px 10px rgba(200,150,30,0.08)"
+                          ? "inset 0 1px 0 rgba(255,232,192,0.03), 0 4px 14px rgba(255,184,77,0.06)"
                           : "none",
                     }}
                     type="button"
@@ -159,7 +166,7 @@ export const CasesStageShell = ({ memberId }: { memberId: string }) => {
                       {entry.summary ? (
                         <p
                           className="mt-1.5 text-xs leading-5"
-                          style={{ color: palette.inkMuted }}
+                          style={{ color: CASES_TOKENS.mutedText }}
                         >
                           {entry.summary.length > 90
                             ? `${entry.summary.slice(0, 90)}…`
@@ -186,7 +193,7 @@ export const CasesStageShell = ({ memberId }: { memberId: string }) => {
               <div className="flex min-h-55 flex-col items-center justify-center gap-2 px-6 text-center">
                 <p
                   className="font-display text-2xl"
-                  style={{ color: "rgba(200,150,30,0.2)" }}
+                  style={{ color: CASES_TOKENS.emptyIcon }}
                 >
                   📖
                 </p>
@@ -198,7 +205,7 @@ export const CasesStageShell = ({ memberId }: { memberId: string }) => {
                 </p>
                 <p
                   className="mt-1 text-xs leading-5"
-                  style={{ color: "rgba(138,112,88,0.5)" }}
+                  style={{ color: CASES_TOKENS.pendingText }}
                 >
                   No cases have been recorded for this analysis period.
                 </p>
@@ -210,7 +217,7 @@ export const CasesStageShell = ({ memberId }: { memberId: string }) => {
             <div
               className="flex items-center justify-between border-t px-4 py-3 text-[10px] uppercase tracking-widest"
               style={{
-                borderColor: "rgba(200,150,30,0.12)",
+                borderColor: CASES_TOKENS.ledgerDivider,
                 color: palette.inkMuted,
               }}
             >
@@ -238,11 +245,9 @@ export const CasesStageShell = ({ memberId }: { memberId: string }) => {
       <aside
         className="border-t px-6 py-6 lg:border-l lg:border-t-0"
         style={{
-          background: palette.parchmentMid,
-
-          borderColor: "rgba(200,150,30,0.35)",
-
-          boxShadow: "-8px 0 32px rgba(0,0,0,0.28)",
+          background: CASES_TOKENS.panelSurface,
+          borderColor: CASES_TOKENS.panelBorder,
+          boxShadow: "-8px 0 32px rgba(0,0,0,0.22)",
         }}
       >
         {selectedCase ? (
@@ -258,15 +263,13 @@ export const CasesStageShell = ({ memberId }: { memberId: string }) => {
             <div
               className="flex h-16 w-16 items-center justify-center rounded-full border-2"
               style={{
-                borderColor: "rgba(200,150,30,0.22)",
-
-                background:
-                  "radial-gradient(circle, rgba(200,150,30,0.10), transparent 70%)",
+                borderColor: CASES_TOKENS.cardBorderStrong,
+                background: CASES_TOKENS.emptyHalo,
               }}
             >
               <span
                 className="text-2xl"
-                style={{ color: "rgba(200,150,30,0.35)" }}
+                style={{ color: CASES_TOKENS.emptyIcon }}
               >
                 📖
               </span>
@@ -280,7 +283,7 @@ export const CasesStageShell = ({ memberId }: { memberId: string }) => {
               </p>
               <p
                 className="mt-1 text-xs leading-5"
-                style={{ color: "rgba(138,112,88,0.45)" }}
+                style={{ color: CASES_TOKENS.pendingText }}
               >
                 Select a case from the ledger.
               </p>
@@ -331,9 +334,10 @@ const OpenRecord = ({
           <span
             className="rounded-full border px-2 py-0.5 text-[9px] uppercase tracking-widest"
             style={{
-              borderColor: "rgba(200,150,30,0.4)",
+              borderColor: CASES_TOKENS.cardBorderStrong,
 
               color: palette.gold,
+              background: CASES_TOKENS.ledgerHeader,
             }}
           >
             Open record
@@ -350,9 +354,10 @@ const OpenRecord = ({
             <span
               className="rounded-full border px-2 py-0.5 text-[9px] uppercase tracking-widest"
               style={{
-                borderColor: "rgba(200,150,30,0.35)",
+                borderColor: CASES_TOKENS.cardBorder,
 
-                color: palette.inkSoft,
+                color: CASES_TOKENS.softText,
+                background: CASES_TOKENS.ledgerHeader,
               }}
             >
               {entry.category}
@@ -378,12 +383,9 @@ const OpenRecord = ({
         <div
           className="mt-5 rounded-xl border px-4 py-4"
           style={{
-            borderColor: "rgba(200,150,30,0.28)",
-
-            background:
-              "linear-gradient(180deg, rgba(200,150,30,0.12), rgba(200,150,30,0.05))",
-
-            boxShadow: "0 8px 24px rgba(0,0,0,0.14)",
+            borderColor: CASES_TOKENS.cardBorderStrong,
+            background: CASES_TOKENS.cardSurfaceStrong,
+            boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
           }}
         >
           {entry.whyItMatters ? (
@@ -396,7 +398,7 @@ const OpenRecord = ({
           ) : null}
           <p
             className="mt-3 text-sm leading-6"
-            style={{ color: palette.inkSoft }}
+            style={{ color: CASES_TOKENS.softText }}
           >
             {entry.whyItMatters ?? entry.summary}
           </p>
@@ -411,9 +413,8 @@ const OpenRecord = ({
               key={section.label}
               className="rounded-lg border px-4 py-3"
               style={{
-                borderColor: "rgba(200,150,30,0.2)",
-
-                background: "rgba(255,255,255,0.05)",
+                borderColor: CASES_TOKENS.cardBorder,
+                background: CASES_TOKENS.cardSurface,
               }}
             >
               <p
@@ -424,7 +425,7 @@ const OpenRecord = ({
               </p>
               <p
                 className="mt-2 text-sm leading-6"
-                style={{ color: palette.inkSoft }}
+                style={{ color: CASES_TOKENS.softText }}
               >
                 {section.value}
               </p>
@@ -439,9 +440,8 @@ const OpenRecord = ({
                 key={label}
                 className="rounded-lg border px-4 py-3"
                 style={{
-                  borderColor: "rgba(200,150,30,0.12)",
-
-                  background: "rgba(255,255,255,0.03)",
+                  borderColor: CASES_TOKENS.cardBorder,
+                  background: CASES_TOKENS.cardSurface,
                 }}
               >
                 <p
@@ -452,7 +452,7 @@ const OpenRecord = ({
                 </p>
                 <p
                   className="mt-2 text-xs italic leading-5"
-                  style={{ color: "rgba(138,112,88,0.5)" }}
+                  style={{ color: CASES_TOKENS.pendingText }}
                 >
                   Pending analysis.
                 </p>
@@ -468,7 +468,11 @@ const OpenRecord = ({
         href={buildAnalysisChamberRouteHref(memberId, "journey", {
           milestone: entry.id.toLowerCase(),
         })}
-        style={{ borderColor: palette.azure, color: palette.azure }}
+        style={{
+          borderColor: CASES_TOKENS.journeyBorder,
+          background: CASES_TOKENS.journeyBg,
+          color: CASES_TOKENS.journeyText,
+        }}
       >
         <span>🗺</span>
         <span>Follow to journey context</span>
