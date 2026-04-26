@@ -350,29 +350,6 @@ export const CompetencyStageShell = ({ memberId }: { memberId: string }) => {
           ) : null}
         </div>
 
-        <div className="mt-6">
-          <div
-            className="rounded-3xl border px-5 py-5 md:px-6"
-            style={{
-              borderColor: "rgba(200,150,30,0.28)",
-              background:
-                "linear-gradient(180deg, rgba(200,150,30,0.10), rgba(200,150,30,0.04))",
-              boxShadow: "0 20px 44px rgba(0, 0, 0, 0.36)",
-            }}
-          >
-            <div className="flex flex-wrap items-start justify-between gap-5">
-              <div className="max-w-xl">
-                <h2
-                  className="font-display text-2xl uppercase tracking-[0.08em]"
-                  style={{ color: palette.ink }}
-                >
-                  Skill constellation
-                </h2>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <div className="mt-6 grid gap-5">
           <div
             className="relative rounded-[22px] border px-5 py-6 md:px-7"
@@ -384,12 +361,7 @@ export const CompetencyStageShell = ({ memberId }: { memberId: string }) => {
             }}
           >
             <div className="flex flex-wrap items-center justify-between gap-4">
-              <p
-                className="font-display text-[10px] uppercase tracking-[0.18em]"
-                style={{ color: palette.gold }}
-              >
-                Skill constellation
-              </p>
+
               <div className="flex gap-2">
                 {isReadingCategory ? (
                   <span

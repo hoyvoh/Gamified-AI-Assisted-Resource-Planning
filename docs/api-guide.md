@@ -222,6 +222,10 @@ All 5 profile endpoints follow the same contract:
 
 **Purpose:** Structured coaching feedback in Keep / Problem / Try format.
 
+**Data provenance (how it’s produced):**
+- Source records (GitHub + MCP) → P1/P2 behavioral events → scoring (dimension scores) → P4 UI summaries → **P5 generates KPT**.
+- Persisted **per analysis run** and served from the member’s **latest completed run**.
+
 **Output — `ProfileKptResponse`:**
 
 | Field | Type | What it represents |
@@ -243,14 +247,19 @@ All 5 profile endpoints follow the same contract:
 
 **UI reflections:**
 - 3-column parchment layout (Keep / Problem / Try scrolls)
-- `linked_problem_ids` → draw connection line from Try to Problem card
-- `linked_dimension_ids` → cross-navigate to Competency dimension
+- Each column currently displays up to 5 items (UI truncation)
+- `linked_problem_ids` → shown as “Addresses N problem(s)” on Try items
+- `linked_dimension_ids` → “Open in competency” deep-link to Competency (query `dimension`, `highlight`)
 
 ---
 
 #### Cases — `/profile/cases`
 
 **Purpose:** Story-based coaching via concrete incident case studies.
+
+**Data provenance (how it’s produced):**
+- Source records (GitHub + MCP) → P1/P2 behavioral events → P4 dimension UI summaries → **P6 generates cases**.
+- Persisted **per analysis run** and served from the member’s **latest completed run**.
 
 **Output — `ProfileCasesResponse`:**
 
@@ -274,17 +283,24 @@ All 5 profile endpoints follow the same contract:
 | `confidence_score` | number 0–1 | AI confidence in this case |
 
 **UI reflections:**
-- Archive ledger: each case is a record card in the archive
+- Archive ledger list + “open record” side panel (no separate drawer)
 - `impact_level` → colored badge (high=red, medium=amber, low=grey)
-- `confidence_score` → small confidence indicator on card
-- Click → detail drawer with full case narrative
+- Click case row → updates route query `case=<case_id>` and focuses the side panel
 - `linked_dimension_ids` → cross-nav to Competency
+- “Follow to journey context” link → navigates to Journey with query `milestone=<id>`
+
+**Related endpoint (optional detail fetch):**
+- `GET /members/{member_id}/profile/cases/{case_id}` — full case record by id (used by detail views/hooks).
 
 ---
 
 #### Journey — `/profile/journey`
 
 **Purpose:** Growth narrative over time — milestones on a timeline, archetype progression.
+
+**Data provenance (how it’s produced):**
+- `growth_journey_summary` + `current_growth_path` are generated in **P7** and stored in the **latest run snapshot**.
+- `milestones` are derived from behavioral events (currently: positive + high impact + confidence threshold) and **appended per member** (can span multiple runs; “retained” milestones are shown).
 
 **Output — `ProfileJourneyResponse`:**
 
@@ -298,12 +314,12 @@ All 5 profile endpoints follow the same contract:
 
 | Field | Type | What it represents |
 |---|---|---|
-| `milestone_type` | string | `ownership_shift / quality_signal / collaboration_signal / delivery_milestone / learning_moment` |
+| `milestone_type` | string | Derived milestone category (currently sourced from behavioral event type) |
 | `title` | string | Milestone headline |
 | `summary` | string | 1–2 sentence description |
-| `impact_score` | number 0–10 | Significance of this milestone |
+| `impact_score` | number 0–1 | Significance/confidence signal used by UI (often shown as `/100`) |
 | `timestamp` | string | When this event occurred |
-| `source_analysis_run_id` | string? | Which run first identified this milestone |
+| `source_analysis_run_id` | string? | Which run identified this milestone (if known) |
 
 **UI reflections:**
 - Realm map / timeline: milestones as plot points on expedition log

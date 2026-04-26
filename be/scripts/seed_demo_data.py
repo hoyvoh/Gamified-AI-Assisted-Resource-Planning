@@ -639,7 +639,7 @@ async def seed_demo_data() -> None:
                     "Planned, executed, and shipped a full refactor of the auth service "
                     "independently. No escalations needed. Delivered on time."
                 ),
-                impact_score=8.5,
+                impact_score=0.85,
                 supporting_event_ids=[e.evidence_id for e in evidence_units[:2]],
                 supporting_evidence_ids=[e.evidence_id for e in evidence_units[:1]],
                 retained=True,
@@ -656,7 +656,7 @@ async def seed_demo_data() -> None:
                     "Maintained a clean production record over 3 months — "
                     "all post-deploy issues were minor and self-caught."
                 ),
-                impact_score=7.8,
+                impact_score=0.78,
                 supporting_event_ids=[],
                 supporting_evidence_ids=[e.evidence_id for e in evidence_units[1:3]],
                 retained=True,
@@ -673,7 +673,7 @@ async def seed_demo_data() -> None:
                     "Coordinated design decisions across two teams for a shared API contract. "
                     "Facilitated alignment meeting and produced the RFC."
                 ),
-                impact_score=8.0,
+                impact_score=0.80,
                 supporting_event_ids=[e.evidence_id for e in evidence_units[3:5]],
                 supporting_evidence_ids=[],
                 retained=True,
