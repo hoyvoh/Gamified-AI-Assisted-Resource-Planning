@@ -368,24 +368,6 @@ export function BranchDetailModal({ open, branch, onClose }: BranchDetailModalPr
         ))}
       </div>
 
-      {/* ── Master outer halo ring (box-shadow bloom, breathing, behind card) ── */}
-      {false && tier === "master" && !exiting && (
-        <div
-          data-modal-master-halo=""
-          aria-hidden="true"
-          className="pointer-events-none fixed rounded-[50%]"
-          style={{
-            top: "50%",
-            left: "50%",
-            width: 500,
-            height: 540,
-            transform: "translate(-50%, -50%)",
-            zIndex: 1001,
-            animation: "masterHaloBreath 2.8s ease-in-out 300ms infinite",
-          }}
-        />
-      )}
-
       {/*
        * ── Float wrapper ──
        * Owns centering (translate -50%,-50%) and the gentle vertical bob.

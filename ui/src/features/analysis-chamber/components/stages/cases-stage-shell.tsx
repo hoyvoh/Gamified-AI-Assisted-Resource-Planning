@@ -465,9 +465,7 @@ const OpenRecord = ({
       {/* Journey context link */}
       <Link
         className="mt-5 inline-flex items-center gap-2 rounded-full border px-3 py-2 font-display text-[10px] uppercase tracking-[0.12em] transition-opacity hover:opacity-80"
-        href={buildAnalysisChamberRouteHref(memberId, "journey", {
-          milestone: entry.id.toLowerCase(),
-        })}
+        href={buildAnalysisChamberRouteHref(memberId, "journey")}
         style={{
           borderColor: CASES_TOKENS.journeyBorder,
           background: CASES_TOKENS.journeyBg,

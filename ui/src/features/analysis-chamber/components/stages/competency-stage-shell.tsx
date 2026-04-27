@@ -225,12 +225,6 @@ export const CompetencyStageShell = ({ memberId }: { memberId: string }) => {
     }
   }, [state.dimension]);
 
-  useEffect(() => {
-    if (state.dimension || state.highlight) {
-      updateQuery({ dimension: null, highlight: null });
-    }
-  }, [state.dimension, state.highlight, updateQuery]);
-
   const selectedDimension = useMemo(
     () => getSelectedDimensionFromScores(dimensions, selectedDimensionId),
     [dimensions, selectedDimensionId],

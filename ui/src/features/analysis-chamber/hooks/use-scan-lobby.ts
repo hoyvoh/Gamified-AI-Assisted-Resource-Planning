@@ -7,7 +7,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getAnalysisRunById,
   getMemberAnalysisRuns,
-  triggerAnalysis,
+  refreshMemberAnalysis,
 } from "@/features/analysis-chamber/api/analysis-chamber-api";
 
 // ─── Query keys ───────────────────────────────────────────────────────────────
@@ -55,7 +55,7 @@ export const useTriggerNewScan = (memberId: string) => {
     }: {
       periodStart: string;
       periodEnd: string;
-    }) => triggerAnalysis(memberId, periodStart, periodEnd),
+    }) => refreshMemberAnalysis(memberId, periodStart, periodEnd),
     onSuccess: (run) => {
       setActiveRunId(run.analysis_run_id);
       void qc.invalidateQueries({

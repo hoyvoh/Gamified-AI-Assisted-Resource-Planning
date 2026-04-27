@@ -282,6 +282,26 @@ export const triggerAnalysis = async (
   );
 };
 
+export const refreshMemberAnalysis = async (
+  memberId: string,
+  periodStart?: string,
+  periodEnd?: string,
+): Promise<ChamberAnalysisRunResponse> => {
+  const end = periodEnd ?? new Date().toISOString().slice(0, 10);
+
+  const start =
+    periodStart ??
+    new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+  return postEnvelope<
+    ChamberAnalysisRunResponse,
+    { period_start: string; period_end: string }
+  >(`/members/${memberId}/refresh`, {
+    period_start: start,
+    period_end: end,
+  });
+};
+
 // No search-by-external-id API exists, so we scan org trees client-side.
 
 // TODO: replace with a dedicated search endpoint (e.g. GET /members?external_id=<handle>)

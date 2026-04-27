@@ -8,7 +8,10 @@ import { usePathname } from "next/navigation";
 
 import type { ChamberBootstrap } from "@/features/analysis-chamber/api/analysis-chamber-api.view-models";
 
-import { triggerAnalysis } from "@/features/analysis-chamber/api/analysis-chamber-api";
+import {
+  refreshMemberAnalysis,
+  triggerAnalysis,
+} from "@/features/analysis-chamber/api/analysis-chamber-api";
 
 import { AnalysisChamberFrame } from "@/features/analysis-chamber/components/analysis-chamber-frame";
 
@@ -144,7 +147,11 @@ const AnalysisPendingScreen = ({
     setTriggerError(null);
 
     try {
-      await triggerAnalysis(memberId);
+      if (status === "failed") {
+        await refreshMemberAnalysis(memberId);
+      } else {
+        await triggerAnalysis(memberId);
+      }
 
       setTriggerState("triggered");
 
