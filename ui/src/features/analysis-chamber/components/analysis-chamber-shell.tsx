@@ -13,6 +13,7 @@ import { triggerAnalysis } from "@/features/analysis-chamber/api/analysis-chambe
 import { AnalysisChamberFrame } from "@/features/analysis-chamber/components/analysis-chamber-frame";
 
 import { AnalysisChamberHeroIdentityLayer } from "@/features/analysis-chamber/components/analysis-chamber-hero-identity-layer";
+import { AnalysisChamberLiveStatusTotem } from "@/features/analysis-chamber/components/analysis-chamber-live-status-totem";
 
 import { AnalysisChamberRouteRail } from "@/features/analysis-chamber/components/analysis-chamber-route-rail";
 
@@ -272,7 +273,7 @@ const chamberBodyClassName =
 const chamberStageClassName = (showSideHeroIdentity: boolean) =>
   `grid min-h-full ${
     showSideHeroIdentity
-      ? "xl:grid-cols-[minmax(0,1fr)_176px] 2xl:grid-cols-[minmax(0,1fr)_188px]"
+      ? "xl:grid-cols-[minmax(0,1fr)_248px] 2xl:grid-cols-[minmax(0,1fr)_260px]"
       : ""
   }`;
 
@@ -292,12 +293,6 @@ export const AnalysisChamberShell = ({
   const refreshChamber = useRefreshChamber(memberId);
 
   const route = getActiveRoute(pathname);
-
-  const roleName = useMemo(
-    () => bootstrap.data?.roleName ?? "Role pending",
-
-    [bootstrap.data?.roleName],
-  );
 
   const loadingBootstrap = useMemo(
     () => createShellPlaceholderBootstrap(memberId, "not_analyzed"),
@@ -430,11 +425,11 @@ export const AnalysisChamberShell = ({
             {stageContent}
           </AnalysisChamberTransitionController>
           {showSideHeroIdentity ? (
-            <AnalysisChamberHeroIdentityLayer
+            <AnalysisChamberLiveStatusTotem
+              bootstrap={bootstrap.data}
               confidence={getShellConfidence(bootstrap.data)}
-              memberName={bootstrap.data.member.displayName}
-              roleName={roleName}
-              status={analysisStatus}
+              memberId={memberId}
+              route={route}
             />
           ) : null}
         </div>
