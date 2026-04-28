@@ -8,9 +8,13 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
+from app.infrastructure.agent_cli.base import (
+    AgentCliHealth,
+    AgentCliTimeoutError,
+    AgentCliUnavailableError,
+)
 from app.infrastructure.collectors.base import (
     CollectionResult,
-    CollectorTimeoutError,
     CollectorUnavailableError,
 )
 from app.infrastructure.collectors.github import GitHubCollector
@@ -28,7 +32,38 @@ def _fail(stderr: bytes = b"", returncode: int = 1) -> tuple[int, bytes, bytes]:
 
 
 _RUN_SUB_GH = "app.infrastructure.collectors.github.run_subprocess"
-_RUN_SUB_MCP = "app.infrastructure.collectors.llm_mcp.run_subprocess"
+
+
+class FakeAgentCliProvider:
+    name = "fake"
+
+    def __init__(
+        self,
+        sources: list[str] | None = None,
+        response: str | None = None,
+        list_error: Exception | None = None,
+    ) -> None:
+        self.sources = sources or []
+        self.response = response
+        self.list_error = list_error
+
+    async def health_check(self) -> AgentCliHealth:
+        return AgentCliHealth(
+            provider=self.name,
+            installed=True,
+            authenticated=None,
+            mcp_available=bool(self.sources),
+            mcp_sources=self.sources,
+            errors=[],
+        )
+
+    async def list_mcp_sources(self) -> list[str]:
+        if self.list_error:
+            raise self.list_error
+        return self.sources
+
+    async def run_prompt(self, prompt: str, model: str, timeout_seconds: int) -> str:
+        return self.response or ""
 
 
 # ── GitHubCollector ───────────────────────────────────────────────────────────
@@ -223,51 +258,43 @@ class TestGitHubCollectorPrParsing:
 
 
 class TestLLMMCPCollector:
-    def _make_collector(self) -> LLMMCPCollector:
-        return LLMMCPCollector(cli_tool="claude", model="claude-sonnet-4-6", timeout_seconds=10)
+    def _make_collector(self, provider: FakeAgentCliProvider) -> LLMMCPCollector:
+        return LLMMCPCollector(provider=provider, model="claude-sonnet-4-6", timeout_seconds=10)
 
     async def test_returns_skipped_when_cli_not_found(self) -> None:
-        collector = self._make_collector()
-        with patch(_RUN_SUB_MCP, AsyncMock(side_effect=CollectorUnavailableError("not found"))):
-            results = await collector.collect("Alice", "alice", "2024-01-01", "2024-06-30")
+        collector = self._make_collector(
+            FakeAgentCliProvider(list_error=AgentCliUnavailableError("not found"))
+        )
+        results = await collector.collect("Alice", "alice", "2024-01-01", "2024-06-30")
 
         assert len(results) == 1
         assert results[0].status == "skipped"
         assert results[0].source_type == "mcp"
 
     async def test_returns_skipped_when_no_mcp_sources_configured(self) -> None:
-        collector = self._make_collector()
-        with patch(_RUN_SUB_MCP, AsyncMock(return_value=_ok(b"No servers configured"))):
-            results = await collector.collect("Alice", "alice", "2024-01-01", "2024-06-30")
+        collector = self._make_collector(FakeAgentCliProvider())
+        results = await collector.collect("Alice", "alice", "2024-01-01", "2024-06-30")
 
         assert len(results) == 1
         assert results[0].status == "skipped"
         assert results[0].record_count == 0
 
     async def test_returns_skipped_when_probe_times_out(self) -> None:
-        collector = self._make_collector()
-        with patch(_RUN_SUB_MCP, AsyncMock(side_effect=CollectorTimeoutError("timed out"))):
-            results = await collector.collect("Alice", "alice", "2024-01-01", "2024-06-30")
+        collector = self._make_collector(
+            FakeAgentCliProvider(list_error=AgentCliTimeoutError("timed out"))
+        )
+        results = await collector.collect("Alice", "alice", "2024-01-01", "2024-06-30")
 
         assert len(results) == 1
         assert results[0].status == "skipped"
 
     async def test_returns_failed_when_llm_returns_no_output(self) -> None:
-        collector = self._make_collector()
-        call_count = 0
-
-        async def fake_run(*args, **kwargs):
-            nonlocal call_count
-            call_count += 1
-            return _ok(b"slack") if call_count == 1 else _ok(b"")
-
-        with patch(_RUN_SUB_MCP, side_effect=fake_run):
-            results = await collector.collect("Alice", "alice", "2024-01-01", "2024-06-30")
+        collector = self._make_collector(FakeAgentCliProvider(sources=["slack"], response=""))
+        results = await collector.collect("Alice", "alice", "2024-01-01", "2024-06-30")
 
         assert any(r.status == "failed" for r in results)
 
     async def test_parses_json_response_into_per_source_results(self) -> None:
-        collector = self._make_collector()
         response_json = json.dumps(
             {
                 "sources_queried": ["slack"],
@@ -284,20 +311,32 @@ class TestLLMMCPCollector:
                 "notes": "",
             }
         )
-        call_count = 0
-
-        async def fake_run(*args, **kwargs):
-            nonlocal call_count
-            call_count += 1
-            return _ok(b"slack") if call_count == 1 else _ok(response_json.encode())
-
-        with patch(_RUN_SUB_MCP, side_effect=fake_run):
-            results = await collector.collect("Alice", "alice", "2024-01-01", "2024-06-30")
+        collector = self._make_collector(
+            FakeAgentCliProvider(sources=["slack"], response=response_json)
+        )
+        results = await collector.collect("Alice", "alice", "2024-01-01", "2024-06-30")
 
         by_type = {r.source_type: r for r in results}
         assert by_type["slack"].status == "collected"
         assert by_type["slack"].record_count == 1
         assert by_type["jira"].status == "skipped"
+
+    async def test_parses_fenced_json_response(self) -> None:
+        response_json = """
+Here is the data:
+
+```json
+{"sources_queried":["slack"],"records":[],"unavailable_sources":[],"notes":""}
+```
+"""
+        collector = self._make_collector(
+            FakeAgentCliProvider(sources=["slack"], response=response_json)
+        )
+        results = await collector.collect("Alice", "alice", "2024-01-01", "2024-06-30")
+
+        assert len(results) == 1
+        assert results[0].source_type == "slack"
+        assert results[0].status == "collected"
 
 
 # ── Runner collection guard ───────────────────────────────────────────────────

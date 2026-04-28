@@ -20,7 +20,7 @@ logging:
   format: "text"
 
 llm:
-  cli_tool: "claude" # "claude" | "codex" — must be on PATH and authenticated
+  provider: "claude" # "claude" | "codex" — must be on PATH and authenticated
   model: "claude-sonnet-4-6" # passed via --model flag when supported
   timeout_seconds: 120 # max seconds to wait for LLM CLI response
   max_retries: 2 # retries on transient subprocess failures

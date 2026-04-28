@@ -3,6 +3,7 @@
 import asyncio
 
 from app.domain.analysis.taxonomy import DIMENSION_IDS
+from app.infrastructure.agent_cli.base import AgentCliProvider
 from app.infrastructure.analysis.pipeline.llm_runner import LLMCallError, call_llm
 from app.infrastructure.analysis.prompts.p3_inference import build_p3_prompt
 from app.logger import get_logger
@@ -17,7 +18,7 @@ async def run_p3(
     behavioral_events: list[dict],  # type: ignore[type-arg]
     role_profile_summary: str,
     baseline_summary: str,
-    cli_tool: str,
+    provider: AgentCliProvider,
     model: str,
     timeout_seconds: int,
     max_retries: int,
@@ -54,7 +55,7 @@ async def run_p3(
             logger.debug("P3: inferring dim=%s run=%s events=%d", dim_id, run_id, len(dim_events))
             try:
                 result = await call_llm(
-                    cli_tool=cli_tool,
+                    provider=provider,
                     model=model,
                     prompt=prompt,
                     timeout_seconds=timeout_seconds,

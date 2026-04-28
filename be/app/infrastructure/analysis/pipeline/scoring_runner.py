@@ -9,6 +9,7 @@ from app.domain.analysis.scoring_engine import (
     compute_category_scores,
     compute_dimension_scores,
 )
+from app.infrastructure.agent_cli.base import AgentCliProvider
 from app.infrastructure.analysis.pipeline.p3_runner import run_p3
 from app.infrastructure.db.base import utcnow
 from app.infrastructure.db.repositories.analysis import (
@@ -28,6 +29,7 @@ async def run_scoring(
     behavioral_events: list[BehavioralEvent],
     session: AsyncSession,
     llm_settings: LLMSettings,
+    provider: AgentCliProvider,
 ) -> None:
     """Run P3 + scoring engine for the given analysis run.
 
@@ -87,7 +89,7 @@ async def run_scoring(
         behavioral_events=events_as_dicts,
         role_profile_summary=role_profile_summary,
         baseline_summary=baseline_summary,
-        cli_tool=llm_settings.cli_tool,
+        provider=provider,
         model=llm_settings.model,
         timeout_seconds=llm_settings.timeout_seconds,
         max_retries=llm_settings.max_retries,

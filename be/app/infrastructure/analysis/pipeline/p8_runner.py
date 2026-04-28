@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import LLMSettings
 from app.domain.analysis.entities import AnalysisRun
+from app.infrastructure.agent_cli.base import AgentCliProvider
 from app.infrastructure.analysis.pipeline.llm_runner import LLMCallError, call_llm
 from app.infrastructure.analysis.prompts.p8_critique import build_p8_prompt
 from app.infrastructure.db.repositories.analysis import (
@@ -21,6 +22,7 @@ async def run_p8(
     run: AnalysisRun,
     session: AsyncSession,
     llm_settings: LLMSettings,
+    provider: AgentCliProvider,
 ) -> None:
     """Run P8 self-critique gate.
 
@@ -56,6 +58,7 @@ async def run_p8(
         growth_journey_summary=snapshot.growth_journey_summary,
         overall_confidence=snapshot.overall_confidence or 0.0,
         llm_settings=llm_settings,
+        provider=provider,
     )
 
     logger.debug(
@@ -117,6 +120,7 @@ async def run_p8(
             growth_journey_summary=patched_journey,
             overall_confidence=snapshot.overall_confidence or 0.0,
             llm_settings=llm_settings,
+            provider=provider,
         )
         logger.info(
             "P8 retry: run_id=%s approved=%s remaining_issues=%d",
@@ -149,6 +153,7 @@ async def _call_p8(
     growth_journey_summary: str | None,
     overall_confidence: float,
     llm_settings: LLMSettings,
+    provider: AgentCliProvider,
 ) -> tuple[bool, list[dict]]:  # type: ignore[type-arg]
     """Call LLM for P8 critique. Returns (approved, issues)."""
     prompt = build_p8_prompt(
@@ -160,7 +165,7 @@ async def _call_p8(
     )
     try:
         result = await call_llm(
-            cli_tool=llm_settings.cli_tool,
+            provider=provider,
             model=llm_settings.model,
             prompt=prompt,
             timeout_seconds=llm_settings.timeout_seconds,
