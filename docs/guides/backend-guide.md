@@ -213,10 +213,10 @@ class CocomoSettings(BaseModel):
     working_days_per_month: float
 
 class LLMSettings(BaseModel):
-    # LLM ops run via CLI subprocess (claude / codex) — no API keys stored here.
+    # LLM ops run via agent CLI subprocess providers (claude / codex) — no API keys stored here.
     # Authenticate once with: `claude auth login` or `codex auth`
-    cli_tool: Literal["claude", "codex"]
-    model: str  # Passed as --model flag when supported by the CLI
+    provider: Literal["claude", "codex"]
+    model: str  # Passed through the selected provider adapter
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -246,8 +246,8 @@ cocomo:
   working_days_per_month: 21.67
 
 llm:
-  cli_tool: "claude"          # "claude" | "codex"
-  model: "claude-sonnet-4-6"  # Passed via --model flag
+  provider: "claude"          # "claude" | "codex"
+  model: "claude-sonnet-4-6"  # Passed through the provider adapter
 
 optimizer:
   population: 100
@@ -305,7 +305,7 @@ be/
 │   │   │   └── repositories/      # Concrete repo implementations
 │   │   │       └── <domain>.py
 │   │   ├── llm/
-│   │   │   └── client.py          # CLI subprocess wrapper (claude / codex)
+│   │   │   └── client.py          # CLI subprocess provider wrapper (claude / codex)
 │   │   └── db/migrations/         # Alembic env + versions
 │   │
 │   └── interfaces/                # HTTP interface — no business logic

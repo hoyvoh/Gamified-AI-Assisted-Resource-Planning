@@ -40,7 +40,7 @@
 | Frontend | Next.js (TypeScript) |
 | Backend | Python 3.12 · FastAPI · SQLAlchemy · aiosqlite |
 | Database | SQLite (dev) |
-| AI Pipeline | Claude CLI subprocess (`claude --model claude-sonnet-4-6 -p`) |
+| AI Pipeline | Agent CLI provider subprocess (`claude` / `codex`) |
 | Deployment | Local / single-machine |
 
 ---
