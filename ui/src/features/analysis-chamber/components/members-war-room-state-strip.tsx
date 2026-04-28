@@ -1,13 +1,14 @@
 import { cn } from "@/lib/utils";
+import { MEDIEVAL_THEME } from "@/lib/theme/medieval-theme";
 
 import type { WarRoomCounter } from "@/features/analysis-chamber/lib/members-war-room";
 
 const COUNTER_TONE_CLASS: Record<WarRoomCounter["tone"], string> = {
-  active: "border-[#5f6f91]/45 text-[#adc0db]",
-  danger: "border-[#8e4538]/48 text-[#e2aa9d]",
-  idle: "border-[#8f8572]/30 text-[#d1c1a6]",
-  ready: "border-[#4a654d]/48 text-[#b5d0b9]",
-  unknown: "border-[#b88b3f]/40 text-[#f1dfbc]",
+  active: "border-[#617495]/45 text-[#b7c6dc]",
+  danger: "border-[#8f4538]/48 text-[#e4aea2]",
+  idle: "border-[#8f826d]/30 text-[#d6c6a7]",
+  ready: "border-[#4d684f]/48 text-[#bad1bd]",
+  unknown: "border-[#b68a44]/40 text-[#ead9b7]",
 };
 
 type MembersWarRoomStateStripProps = {
@@ -26,17 +27,27 @@ export function MembersWarRoomStateStrip({
         <div
           key={counter.key}
           className={cn(
-            "border bg-[linear-gradient(180deg,rgba(31,21,14,0.94),rgba(20,14,10,0.96))] px-4 py-3 shadow-[inset_0_1px_0_rgba(255,240,219,0.04)]",
+            "border px-4 py-3 shadow-[inset_0_1px_0_rgba(255,240,219,0.04)]",
             COUNTER_TONE_CLASS[counter.tone],
           )}
+          style={{ backgroundImage: MEDIEVAL_THEME.gradients.shell }}
         >
-          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#d6bf94]/62">
+          <p
+            className="font-mono text-[10px] uppercase tracking-[0.18em]"
+            style={{ color: "rgba(214, 191, 148, 0.62)" }}
+          >
             {counter.label}
           </p>
           <p className="mt-2 font-body-serif text-3xl leading-none text-current">
             {counter.value}
           </p>
-          <div className="mt-2 h-px w-full bg-[linear-gradient(90deg,rgba(214,191,148,0.0),rgba(214,191,148,0.22),rgba(214,191,148,0.0))]" />
+          <div
+            className="mt-2 h-px w-full"
+            style={{
+              background:
+                "linear-gradient(90deg,rgba(214,191,148,0.0),rgba(214,191,148,0.22),rgba(214,191,148,0.0))",
+            }}
+          />
         </div>
       ))}
     </section>

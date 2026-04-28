@@ -8,12 +8,13 @@ import {
 } from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
 import { buildAnalysisChamberRouteHref } from "@/features/analysis-chamber/lib/analysis-chamber-route-links";
 import type { AnalysisChamberRouteKey } from "@/features/analysis-chamber/lib/analysis-chamber-shell.types";
+import { MEDIEVAL_THEME } from "@/lib/theme/medieval-theme";
 
 // Keyframes injected once — idle glow pulse (composited via filter) + stripe reveal
 const RAIL_KEYFRAMES = `
   @keyframes railGlowPulse {
-    0%, 100% { filter: drop-shadow(0 0 4px rgba(255,149,0,0.40)); }
-    50%       { filter: drop-shadow(0 0 9px rgba(255,149,0,0.80)); }
+    0%, 100% { filter: drop-shadow(0 0 4px rgba(209,172,103,0.40)); }
+    50%       { filter: drop-shadow(0 0 9px rgba(209,172,103,0.80)); }
   }
   @keyframes stripeReveal {
     from { transform: scaleY(0); }
@@ -39,15 +40,14 @@ export const AnalysisChamberRouteRail = ({
         aria-label="Analysis chamber routes"
         className="relative z-20 flex h-full w-full flex-col items-center gap-1 overflow-visible border-r py-4"
         style={{
-          background:
-            "linear-gradient(180deg, rgba(21,9,10,0.98), rgba(12,5,8,0.98))",
-          borderColor: "rgba(200, 150, 30, 0.35)",
+          background: MEDIEVAL_THEME.gradients.rail,
+          borderColor: "rgba(161, 119, 55, 0.35)",
         }}
       >
         {/* Ambient vertical track */}
         <div
           className="pointer-events-none absolute bottom-4 top-4 w-px"
-          style={{ background: "rgba(255,149,0,0.10)" }}
+          style={{ background: "rgba(209,172,103,0.10)" }}
         />
 
         {ANALYSIS_CHAMBER_ROUTES.map((route, index) => {
@@ -86,8 +86,8 @@ export const AnalysisChamberRouteRail = ({
                     className="pointer-events-none absolute inset-x-1.5 inset-y-0.5 rounded-lg"
                     style={{
                       background:
-                        "linear-gradient(135deg, rgba(255,149,0,0.14), rgba(255,149,0,0.07))",
-                      border: `1px solid rgba(255,149,0,0.22)`,
+                        "linear-gradient(135deg, rgba(209,172,103,0.14), rgba(209,172,103,0.07))",
+                      border: "1px solid rgba(209,172,103,0.22)",
                     }}
                   />
                 ) : null}
@@ -100,7 +100,7 @@ export const AnalysisChamberRouteRail = ({
                   style={{
                     color: isActive ? palette.ink : palette.inkMuted,
                     filter: isActive
-                      ? "drop-shadow(0 0 6px rgba(255,149,0,0.65))"
+                      ? "drop-shadow(0 0 6px rgba(209,172,103,0.65))"
                       : "none",
                     animation: isActive
                       ? "railGlowPulse 3.8s ease-in-out 2"
@@ -115,7 +115,7 @@ export const AnalysisChamberRouteRail = ({
                 <span
                   className="relative z-10 select-none font-display text-[8px] uppercase tracking-[0.14em] leading-none transition-colors duration-200"
                   style={{
-                    color: isActive ? palette.ink : "rgba(154,171,184,0.55)",
+                    color: isActive ? palette.ink : "rgba(159,144,118,0.55)",
                   }}
                 >
                   {route.shortLabel}
@@ -126,7 +126,7 @@ export const AnalysisChamberRouteRail = ({
                   className="pointer-events-none absolute left-[calc(100%+10px)] top-1/2 z-50 -translate-y-1/2 whitespace-nowrap rounded-sm px-2.5 py-1.5 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
                   style={{
                     background: "rgba(18,10,6,0.96)",
-                    border: `1px solid rgba(200,150,30,0.35)`,
+                    border: "1px solid rgba(161,119,55,0.35)",
                     color: palette.inkSoft,
                     fontSize: 10,
                     fontFamily: "inherit",
@@ -146,7 +146,7 @@ export const AnalysisChamberRouteRail = ({
               {index < ANALYSIS_CHAMBER_ROUTES.length - 1 ? (
                 <div
                   className="my-0.5 h-px w-8"
-                  style={{ background: "rgba(255,149,0,0.12)" }}
+                  style={{ background: "rgba(209,172,103,0.12)" }}
                 />
               ) : null}
             </div>

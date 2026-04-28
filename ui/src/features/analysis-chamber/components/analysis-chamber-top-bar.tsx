@@ -8,6 +8,7 @@ import {
 } from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
 import type { AnalysisChamberRouteKey } from "@/features/analysis-chamber/lib/analysis-chamber-shell.types";
 import type { ChamberBootstrap } from "@/features/analysis-chamber/api/analysis-chamber-api.view-models";
+import { MEDIEVAL_THEME } from "@/lib/theme/medieval-theme";
 
 export const AnalysisChamberTopBar = ({
   bootstrap,
@@ -21,9 +22,8 @@ export const AnalysisChamberTopBar = ({
   <header
     className="relative z-10 flex min-h-14 items-center gap-3 border-b px-3 py-2.5 md:px-5"
     style={{
-      background:
-        "linear-gradient(90deg, rgba(255,149,0,0.08), rgba(27,15,10,0.98) 28%, rgba(21,9,10,0.98) 100%)",
-      borderColor: "rgba(120, 80, 20, 0.5)",
+      background: MEDIEVAL_THEME.gradients.topBar,
+      borderColor: "rgba(141, 105, 52, 0.5)",
       color: palette.ink,
     }}
   >
@@ -38,21 +38,21 @@ export const AnalysisChamberTopBar = ({
       </Link>
       <div
         className="h-8 w-px"
-        style={{ background: "rgba(255,149,0,0.15)" }}
+        style={{ background: "rgba(209, 172, 103, 0.15)" }}
       />
       <div
         className="flex h-8 w-8 items-center justify-center rounded-full border text-[11px] font-semibold tracking-[0.16em]"
         style={{
           borderColor: palette.gold,
           color: palette.gold,
-          boxShadow: "0 0 18px rgba(255,149,0,0.16)",
+          boxShadow: "0 0 18px rgba(209,172,103,0.16)",
         }}
       >
         AC
       </div>
       <div
         className="hidden h-8 w-px md:block"
-        style={{ background: "rgba(255,149,0,0.22)" }}
+        style={{ background: "rgba(209, 172, 103, 0.22)" }}
       />
     </div>
 
@@ -77,7 +77,7 @@ export const AnalysisChamberTopBar = ({
       </p>
       <p
         className="mt-0.5 text-[9px] uppercase tracking-[0.16em]"
-        style={{ color: "rgba(255,184,77,0.58)" }}
+        style={{ color: "rgba(209,172,103,0.58)" }}
       >
         Chamber mode
       </p>
@@ -89,9 +89,9 @@ export const AnalysisChamberTopBar = ({
           className="rounded-md border px-2.5 py-1 text-sm font-display transition-all duration-150 hover:brightness-125 active:scale-95"
           onClick={onRefresh}
           style={{
-            borderColor: "rgba(200,150,30,0.35)",
+            borderColor: "rgba(161, 119, 55, 0.35)",
             color: palette.gold,
-            background: "rgba(200,150,30,0.06)",
+            background: "rgba(209, 172, 103, 0.06)",
           }}
           title="Refresh data"
           type="button"

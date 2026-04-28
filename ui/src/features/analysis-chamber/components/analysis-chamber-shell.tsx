@@ -173,12 +173,12 @@ const AnalysisPendingScreen = ({
         className="flex h-24 w-24 items-center justify-center rounded-full border"
         style={{
           borderColor: isRunning
-            ? "rgba(200,150,30,0.5)"
-            : "rgba(200,150,30,0.25)",
+            ? "rgba(209,172,103,0.5)"
+            : "rgba(209,172,103,0.25)",
 
           background: isRunning
-            ? "radial-gradient(circle, rgba(200,150,30,0.22) 0%, rgba(200,150,30,0.08) 55%, transparent 70%)"
-            : "radial-gradient(circle, rgba(200,150,30,0.10) 0%, transparent 70%)",
+            ? "radial-gradient(circle, rgba(209,172,103,0.22) 0%, rgba(209,172,103,0.08) 55%, transparent 70%)"
+            : "radial-gradient(circle, rgba(209,172,103,0.10) 0%, transparent 70%)",
 
           animation: isRunning ? "pulse 2s ease-in-out infinite" : undefined,
         }}
@@ -186,7 +186,7 @@ const AnalysisPendingScreen = ({
         <span
           className="font-display text-3xl"
           style={{
-            color: isRunning ? "rgba(200,150,30,0.9)" : "rgba(200,150,30,0.35)",
+            color: isRunning ? "rgba(209,172,103,0.9)" : "rgba(209,172,103,0.35)",
           }}
         >
           {isRunning ? "⚙" : status === "failed" ? "✕" : "○"}
@@ -222,11 +222,11 @@ const AnalysisPendingScreen = ({
             }
             onClick={() => void handleTrigger()}
             style={{
-              borderColor: "rgba(200,150,30,0.55)",
+              borderColor: "rgba(209,172,103,0.55)",
 
-              color: "rgba(200,150,30,0.9)",
+              color: "rgba(209,172,103,0.9)",
 
-              background: "rgba(200,150,30,0.08)",
+              background: "rgba(209,172,103,0.08)",
             }}
             type="button"
           >
@@ -335,10 +335,10 @@ export const AnalysisChamberShell = ({
                   <div
                     className="mx-auto mt-8 h-24 w-24 rounded-full border"
                     style={{
-                      borderColor: "rgba(200, 150, 30, 0.35)",
+                      borderColor: "rgba(161, 119, 55, 0.35)",
 
                       background:
-                        "radial-gradient(circle, rgba(200,150,30,0.18) 0%, rgba(200,150,30,0.06) 55%, transparent 70%)",
+                        "radial-gradient(circle, rgba(209,172,103,0.18) 0%, rgba(209,172,103,0.06) 55%, transparent 70%)",
                     }}
                   />
                 </div>

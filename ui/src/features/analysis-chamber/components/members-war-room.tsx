@@ -13,6 +13,7 @@ import {
   getWarRoomCounters,
   sortWarRoomMembers,
 } from "@/features/analysis-chamber/lib/members-war-room";
+import { MEDIEVAL_THEME } from "@/lib/theme/medieval-theme";
 
 export function MembersWarRoom() {
   const { data, isLoading, isError } = useQuery({
@@ -70,21 +71,44 @@ function MembersWarRoomLoading() {
         {Array.from({ length: 4 }).map((_, index) => (
           <div
             key={index}
-            className="h-24 animate-pulse border border-amber-200/10 bg-[#1b120c]/70"
+            className="h-24 animate-pulse border"
+            style={{
+              borderColor: "rgba(161, 119, 55, 0.18)",
+              backgroundImage: MEDIEVAL_THEME.gradients.shell,
+            }}
           />
         ))}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="border border-amber-200/15 bg-[#ead5a6] p-4">
-          <div className="mb-4 h-8 w-52 animate-pulse bg-[#7b4d20]/15" />
+        <div
+          className="border p-4"
+          style={{
+            borderColor: "rgba(161, 119, 55, 0.18)",
+            backgroundImage: MEDIEVAL_THEME.gradients.ledger,
+          }}
+        >
+          <div
+            className="mb-4 h-8 w-52 animate-pulse"
+            style={{ backgroundColor: "rgba(123, 77, 32, 0.15)" }}
+          />
           <div className="space-y-3">
             {Array.from({ length: 5 }).map((_, index) => (
-              <div key={index} className="h-16 animate-pulse bg-[#7b4d20]/12" />
+              <div
+                key={index}
+                className="h-16 animate-pulse"
+                style={{ backgroundColor: "rgba(123, 77, 32, 0.12)" }}
+              />
             ))}
           </div>
         </div>
-        <div className="h-80 animate-pulse border border-amber-200/15 bg-[#1b120c]/75" />
+        <div
+          className="h-80 animate-pulse border"
+          style={{
+            borderColor: "rgba(161, 119, 55, 0.18)",
+            backgroundImage: MEDIEVAL_THEME.gradients.shell,
+          }}
+        />
       </div>
     </div>
   );
@@ -92,14 +116,27 @@ function MembersWarRoomLoading() {
 
 function MembersWarRoomError() {
   return (
-    <div className="border border-red-300/25 bg-[#1b120c]/88 p-8 text-amber-50">
-      <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-red-200/70">
+    <div
+      className="border p-8"
+      style={{
+        borderColor: "rgba(143, 69, 56, 0.25)",
+        backgroundImage: MEDIEVAL_THEME.gradients.shell,
+        color: MEDIEVAL_THEME.text.primary,
+      }}
+    >
+      <p
+        className="font-mono text-[10px] uppercase tracking-[0.18em]"
+        style={{ color: "rgba(228, 174, 162, 0.7)" }}
+      >
         Council records unavailable
       </p>
       <h2 className="mt-3 font-body-serif text-3xl">
         Backend connection failed
       </h2>
-      <p className="mt-2 max-w-xl text-sm leading-6 text-amber-50/65">
+      <p
+        className="mt-2 max-w-xl text-sm leading-6"
+        style={{ color: "rgba(243, 227, 193, 0.65)" }}
+      >
         The roster could not be loaded. Check that the backend is running and
         reachable, then refresh this page.
       </p>
@@ -109,13 +146,24 @@ function MembersWarRoomError() {
 
 function MembersWarRoomEmpty() {
   return (
-    <div className="border border-amber-200/20 bg-[#1b120c]/88 p-8 text-center text-amber-50">
+    <div
+      className="border p-8 text-center"
+      style={{
+        borderColor: "rgba(161, 119, 55, 0.2)",
+        backgroundImage: MEDIEVAL_THEME.gradients.shell,
+        color: MEDIEVAL_THEME.text.primary,
+      }}
+    >
       <p className="font-body-serif text-2xl">
         No champions are on the roster.
       </p>
       <Link
         href="/"
-        className="mt-4 inline-flex border border-amber-200/25 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-amber-100/70 transition hover:border-amber-200/45 hover:text-amber-50"
+        className="mt-4 inline-flex border px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] transition"
+        style={{
+          borderColor: "rgba(161, 119, 55, 0.25)",
+          color: "rgba(243, 227, 193, 0.7)",
+        }}
       >
         Return To Launcher
       </Link>

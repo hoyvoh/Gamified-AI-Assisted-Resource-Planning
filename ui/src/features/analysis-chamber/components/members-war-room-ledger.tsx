@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { cn } from "@/lib/utils";
+import { MEDIEVAL_THEME } from "@/lib/theme/medieval-theme";
 
 import type { FlatMemberRow } from "@/features/analysis-chamber/api/analysis-chamber-api.view-models";
 import {
@@ -31,22 +32,39 @@ export function MembersWarRoomLedger({
     <section aria-labelledby="campaign-ledger-title">
       <div className="mb-3 flex items-end justify-between gap-4">
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#d1ac67]/72">
+          <p
+            className="font-mono text-[10px] uppercase tracking-[0.18em]"
+            style={{ color: "rgba(209, 172, 103, 0.72)" }}
+          >
             Campaign Ledger
           </p>
           <h2
             id="campaign-ledger-title"
-            className="font-body-serif text-2xl text-[#f3e3c1]"
+            className="font-body-serif text-2xl"
+            style={{ color: MEDIEVAL_THEME.text.primary }}
           >
             War Council Ledger
           </h2>
         </div>
       </div>
 
-      <div className="overflow-hidden border border-[#a17737]/28 bg-[linear-gradient(180deg,rgba(25,18,13,0.97),rgba(13,10,8,0.98))] text-[#f3e3c1] shadow-[0_24px_70px_rgba(0,0,0,0.35)]">
+      <div
+        className="overflow-hidden border text-[#f3e3c1]"
+        style={{
+          borderColor: "rgba(161, 119, 55, 0.28)",
+          backgroundImage: MEDIEVAL_THEME.gradients.ledger,
+          color: MEDIEVAL_THEME.text.primary,
+          boxShadow: MEDIEVAL_THEME.effects.panelShadow,
+        }}
+      >
         <div
-          className="hidden grid-cols-[minmax(180px,1.4fr)_minmax(120px,0.9fr)_minmax(120px,0.9fr)_minmax(150px,0.9fr)_140px] border-b border-[#6f5227]/45 bg-[linear-gradient(180deg,rgba(46,32,20,0.92),rgba(32,24,17,0.94))] px-4 py-3 font-mono text-[10px] uppercase tracking-[0.16em] text-[#d4bc90]/72 lg:grid"
+          className="hidden grid-cols-[minmax(180px,1.4fr)_minmax(120px,0.9fr)_minmax(120px,0.9fr)_minmax(150px,0.9fr)_140px] border-b px-4 py-3 font-mono text-[10px] uppercase tracking-[0.16em] lg:grid"
           aria-hidden="true"
+          style={{
+            borderColor: "rgba(111, 82, 39, 0.45)",
+            backgroundImage: MEDIEVAL_THEME.gradients.ledgerHeader,
+            color: "rgba(212, 188, 144, 0.72)",
+          }}
         >
           <span>Champion</span>
           <span>House</span>
@@ -85,9 +103,14 @@ function LedgerRow({ member, isSelected, onSelect }: LedgerRowProps) {
       className={cn(
         "relative grid gap-3 px-4 py-4 transition-colors lg:grid-cols-[minmax(180px,1.4fr)_minmax(120px,0.9fr)_minmax(120px,0.9fr)_minmax(150px,0.9fr)_140px] lg:items-center",
         isSelected
-          ? "bg-[linear-gradient(90deg,rgba(106,77,33,0.26),rgba(39,28,18,0.62)_16%,rgba(25,19,14,0.94)_100%)] shadow-[inset_0_1px_0_rgba(245,228,190,0.05)]"
-          : "bg-[linear-gradient(90deg,rgba(255,255,255,0.02),transparent_34%)] hover:bg-[linear-gradient(90deg,rgba(112,79,34,0.14),rgba(27,20,15,0.72)_16%,rgba(18,14,11,0.94)_100%)]",
+          ? "shadow-[inset_0_1px_0_rgba(245,228,190,0.05)]"
+          : "hover:bg-[linear-gradient(90deg,rgba(112,79,34,0.14),rgba(27,20,15,0.72)_16%,rgba(18,14,11,0.94)_100%)]",
       )}
+      style={{
+        backgroundImage: isSelected
+          ? MEDIEVAL_THEME.gradients.selectedRow
+          : MEDIEVAL_THEME.gradients.idleRow,
+      }}
     >
       {isSelected ? (
         <span
@@ -156,10 +179,18 @@ type LedgerMobileLabelProps = {
 function LedgerMobileLabel({ label, value }: LedgerMobileLabelProps) {
   return (
     <div className="min-w-0">
-      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#b39262]/62 lg:hidden">
+      <p
+        className="font-mono text-[10px] uppercase tracking-[0.14em] lg:hidden"
+        style={{ color: "rgba(179, 146, 98, 0.62)" }}
+      >
         {label}
       </p>
-      <p className="truncate text-sm text-[#e4d3b2]/86">{value}</p>
+      <p
+        className="truncate text-sm"
+        style={{ color: "rgba(228, 211, 178, 0.86)" }}
+      >
+        {value}
+      </p>
     </div>
   );
 }
