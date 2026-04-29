@@ -1,7 +1,10 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
 import { ChevronLeft } from "lucide-react";
 
+import { getAnalysisChamberBootstrap } from "@/features/analysis-chamber/api/analysis-chamber-api";
+import { isAnalysisChamberApiErrorStatus } from "@/features/analysis-chamber/api/analysis-chamber-api.client";
 import { ScanLobby } from "@/features/analysis-chamber/components/scan-lobby";
 
 export default async function ScanLobbyPage({
@@ -10,6 +13,16 @@ export default async function ScanLobbyPage({
   params: Promise<{ memberId: string }>;
 }) {
   const { memberId } = await params;
+
+  try {
+    await getAnalysisChamberBootstrap(memberId);
+  } catch (error) {
+    if (isAnalysisChamberApiErrorStatus(error, 404)) {
+      notFound();
+    }
+
+    throw error;
+  }
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_50%_0%,rgba(214,168,79,0.12),transparent_34%),linear-gradient(180deg,#0b0707,#050405)] px-4 py-6 md:px-8">

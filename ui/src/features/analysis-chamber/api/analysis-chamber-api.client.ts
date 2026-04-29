@@ -26,6 +26,12 @@ export class AnalysisChamberApiError extends Error {
   }
 }
 
+export const isAnalysisChamberApiErrorStatus = (
+  error: unknown,
+  status: number,
+): error is AnalysisChamberApiError =>
+  error instanceof AnalysisChamberApiError && error.status === status;
+
 const buildUrl = (
   path: string,
   query?: Record<string, string | number | null | undefined>,
