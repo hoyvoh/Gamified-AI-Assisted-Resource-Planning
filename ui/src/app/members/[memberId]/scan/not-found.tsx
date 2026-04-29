@@ -11,6 +11,7 @@ export default function ScanMemberNotFound() {
       secondaryAction={{ href: "/", label: "Consult the Scribes" }}
       imageSrc="/warrior.png"
       imageAlt="Armored warrior kneeling beside the recovery message"
+      imagePresentation="poster"
       footerLabel="Lost Signal Recovery Protocol"
     />
   );
