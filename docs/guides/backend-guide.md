@@ -304,7 +304,7 @@ be/
 │   │   │   │   └── <domain>.py
 │   │   │   └── repositories/      # Concrete repo implementations
 │   │   │       └── <domain>.py
-│   │   ├── llm/
+│   │   ├── agent_cli/
 │   │   │   └── client.py          # CLI subprocess provider wrapper (claude / codex)
 │   │   └── db/migrations/         # Alembic env + versions
 │   │
