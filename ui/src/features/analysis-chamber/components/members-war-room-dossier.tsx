@@ -41,7 +41,7 @@ export function MembersWarRoomDossier({ member }: MembersWarRoomDossierProps) {
         className="font-mono text-[10px] uppercase tracking-[0.2em]"
         style={{ color: "rgba(209, 172, 103, 0.72)" }}
       >
-        Royal Dossier
+        Member Brief
       </p>
       <h2
         id="royal-dossier-title"
@@ -64,7 +64,7 @@ export function MembersWarRoomDossier({ member }: MembersWarRoomDossierProps) {
         )}
       >
         <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-current/60">
-          Campaign State
+          Scan Status
         </p>
         <p className="mt-1 font-body-serif text-2xl leading-none">
           {status.label}
@@ -78,10 +78,10 @@ export function MembersWarRoomDossier({ member }: MembersWarRoomDossierProps) {
         <DossierField label="House" value={member.teamName} />
         <DossierField label="Calling" value={member.roleName ?? "Unassigned"} />
         <DossierField
-          label="Last Campaign"
+          label="Last Scan"
           value={formatWarRoomDate(member.lastAnalysisAt)}
         />
-        <DossierField label="Next Order" value={action.recommendation} />
+        <DossierField label="Next Action" value={action.recommendation} />
       </dl>
 
       <Link

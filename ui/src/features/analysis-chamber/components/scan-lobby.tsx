@@ -363,12 +363,12 @@ function ScanLobbyHeader({
 }) {
   const statusText =
     mode === "failed"
-      ? "Repair Required"
+      ? "Scan Failed"
       : mode === "success"
-        ? "Dossier Fortified"
+        ? "Profile Ready"
         : mode === "scouting" || mode === "dispatching"
-          ? "Scout In Field"
-          : "Chamber Ready";
+          ? "Scan Running"
+          : "Ready";
 
   return (
     <header
@@ -377,7 +377,7 @@ function ScanLobbyHeader({
     >
       <div>
         <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-amber-200/55">
-          Scout Dispatch Chamber
+          Scan Lobby
         </p>
         <h1 className="mt-2 font-serif text-4xl text-amber-50 md:text-5xl">
           {displayName}
@@ -402,7 +402,7 @@ function ScanLobbyHeader({
             href={`/profile/${memberId}`}
             className="inline-flex items-center gap-2 rounded-md border border-emerald-200/25 bg-emerald-200/8 px-4 py-3 font-mono text-xs uppercase tracking-[0.14em] text-emerald-100 transition hover:border-emerald-100/45 hover:bg-emerald-200/12 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-200"
           >
-            Open Latest Dossier
+            Open Latest Profile
             <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
           </Link>
         )}
@@ -440,12 +440,11 @@ function ControlRoomSummary({
             Scan Control Room
           </p>
           <h2 className="mt-2 font-serif text-2xl text-amber-50">
-            Dispatch is now a blocking chamber flow
+            Starting a scan opens the live chamber
           </h2>
           <p className="mt-3 text-sm leading-6 text-white/60">
-            The live reconnaissance map no longer sits inline on this page. When a
-            scout is dispatched, the chamber takes full focus until the scan reaches
-            a verdict.
+            The live scan map no longer sits inline on this page. When a scan
+            starts, the chamber takes full focus until the run reaches a final status.
           </p>
         </div>
 
@@ -457,7 +456,7 @@ function ControlRoomSummary({
             {mode === "scouting" || mode === "dispatching"
               ? "Live chamber engaged"
               : mode === "failed"
-                ? "Repair required"
+                ? "Retry required"
                 : "Control room ready"}
           </p>
         </div>
@@ -492,7 +491,7 @@ function ControlRoomSummary({
             <p className="mt-3 text-sm text-white/62">
               {reducedMotion
                 ? "Reduced motion is active. The live chamber should still show clear state progression."
-                : "Dispatch will open a full-focus live chamber with phase and source progression."}
+                : "Starting a scan will open a full-focus live chamber with phase and source progression."}
             </p>
             <p className="mt-3 font-mono text-[11px] text-amber-100/65">
               Current phase key: {phase}
@@ -540,14 +539,14 @@ function BrokenBannerDetail({ run }: { run: ScanRun }) {
   return (
     <section className="rounded-lg border border-red-300/25 bg-red-950/12 p-5">
       <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-red-100/50">
-        Required Repair
+        Scan Failure
       </p>
       <h2 className="mt-2 flex items-center gap-2 text-xl font-semibold text-red-100">
         <AlertTriangle className="h-5 w-5" aria-hidden="true" />
-        Broken Banner
+        Failed Scan
       </h2>
       <p className="mt-3 text-sm text-red-50/70">
-        The chamber runner could not gather signal from this campaign window.
+        The scan could not gather enough signal from this campaign window.
       </p>
       {run.errorMessage && (
         <p className="mt-3 rounded-md border border-red-300/20 bg-black/25 p-3 font-mono text-xs text-red-100/80">
@@ -596,10 +595,10 @@ function DispatchOrderForm({
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-amber-200/55">
-            Dispatch Order
+            Scan Order
           </p>
           <h2 className="mt-2 font-serif text-2xl text-amber-50">
-            Seal a campaign window
+            Select a campaign window
           </h2>
         </div>
         <CheckCircle2 className="mt-1 h-5 w-5 text-amber-200/55" aria-hidden="true" />
@@ -609,7 +608,7 @@ function DispatchOrderForm({
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block" htmlFor="scan-campaign-start">
             <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-[0.15em] text-white/38">
-              Campaign Start
+              Window Start
             </span>
             <input
               id="scan-campaign-start"
@@ -622,7 +621,7 @@ function DispatchOrderForm({
           </label>
           <label className="block" htmlFor="scan-campaign-end">
             <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-[0.15em] text-white/38">
-              Campaign End
+              Window End
             </span>
             <input
               id="scan-campaign-end"
@@ -637,7 +636,7 @@ function DispatchOrderForm({
 
         {(validationError || mutationError) && (
           <p className="rounded-md border border-red-300/20 bg-red-950/20 p-3 font-mono text-xs text-red-100/80">
-            {validationError ?? mutationError?.message ?? "Failed to dispatch scout."}
+            {validationError ?? mutationError?.message ?? "Failed to start the scan."}
           </p>
         )}
 
@@ -649,7 +648,7 @@ function DispatchOrderForm({
           data-animate="dispatch-button"
         >
           <Play className="h-3.5 w-3.5" aria-hidden="true" />
-          {isDispatching ? "Sealing Order..." : disabled ? "Scout In Field" : "Dispatch Scout"}
+          {isDispatching ? "Starting Scan..." : disabled ? "Scan Running" : "Start Scan"}
         </button>
       </form>
     </section>
@@ -685,10 +684,10 @@ function CampaignChronicle({
       <div className="flex items-center justify-between gap-4">
         <div>
           <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-amber-200/50">
-            Campaign Chronicle
+            Scan History
           </p>
           <h2 className="mt-2 font-serif text-2xl text-amber-50">
-            Previous scout records
+            Previous scan runs
           </h2>
         </div>
         <span className="rounded border border-white/10 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-white/35">
@@ -699,7 +698,7 @@ function CampaignChronicle({
       <div className="mt-5 space-y-3">
         {isLoading && (
           <p className="rounded-md border border-white/8 bg-white/5 p-5 font-mono text-xs text-white/40">
-            Loading campaign records...
+            Loading scan history...
           </p>
         )}
         {isError && (
@@ -727,9 +726,9 @@ function CampaignChronicle({
 function EmptyChronicleState() {
   return (
     <div className="rounded-md border border-dashed border-amber-200/20 bg-amber-200/5 px-5 py-8 text-center">
-      <p className="font-serif text-xl text-amber-50">No campaign record yet</p>
+      <p className="font-serif text-xl text-amber-50">No scan history yet</p>
       <p className="mx-auto mt-2 max-w-md text-sm text-white/50">
-        Choose a campaign window and dispatch your first AI scout.
+        Choose a campaign window and start the first profile scan.
       </p>
     </div>
   );
@@ -799,7 +798,7 @@ function CampaignRecordCard({
             href={`/profile/${memberId}`}
             className="inline-flex items-center gap-2 rounded-md border border-emerald-200/25 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-emerald-100 transition hover:border-emerald-100/45 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-200"
           >
-            Open Dossier
+            Open Profile
             <ArrowRight className="h-3 w-3" aria-hidden="true" />
           </Link>
         )}
@@ -812,7 +811,7 @@ function CampaignRecordCard({
               className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-red-200/25 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-red-100 transition hover:border-red-100/45 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-200 disabled:cursor-not-allowed disabled:opacity-45"
             >
               <RotateCcw className="h-3 w-3" aria-hidden="true" />
-              Send Again
+              Retry Scan
             </button>
             {run.errorMessage && (
               <button
@@ -851,7 +850,7 @@ function ScoutAdvisor({
       data-animate="panel"
     >
       <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-amber-200/50">
-        Scout Advisor
+        Scan Advisor
       </p>
       <p className="mt-3 text-sm leading-6 text-white/62">
         {getAdvisorCopy({ mode, activeRun, selectedRun, hasHistory })}
@@ -867,7 +866,7 @@ function ScoutAdvisor({
       </div>
 
       <div className="mt-5 grid grid-cols-2 gap-3">
-        <AdvisorMetric label="Dossier" value={hasCompletedRun ? "Ready" : "Pending"} />
+        <AdvisorMetric label="Profile" value={hasCompletedRun ? "Ready" : "Pending"} />
         <AdvisorMetric
           label="Motion"
           value={mode === "scouting" || mode === "dispatching" ? "Live" : "Calm"}

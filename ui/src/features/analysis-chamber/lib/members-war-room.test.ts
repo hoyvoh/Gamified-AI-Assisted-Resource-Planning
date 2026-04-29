@@ -27,28 +27,28 @@ const member = (
 });
 
 describe("members war room derivations", () => {
-  it("maps domain statuses to medieval display labels", () => {
+  it("maps domain statuses to the normalized scan labels", () => {
     expect(getWarRoomStatusDisplay("not_analyzed")).toMatchObject({
-      label: "Unsworn",
-      meaning: "No chamber record yet",
+      label: "Not Scanned",
+      meaning: "No profile scan yet",
     });
     expect(getWarRoomStatusDisplay("completed")).toMatchObject({
-      label: "Fortified",
-      meaning: "Chamber is ready",
+      label: "Profile Ready",
+      meaning: "The latest profile is ready",
     });
   });
 
   it("maps primary row actions to the correct routes", () => {
     expect(getWarRoomAction("member-1", "not_analyzed")).toMatchObject({
-      label: "Dispatch Scout",
+      label: "Start Scan",
       href: "/members/member-1/scan",
     });
     expect(getWarRoomAction("member-1", "completed")).toMatchObject({
-      label: "Open Dossier",
+      label: "Open Profile",
       href: "/profile/member-1",
     });
     expect(getWarRoomAction("member-1", "future_state")).toMatchObject({
-      label: "Open Chamber",
+      label: "Open Scan Lobby",
       href: "/members/member-1/scan",
     });
   });

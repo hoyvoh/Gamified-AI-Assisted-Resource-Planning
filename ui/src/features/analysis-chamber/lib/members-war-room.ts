@@ -25,23 +25,23 @@ export const WAR_ROOM_STATUS_DISPLAY: Record<
   WarRoomStatusDisplay
 > = {
   not_analyzed: {
-    label: "Unsworn",
-    meaning: "No chamber record yet",
+    label: "Not Scanned",
+    meaning: "No profile scan yet",
     tone: "idle",
   },
   analyzing: {
-    label: "Scouting",
-    meaning: "Analysis is running",
+    label: "Scanning",
+    meaning: "Profile scan is running",
     tone: "active",
   },
   failed: {
-    label: "Breach",
-    meaning: "Last run failed or is blocked",
+    label: "Scan Failed",
+    meaning: "The latest scan failed or was blocked",
     tone: "danger",
   },
   completed: {
-    label: "Fortified",
-    meaning: "Chamber is ready",
+    label: "Profile Ready",
+    meaning: "The latest profile is ready",
     tone: "ready",
   },
 };
@@ -72,33 +72,33 @@ export function getWarRoomAction(
   switch (status) {
     case "not_analyzed":
       return {
-        label: "Dispatch Scout",
+        label: "Start Scan",
         href: `/members/${memberId}/scan`,
-        recommendation: "Begin the first chamber scan.",
+        recommendation: "Run the first profile scan.",
       };
     case "analyzing":
       return {
-        label: "Watch Scout",
+        label: "Watch Scan",
         href: `/members/${memberId}/scan`,
-        recommendation: "Check the active scan progress.",
+        recommendation: "Open the scan lobby to watch live progress.",
       };
     case "failed":
       return {
-        label: "Send Again",
+        label: "Retry Scan",
         href: `/members/${memberId}/scan`,
-        recommendation: "Review the blocked run and retry from the scan lobby.",
+        recommendation: "Review the failed run and retry from the scan lobby.",
       };
     case "completed":
       return {
-        label: "Open Dossier",
+        label: "Open Profile",
         href: `/profile/${memberId}`,
-        recommendation: "Open the completed profile chamber.",
+        recommendation: "Open the latest analysis profile.",
       };
     default:
       return {
-        label: "Open Chamber",
+        label: "Open Scan Lobby",
         href: `/members/${memberId}/scan`,
-        recommendation: "Open the chamber and verify this member state.",
+        recommendation: "Open the scan lobby and verify this member state.",
       };
   }
 }
@@ -142,19 +142,19 @@ export function getWarRoomCounters(members: FlatMemberRow[]): WarRoomCounter[] {
     },
     {
       key: "analyzing",
-      label: "Scouts In Field",
+      label: "Scans Running",
       value: totals.analyzing,
       tone: WAR_ROOM_STATUS_DISPLAY.analyzing.tone,
     },
     {
       key: "failed",
-      label: "Broken Banners",
+      label: "Failed Scans",
       value: totals.failed,
       tone: WAR_ROOM_STATUS_DISPLAY.failed.tone,
     },
     {
       key: "completed",
-      label: "Fortified Records",
+      label: "Ready Profiles",
       value: totals.completed,
       tone: WAR_ROOM_STATUS_DISPLAY.completed.tone,
     },
@@ -163,7 +163,7 @@ export function getWarRoomCounters(members: FlatMemberRow[]): WarRoomCounter[] {
 
 export function formatWarRoomDate(value: string | null): string {
   if (!value) {
-    return "No campaign yet";
+    return "No scan yet";
   }
 
   const date = new Date(value);

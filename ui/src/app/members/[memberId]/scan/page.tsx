@@ -24,7 +24,7 @@ export default async function ScanLobbyPage({
           </Link>
           <span className="text-white/15">/</span>
           <span className="font-mono text-xs text-white/35">
-            Scout Dispatch Chamber
+            Scan Lobby
           </span>
         </div>
 

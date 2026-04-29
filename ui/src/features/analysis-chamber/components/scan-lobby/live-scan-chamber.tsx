@@ -59,29 +59,29 @@ const toneClasses: Record<
 const getHeadline = (state: LiveScanChamberState) => {
   if (state === "opening") {
     return {
-      badge: "Opening Chamber",
-      status: "Sealing dispatch order",
+      badge: "Starting Scan",
+      status: "Preparing scan window",
     };
   }
 
   if (state === "dispatching") {
     return {
       badge: "Dispatching",
-      status: "Raising live chamber",
+      status: "Opening live scan chamber",
     };
   }
 
   if (state === "scouting") {
     return {
       badge: "Scan in Progress",
-      status: "Gathering live signal",
+      status: "Gathering live scan signals",
     };
   }
 
   if (state === "success") {
     return {
-      badge: "Verdict Locked",
-      status: "Dossier fortified",
+      badge: "Scan Complete",
+      status: "Profile ready",
     };
   }
 
@@ -93,8 +93,8 @@ const getHeadline = (state: LiveScanChamberState) => {
   }
 
   return {
-    badge: "Broken Banner",
-    status: "Dispatch failed",
+    badge: "Scan Failed",
+    status: "Retry required",
   };
 };
 

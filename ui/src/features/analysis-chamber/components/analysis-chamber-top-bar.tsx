@@ -79,7 +79,7 @@ export const AnalysisChamberTopBar = ({
         className="mt-0.5 text-[9px] uppercase tracking-[0.16em]"
         style={{ color: "rgba(209,172,103,0.58)" }}
       >
-        Chamber mode
+        Profile route
       </p>
     </div>
 

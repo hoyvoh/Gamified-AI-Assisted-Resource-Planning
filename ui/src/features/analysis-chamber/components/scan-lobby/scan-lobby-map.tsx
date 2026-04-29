@@ -92,12 +92,12 @@ export function LivingTacticalMap({
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-amber-200/55">
-              Living Reconnaissance Map
+              Live Scan Map
             </p>
           </div>
           <div className="rounded-md border border-amber-200/12 bg-black/20 px-3 py-2 text-right backdrop-blur-sm">
             <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-white/28">
-              Campaign markers
+              Run markers
             </p>
             <p className="mt-1 font-mono text-[11px] text-white/68">
               {completedCount} fortified / {failedCount} broken

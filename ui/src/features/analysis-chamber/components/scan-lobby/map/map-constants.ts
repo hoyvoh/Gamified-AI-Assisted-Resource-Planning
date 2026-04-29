@@ -144,24 +144,24 @@ export const PHASE_COPY: Record<
   { title: string; detail: string }
 > = {
   "sealing-order": {
-    title: "Sealing Dispatch Order",
-    detail: "Preparing campaign window and mission instruction.",
+    title: "Sealing Scan Order",
+    detail: "Preparing the campaign window and scan instructions.",
   },
   "crossing-signal-realm": {
-    title: "Scout Crossing the Signal Realm",
-    detail: "Contacting available developer signal sources.",
+    title: "Scanning Live Sources",
+    detail: "Contacting the available developer signal sources.",
   },
   "gathering-fragments": {
-    title: "Gathering Banners and Fragments",
-    detail: "Collecting developer activity traces.",
+    title: "Collecting Source Records",
+    detail: "Collecting the activity traces returned by each source.",
   },
   "forging-dossier": {
-    title: "Forging the Dossier",
-    detail: "Composing the member profile and scan result.",
+    title: "Composing the Profile",
+    detail: "Building the member profile from the completed scan data.",
   },
   verdict: {
-    title: "Chamber Verdict",
-    detail: "The latest backend run state is ready.",
+    title: "Final Scan Status",
+    detail: "The latest scan run has reached a final status.",
   },
 };
 

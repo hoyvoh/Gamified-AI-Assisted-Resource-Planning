@@ -98,21 +98,21 @@ const PENDING_COPY: Record<
   { headline: string; sub: string }
 > = {
   not_analyzed: {
-    headline: "Analysis not started",
+    headline: "Profile scan not started",
 
-    sub: "No analysis run has been initiated for this member yet.",
+    sub: "No profile scan has been initiated for this member yet.",
   },
 
   analyzing: {
-    headline: "Analysis in progress",
+    headline: "Profile scan in progress",
 
-    sub: "Profile data will appear here once the run completes. This page refreshes automatically.",
+    sub: "Profile data will appear here once the current scan completes. This page refreshes automatically.",
   },
 
   failed: {
-    headline: "Analysis failed",
+    headline: "Profile scan failed",
 
-    sub: "The last analysis run encountered an error. Trigger a new run to retry.",
+    sub: "The latest profile scan encountered an error. Start another scan to retry.",
   },
 };
 
@@ -233,10 +233,10 @@ const AnalysisPendingScreen = ({
             {triggerState === "triggering"
               ? "Starting…"
               : triggerState === "triggered"
-                ? "Analysis started ✓"
+                ? "Scan started ✓"
                 : status === "failed"
-                  ? "↺ Re-run analysis"
-                  : "▶ Start analysis"}
+                  ? "↺ Re-run scan"
+                  : "▶ Start scan"}
           </button>
         )}
 

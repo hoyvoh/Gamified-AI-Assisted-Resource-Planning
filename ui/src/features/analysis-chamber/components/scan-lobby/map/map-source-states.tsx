@@ -2,7 +2,7 @@ import type { SourceStatus } from "../scan-lobby.types";
 import { MAP_ANCHORS, SOURCE_STATUS_STYLES } from "./map-constants";
 
 /**
- * Source States panel — the readable source-of-truth for anchor identities.
+ * Source Status panel — the readable source-of-truth for anchor identities.
  * Active rows receive a subtle highlight that mirrors the active anchor on the map.
  */
 export function MapSourceStates({
@@ -13,7 +13,7 @@ export function MapSourceStates({
   return (
     <div className="rounded-md border border-white/6 bg-black/12 p-2 backdrop-blur-sm">
       <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-white/28">
-        Source States
+        Source Status
       </p>
       <div className="mt-2 space-y-1">
         {MAP_ANCHORS.map((anchor) => {

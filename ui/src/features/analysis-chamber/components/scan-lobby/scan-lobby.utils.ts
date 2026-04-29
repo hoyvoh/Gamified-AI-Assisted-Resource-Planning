@@ -19,36 +19,36 @@ export const isTerminalRun = (status: string | null | undefined) =>
 export const getRunStatusMeta = (status: string): ScanStatusMeta => {
   if (status === "completed") {
     return {
-      label: "Fortified",
+      label: "Profile Ready",
       technicalLabel: "Completed",
       tone: "completed",
-      summary: "Campaign completed successfully. Dossier is ready for review.",
+      summary: "The scan completed successfully. The profile is ready to review.",
     };
   }
 
   if (status === "failed") {
     return {
-      label: "Broken Banner",
+      label: "Scan Failed",
       technicalLabel: "Failed",
       tone: "failed",
-      summary: "The chamber runner could not gather enough signal.",
+      summary: "The scan could not gather enough signal to finish.",
     };
   }
 
   if (status === "pending") {
     return {
-      label: "Awaiting Signal",
+      label: "Queued",
       technicalLabel: "Pending",
       tone: "pending",
-      summary: "The dispatch order is queued for the chamber runner.",
+      summary: "The scan request is queued and waiting to start.",
     };
   }
 
   return {
-    label: "Scouting",
+    label: "Scanning",
     technicalLabel: status.charAt(0).toUpperCase() + status.slice(1),
     tone: "scouting",
-    summary: "Scout is gathering signal from the selected campaign window.",
+    summary: "The scan is gathering signal from the selected campaign window.",
   };
 };
 
@@ -96,30 +96,30 @@ export const getAdvisorCopy = ({
   hasHistory: boolean;
 }) => {
   if (selectedRun?.status === "failed" && selectedRun.errorMessage) {
-    return `Selected broken banner: ${selectedRun.errorMessage}`;
+    return `Selected failed scan: ${selectedRun.errorMessage}`;
   }
 
   if (selectedRun?.status === "completed") {
-    return "Selected campaign is fortified. Open the latest dossier when you need the current profile view.";
+    return "Selected scan is complete. Open the latest profile when you need the current analysis view.";
   }
 
   if (mode === "failed" && activeRun?.errorMessage) {
-    return `The previous mission failed because: ${activeRun.errorMessage}`;
+    return `The previous scan failed because: ${activeRun.errorMessage}`;
   }
 
   if (mode === "success") {
-    return "The dossier is ready. Open it to review the member profile and latest signals.";
+    return "The profile is ready. Open it to review the latest analysis signals.";
   }
 
   if (mode === "scouting" || mode === "dispatching") {
-    return "The scout is in the field. Keep the chamber open to watch the live run state returned by the API.";
+    return "The scan is running. Keep the live chamber open to watch the latest run state returned by the API.";
   }
 
   if (!hasHistory) {
-    return "Choose a campaign window, then dispatch the first AI scout for this member.";
+    return "Choose a campaign window, then start the first profile scan for this member.";
   }
 
-  return "Select a previous campaign for context, or dispatch a fresh scout when new signal is available.";
+  return "Select a previous scan for context, or start a fresh scan when new signal is available.";
 };
 
 export const getRecommendedNextAction = ({
@@ -131,11 +131,11 @@ export const getRecommendedNextAction = ({
   selectedRun: ScanRun | undefined;
   hasCompletedRun: boolean;
 }) => {
-  if (selectedRun?.status === "failed") return "Review error trace, repair, then send again.";
-  if (mode === "failed") return "Repair the broken banner, then dispatch a retry.";
+  if (selectedRun?.status === "failed") return "Review the error trace, then retry the scan.";
+  if (mode === "failed") return "Review the failed scan, then dispatch a retry.";
   if (mode === "scouting" || mode === "dispatching") {
-    return "The Live Scan Chamber will hold focus until the chamber verdict returns.";
+    return "The Live Scan Chamber will hold focus until the scan reaches a final status.";
   }
-  if (hasCompletedRun) return "Open latest dossier or dispatch a fresh scout.";
-  return "Choose a campaign window and dispatch the first scout.";
+  if (hasCompletedRun) return "Open the latest profile or start a fresh scan.";
+  return "Choose a campaign window and start the first scan.";
 };

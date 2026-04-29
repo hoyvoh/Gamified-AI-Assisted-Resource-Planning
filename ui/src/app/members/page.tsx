@@ -46,7 +46,7 @@ export default function MembersPage() {
           style={{ color: "rgba(228, 211, 175, 0.62)" }}
         >
           Reframing the members page as a medieval campaign room: champions,
-          houses, banners, campaign states, and royal dossiers. The interface
+          houses, banners, scan states, and analysis profiles. The interface
           should feel game-like, but still behave like a fast operating surface.
         </p>
 
