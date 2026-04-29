@@ -291,10 +291,44 @@ body {
   animation: scan-map-core-spin 36s linear infinite reverse;
 }
 
+.citadel-sigil-spin {
+  animation: citadel-sigil-spin 38s linear infinite;
+  transform-origin: center;
+}
+
+.citadel-sword-glow-idle {
+  animation: citadel-sword-glow-idle 5.6s ease-in-out infinite;
+}
+
+@keyframes citadel-sigil-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes citadel-sword-glow-idle {
+  0%,
+  100% {
+    opacity: 0.28;
+    transform: translateX(-50%) scaleY(0.98);
+  }
+
+  50% {
+    opacity: 0.42;
+    transform: translateX(-50%) scaleY(1.03);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .scan-map-grid-drift,
   .scan-map-core-spin,
-  .scan-map-core-spin-slow {
+  .scan-map-core-spin-slow,
+  .citadel-sigil-spin,
+  .citadel-sword-glow-idle {
     animation: none;
   }
 }
