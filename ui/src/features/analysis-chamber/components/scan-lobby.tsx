@@ -379,7 +379,7 @@ function ScanLobbyHeader({
         <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-amber-200/55">
           Scan Lobby
         </p>
-        <h1 className="mt-2 font-serif text-4xl text-amber-50 md:text-5xl">
+        <h1 className="mt-2 font-serif text-[1.5rem] leading-none text-amber-50 md:text-[2rem]">
           {displayName}
         </h1>
         <p className="mt-2 font-mono text-xs text-white/42">
@@ -387,23 +387,23 @@ function ScanLobbyHeader({
         </p>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="rounded-md border border-amber-200/20 bg-amber-200/5 px-4 py-2">
-          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-white/38">
+      <div className="flex flex-wrap items-stretch gap-3 md:items-stretch">
+        <div className="flex min-h-[44px] min-w-[160px] flex-col justify-center rounded-md border border-amber-200/20 bg-amber-200/5 px-3 py-1.5">
+          <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-white/38">
             Chamber Status
           </p>
-          <p className="mt-1 flex items-center gap-2 font-mono text-xs text-amber-100">
-            <CircleDot className="h-3.5 w-3.5" aria-hidden="true" />
+          <p className="mt-0.5 flex items-center gap-2 font-mono text-xs text-amber-100">
+            <CircleDot className="h-3 w-3" aria-hidden="true" />
             {statusText}
           </p>
         </div>
         {hasCompletedRun && (
           <Link
             href={`/profile/${memberId}`}
-            className="inline-flex items-center gap-2 rounded-md border border-emerald-200/25 bg-emerald-200/8 px-4 py-3 font-mono text-xs uppercase tracking-[0.14em] text-emerald-100 transition hover:border-emerald-100/45 hover:bg-emerald-200/12 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-200"
+            className="inline-flex min-h-[44px] min-w-[200px] items-center gap-2 rounded-md border border-emerald-200/25 bg-emerald-200/8 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-emerald-100 transition hover:border-emerald-100/45 hover:bg-emerald-200/12 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-200"
           >
             Open Latest Profile
-            <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+            <ArrowRight className="h-3 w-3" aria-hidden="true" />
           </Link>
         )}
       </div>
@@ -439,7 +439,7 @@ function ControlRoomSummary({
           <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-amber-200/50">
             Scan Control Room
           </p>
-          <h2 className="mt-2 font-serif text-2xl text-amber-50">
+          <h2 className="mt-2 font-serif text-xl text-amber-50">
             Starting a scan opens the live chamber
           </h2>
           <p className="mt-3 text-sm leading-6 text-white/60">
