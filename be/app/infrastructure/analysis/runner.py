@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import AnalysisSettings, LLMSettings
 from app.domain.analysis.entities import AnalysisRun, SourcePayload
 from app.domain.analysis.repositories import IAnalysisRunRepository
+from app.infrastructure.agent_cli.factory import create_agent_cli_provider
 from app.infrastructure.analysis.pipeline.output_runner import run_output_generation
 from app.infrastructure.analysis.pipeline.p1_runner import run_p1
 from app.infrastructure.analysis.pipeline.p2_runner import run_p2
@@ -116,6 +117,7 @@ async def _run_pipeline(
     evidence_repo = SqlEvidenceUnitRepository(session)
     event_repo = SqlBehavioralEventRepository(session)
     dim_score_repo = SqlDimensionScoreRepository(session)
+    agent_cli_provider = create_agent_cli_provider(llm_settings.provider)
 
     run = await run_repo.get_by_id(run_id)
     if run is None:
@@ -136,7 +138,7 @@ async def _run_pipeline(
 
     gh = GitHubCollector(timeout_seconds=analysis_settings.github_timeout_seconds)
     mcp = LLMMCPCollector(
-        cli_tool=llm_settings.cli_tool,
+        provider=agent_cli_provider,
         model=llm_settings.model,
         timeout_seconds=llm_settings.timeout_seconds,
     )
@@ -296,7 +298,7 @@ async def _run_pipeline(
         period_start=run.period_start,
         period_end=run.period_end,
         source_records=all_records,
-        cli_tool=llm_settings.cli_tool,
+        provider=agent_cli_provider,
         model=llm_settings.model,
         timeout_seconds=llm_settings.timeout_seconds,
         max_retries=llm_settings.max_retries,
@@ -313,7 +315,7 @@ async def _run_pipeline(
         run_id=run_id,
         member_id=run.member_id,
         candidate_events=candidate_events,
-        cli_tool=llm_settings.cli_tool,
+        provider=agent_cli_provider,
         model=llm_settings.model,
         timeout_seconds=llm_settings.timeout_seconds,
         max_retries=llm_settings.max_retries,
@@ -346,6 +348,7 @@ async def _run_pipeline(
         behavioral_events=behavioral_events,
         session=session,
         llm_settings=llm_settings,
+        provider=agent_cli_provider,
     )
 
     run.progress_stage = "scoring"
@@ -368,6 +371,7 @@ async def _run_pipeline(
         behavioral_events=behavioral_events,
         session=session,
         llm_settings=llm_settings,
+        provider=agent_cli_provider,
     )
 
     # ── Phase 5: P8 Self-Critique Gate ────────────────────────────────────────
@@ -377,7 +381,12 @@ async def _run_pipeline(
     await run_repo.update(run)
     await session.commit()
 
-    await run_p8(run=run, session=session, llm_settings=llm_settings)
+    await run_p8(
+        run=run,
+        session=session,
+        llm_settings=llm_settings,
+        provider=agent_cli_provider,
+    )
 
     # ── Completed ─────────────────────────────────────────────────────────────
     run.status = "completed"

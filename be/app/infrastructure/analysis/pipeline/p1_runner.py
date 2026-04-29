@@ -5,6 +5,7 @@ import uuid
 
 from app.domain.analysis.entities import EvidenceUnit
 from app.domain.analysis.taxonomy import VALID_POLARITIES
+from app.infrastructure.agent_cli.base import AgentCliProvider
 from app.infrastructure.analysis.pipeline.chunker import build_content_excerpt, chunk_records
 from app.infrastructure.analysis.pipeline.llm_runner import LLMCallError, call_llm
 from app.infrastructure.analysis.prompts.p1_extraction import build_p1_prompt
@@ -23,7 +24,7 @@ async def run_p1(
     period_start: str,
     period_end: str,
     source_records: list[dict],  # type: ignore[type-arg]  # from parsed source_payloads
-    cli_tool: str,
+    provider: AgentCliProvider,
     model: str,
     timeout_seconds: int,
     max_retries: int,
@@ -97,7 +98,7 @@ async def run_p1(
             )
             try:
                 result = await call_llm(
-                    cli_tool=cli_tool,
+                    provider=provider,
                     model=model,
                     prompt=prompt,
                     timeout_seconds=timeout_seconds,

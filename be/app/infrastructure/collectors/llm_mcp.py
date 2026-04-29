@@ -5,20 +5,21 @@ The backend never holds Slack/Confluence/Jira tokens. Instead it calls the LLM C
 fetch and return structured JSON. The LLM's own MCP configuration handles auth.
 """
 
-import json
-import re
-
+from app.infrastructure.agent_cli.base import (
+    AgentCliError,
+    AgentCliProvider,
+    AgentCliTimeoutError,
+    AgentCliUnavailableError,
+)
+from app.infrastructure.analysis.pipeline.llm_runner import _parse_json
 from app.infrastructure.collectors.base import (
     CollectionResult,
     CollectorTimeoutError,
     CollectorUnavailableError,
-    run_subprocess,
 )
 from app.logger import get_logger
 
 logger = get_logger(__name__)
-
-_KNOWN_MCP_SOURCES = {"slack", "confluence", "jira", "notion", "linear"}
 
 _COLLECTION_PROMPT_TEMPLATE = """\
 You have access to MCP tools. Collect developer activity data for analysis.
@@ -58,25 +59,30 @@ Return ONLY a valid JSON object (no markdown, no explanation) matching this sche
 class LLMMCPCollector:
     _SOURCE_TYPE: str = "mcp"
 
-    def __init__(self, cli_tool: str, model: str, timeout_seconds: int = 120) -> None:
-        self._cli = cli_tool
+    def __init__(
+        self,
+        provider: AgentCliProvider,
+        model: str,
+        timeout_seconds: int = 120,
+    ) -> None:
+        self._provider = provider
         self._model = model
         self._timeout = timeout_seconds
 
     async def probe_mcp_sources(self) -> list[str]:
-        """Detect which MCP servers are configured by running `<cli> mcp list`."""
+        """Detect which MCP servers are configured for the selected provider."""
         try:
-            _, stdout, _ = await run_subprocess(self._cli, "mcp", "list", timeout=5)
-            output = stdout.decode(errors="replace").lower()
-            found = [src for src in _KNOWN_MCP_SOURCES if src in output]
-            return found
-        except CollectorUnavailableError:
+            return await self._provider.list_mcp_sources()
+        except AgentCliUnavailableError:
             raise CollectorUnavailableError(
-                f"LLM CLI `{self._cli}` not found on PATH. "
+                f"LLM CLI `{self._provider.name}` not found on PATH. "
                 "Install and authenticate it before running analysis."
             ) from None
-        except CollectorTimeoutError:
+        except AgentCliTimeoutError:
             logger.warning("MCP probe timed out — assuming no MCP sources available")
+            return []
+        except AgentCliError as exc:
+            logger.warning("MCP probe failed for %s: %s", self._provider.name, exc)
             return []
 
     async def collect(
@@ -104,9 +110,13 @@ class LLMMCPCollector:
                 )
             ]
 
-        logger.debug("MCP probe result: cli=%s available_sources=%s", self._cli, available)
+        logger.debug(
+            "MCP probe result: provider=%s available_sources=%s",
+            self._provider.name,
+            available,
+        )
         if not available:
-            logger.info("No known MCP sources configured for %s — skipping", self._cli)
+            logger.info("No known MCP sources configured for %s — skipping", self._provider.name)
             return [
                 CollectionResult(
                     source_type="mcp",
@@ -160,35 +170,27 @@ class LLMMCPCollector:
 
     async def _run_llm(self, prompt: str) -> str | None:
         """Invoke the LLM CLI with a prompt and return its stdout."""
-        if self._model:
-            cmd = (self._cli, "--model", self._model, "-p", prompt)
-        else:
-            cmd = (self._cli, "-p", prompt)
         try:
-            returncode, stdout, stderr = await run_subprocess(*cmd, timeout=self._timeout)
-            if returncode != 0:
-                err = stderr.decode(errors="replace").strip()
-                logger.warning("LLM CLI exited with code %d: %s", returncode, err[:300])
-                return None
-
-            return stdout.decode(errors="replace").strip() or None
-
-        except CollectorTimeoutError:
-            raise
-        except CollectorUnavailableError:
-            raise CollectorUnavailableError(f"LLM CLI `{self._cli}` not found on PATH.") from None
+            return (
+                await self._provider.run_prompt(
+                    prompt=prompt,
+                    model=self._model,
+                    timeout_seconds=self._timeout,
+                )
+            ) or None
+        except AgentCliTimeoutError as exc:
+            raise CollectorTimeoutError(str(exc)) from exc
+        except AgentCliUnavailableError as exc:
+            raise CollectorUnavailableError(str(exc)) from exc
+        except AgentCliError as exc:
+            logger.warning("LLM CLI exited unsuccessfully: %s", exc)
+            return None
 
 
 def _parse_json_response(raw: str) -> dict | None:  # type: ignore[type-arg]
     """Extract a JSON object from LLM output (handles markdown code fences)."""
-    # Strip markdown code fences if present
-    stripped = re.sub(r"^```(?:json)?\s*", "", raw.strip(), flags=re.MULTILINE)
-    stripped = re.sub(r"\s*```$", "", stripped.strip(), flags=re.MULTILINE)
-    try:
-        result = json.loads(stripped)
-        return result if isinstance(result, dict) else None
-    except json.JSONDecodeError:
-        return None
+    result = _parse_json(raw)
+    return result if isinstance(result, dict) else None
 
 
 def _split_by_source(

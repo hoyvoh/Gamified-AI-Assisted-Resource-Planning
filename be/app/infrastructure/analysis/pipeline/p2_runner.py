@@ -8,6 +8,7 @@ from app.domain.analysis.taxonomy import (
     VALID_OPPORTUNITY_LEVELS,
     VALID_POLARITIES,
 )
+from app.infrastructure.agent_cli.base import AgentCliProvider
 from app.infrastructure.analysis.pipeline.llm_runner import LLMCallError, call_llm
 from app.infrastructure.analysis.prompts.p2_consolidation import build_p2_prompt
 from app.infrastructure.db.base import utcnow
@@ -20,7 +21,7 @@ async def run_p2(
     run_id: str,
     member_id: str,
     candidate_events: list[dict],  # type: ignore[type-arg]  # from P1
-    cli_tool: str,
+    provider: AgentCliProvider,
     model: str,
     timeout_seconds: int,
     max_retries: int,
@@ -38,7 +39,7 @@ async def run_p2(
     prompt = build_p2_prompt(candidate_events)
     try:
         result = await call_llm(
-            cli_tool=cli_tool,
+            provider=provider,
             model=model,
             prompt=prompt,
             timeout_seconds=timeout_seconds,

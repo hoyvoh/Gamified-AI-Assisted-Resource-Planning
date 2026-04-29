@@ -17,6 +17,7 @@ from app.domain.analysis.entities import (
     KptItem,
     Milestone,
 )
+from app.infrastructure.agent_cli.base import AgentCliProvider
 from app.infrastructure.analysis.pipeline.llm_runner import LLMCallError, call_llm
 from app.infrastructure.analysis.prompts.p4_ui_summary import build_p4_prompt
 from app.infrastructure.analysis.prompts.p5_kpt import build_p5_prompt
@@ -46,6 +47,7 @@ async def run_output_generation(
     behavioral_events: list[BehavioralEvent],
     session: AsyncSession,
     llm_settings: LLMSettings,
+    provider: AgentCliProvider,
 ) -> None:
     """Run P4 (parallel) + P5 + P6 + P7 + milestone derivation + snapshot persist."""
     member_repo = SqlMemberRepository(session)
@@ -69,7 +71,14 @@ async def run_output_generation(
     # ── Phase A: P4 — dimension UI summaries (parallel) ───────────────────────
     scored_dims = [ds for ds in dimension_scores if ds.p3_inference is not None]
     logger.info("P4 starting: run_id=%s scored_dims=%d", run.analysis_run_id, len(scored_dims))
-    await _run_p4_parallel(scored_dims, run.analysis_run_id, dim_score_repo, session, llm_settings)
+    await _run_p4_parallel(
+        scored_dims,
+        run.analysis_run_id,
+        dim_score_repo,
+        session,
+        llm_settings,
+        provider,
+    )
     await session.commit()
 
     # Reload dimension scores (now with ui_summary populated)
@@ -112,6 +121,7 @@ async def run_output_generation(
             top_strength_ids=top_strength_ids,
             top_growth_ids=top_growth_ids,
             llm_settings=llm_settings,
+            provider=provider,
             now=now,
         ),
         _run_p6(
@@ -121,6 +131,7 @@ async def run_output_generation(
             dim_summaries=dim_summaries,
             top_growth_ids=top_growth_ids,
             llm_settings=llm_settings,
+            provider=provider,
             now=now,
         ),
         _run_p7(
@@ -131,6 +142,7 @@ async def run_output_generation(
             dimension_scores=dimension_scores,
             overall_confidence=overall_confidence,
             llm_settings=llm_settings,
+            provider=provider,
         ),
     )
     profile_summary, growth_journey_summary, current_growth_path = p7_result
@@ -197,6 +209,7 @@ async def _run_p4_parallel(
     dim_score_repo: SqlDimensionScoreRepository,
     session: AsyncSession,
     llm_settings: LLMSettings,
+    provider: AgentCliProvider,
 ) -> None:
     semaphore = asyncio.Semaphore(_P4_CONCURRENT)
 
@@ -207,7 +220,7 @@ async def _run_p4_parallel(
             prompt = build_p4_prompt(ds.dimension_id, ds.p3_inference)
             try:
                 result = await call_llm(
-                    cli_tool=llm_settings.cli_tool,
+                    provider=provider,
                     model=llm_settings.model,
                     prompt=prompt,
                     timeout_seconds=llm_settings.timeout_seconds,
@@ -234,6 +247,7 @@ async def _run_p5(
     top_strength_ids: list[str],
     top_growth_ids: list[str],
     llm_settings: LLMSettings,
+    provider: AgentCliProvider,
     now: str,
 ) -> list[KptItem]:
     prompt = build_p5_prompt(
@@ -247,7 +261,7 @@ async def _run_p5(
     )
     try:
         result = await call_llm(
-            cli_tool=llm_settings.cli_tool,
+            provider=provider,
             model=llm_settings.model,
             prompt=prompt,
             timeout_seconds=llm_settings.timeout_seconds,
@@ -299,6 +313,7 @@ async def _run_p6(
     dim_summaries: list[dict],  # type: ignore[type-arg]
     top_growth_ids: list[str],
     llm_settings: LLMSettings,
+    provider: AgentCliProvider,
     now: str,
 ) -> list[CaseFeedback]:
     prompt = build_p6_prompt(
@@ -312,7 +327,7 @@ async def _run_p6(
     )
     try:
         result = await call_llm(
-            cli_tool=llm_settings.cli_tool,
+            provider=provider,
             model=llm_settings.model,
             prompt=prompt,
             timeout_seconds=llm_settings.timeout_seconds,
@@ -369,6 +384,7 @@ async def _run_p7(
     dimension_scores: list[DimensionScore],
     overall_confidence: float,
     llm_settings: LLMSettings,
+    provider: AgentCliProvider,
 ) -> tuple[str | None, str | None, str | None]:
     cat_scores_for_prompt = [
         {"category_id": ds.dimension_id, "score": ds.normalized_score}
@@ -388,7 +404,7 @@ async def _run_p7(
     )
     try:
         result = await call_llm(
-            cli_tool=llm_settings.cli_tool,
+            provider=provider,
             model=llm_settings.model,
             prompt=prompt,
             timeout_seconds=llm_settings.timeout_seconds,

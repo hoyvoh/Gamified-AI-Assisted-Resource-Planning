@@ -1,6 +1,6 @@
 from typing import ClassVar, Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, model_validator
 from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
@@ -26,10 +26,21 @@ class LoggingSettings(BaseModel):
 class LLMSettings(BaseModel):
     # LLM ops run via CLI subprocess (claude / codex) — no API keys stored here.
     # Authenticate once with: `claude auth login` or similar.
-    cli_tool: Literal["claude", "codex"] = "claude"
+    provider: Literal["claude", "codex"] = "claude"
+    deprecated_cli_tool: Literal["claude", "codex"] | None = Field(
+        default=None,
+        validation_alias="cli_tool",
+        exclude=True,
+    )
     model: str = "claude-sonnet-4-6"
     timeout_seconds: int = 120
     max_retries: int = 2
+
+    @model_validator(mode="after")
+    def _apply_deprecated_cli_tool(self) -> "LLMSettings":
+        if self.deprecated_cli_tool is not None:
+            self.provider = self.deprecated_cli_tool
+        return self
 
 
 class AnalysisSettings(BaseModel):
