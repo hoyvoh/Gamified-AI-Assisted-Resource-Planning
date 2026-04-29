@@ -1,4 +1,8 @@
-import type { CSSProperties } from "react";
+"use client";
+
+import { useEffect, useRef, type CSSProperties } from "react";
+
+import { animate } from "animejs";
 
 import {
   Archive,
@@ -23,11 +27,64 @@ const iconMap = {
 
 export function MapAnchorNodes({
   sourceStatuses,
+  reducedMotion,
 }: {
   sourceStatuses: Record<string, SourceStatus>;
+  reducedMotion: boolean;
 }) {
+  const layerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (reducedMotion || !layerRef.current) return;
+
+    const animations: Array<ReturnType<typeof animate>> = [];
+    const activeNodes = layerRef.current.querySelectorAll('[data-node-status="watching"]');
+    const sealedNodes = layerRef.current.querySelectorAll('[data-node-status="sealed"]');
+    const brokenNodes = layerRef.current.querySelectorAll('[data-node-status="broken"]');
+
+    if (activeNodes.length) {
+      animations.push(
+        animate(activeNodes, {
+          scale: [1, 1.07, 1],
+          duration: 1450,
+          ease: "inOutSine",
+          loop: true,
+        }),
+      );
+    }
+
+    if (sealedNodes.length) {
+      animations.push(
+        animate(sealedNodes, {
+          scale: [0.96, 1],
+          opacity: [0.82, 1],
+          duration: 420,
+          ease: "outQuad",
+        }),
+      );
+    }
+
+    if (brokenNodes.length) {
+      animations.push(
+        animate(brokenNodes, {
+          translateX: [0, -1.5, 1.5, -1, 0],
+          duration: 320,
+          ease: "inOutSine",
+        }),
+      );
+    }
+
+    return () => {
+      animations.forEach((animation) => animation.pause());
+    };
+  }, [reducedMotion, sourceStatuses]);
+
   return (
-    <div className="absolute inset-0 z-20" aria-label="Scan source anchors">
+    <div
+      ref={layerRef}
+      className="absolute inset-0 z-20"
+      aria-label="Scan source anchors"
+    >
       {MAP_ANCHORS.map((anchor) => {
         const status = sourceStatuses[anchor.id] ?? "dormant";
         const styles = SOURCE_STATUS_STYLES[status];
@@ -43,6 +100,7 @@ export function MapAnchorNodes({
             style={position}
             title={`${anchor.label} / ${anchor.technicalLabel}: ${styles.label}`}
             data-animate="source-node"
+            data-node-status={status}
           >
             <span
               className={`absolute -inset-2 rounded-full border transition duration-500 ${styles.anchorRing} ${

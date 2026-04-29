@@ -72,10 +72,17 @@ export function LivingTacticalMap({
             className="pointer-events-none absolute z-10"
             style={{ left: "50%", top: "46.25%", transform: "translate(-50%, -50%)" }}
           >
-            <MapSignalCore mode={mode} reducedMotion={reducedMotion} />
+            <MapSignalCore
+              mode={mode}
+              phase={phase}
+              reducedMotion={reducedMotion}
+            />
           </div>
 
-          <MapAnchorNodes sourceStatuses={sourceStatuses} />
+          <MapAnchorNodes
+            sourceStatuses={sourceStatuses}
+            reducedMotion={reducedMotion}
+          />
         </div>
       </div>
 

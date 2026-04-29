@@ -20,22 +20,37 @@ export function MapRouteLayer({
   const layerRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
-    if (reducedMotion || !layerRef.current) return;
+    if (!layerRef.current || reducedMotion) return;
 
+    const animations: Array<ReturnType<typeof animate>> = [];
     const activeRoutes = layerRef.current.querySelectorAll('[data-route-state="watching"]');
-    if (!activeRoutes.length) return;
+    const brokenRoutes = layerRef.current.querySelectorAll('[data-route-state="broken"]');
 
-    const animation = animate(activeRoutes, {
-      strokeDashoffset: [180, 0],
-      opacity: [0.28, 0.9, 0.28],
-      duration: 1800,
-      delay: stagger(160),
-      ease: "inOutSine",
-      loop: true,
-    });
+    if (activeRoutes.length) {
+      animations.push(
+        animate(activeRoutes, {
+          strokeDashoffset: [180, 0],
+          opacity: [0.28, 0.94, 0.28],
+          duration: 1800,
+          delay: stagger(160),
+          ease: "inOutSine",
+          loop: true,
+        }),
+      );
+    }
+
+    if (brokenRoutes.length && mode === "failed") {
+      animations.push(
+        animate(brokenRoutes, {
+          opacity: [0.8, 0.36, 0.72],
+          duration: 480,
+          ease: "inOutSine",
+        }),
+      );
+    }
 
     return () => {
-      animation.pause();
+      animations.forEach((animation) => animation.pause());
     };
   }, [mode, sourceStatuses, reducedMotion]);
 
