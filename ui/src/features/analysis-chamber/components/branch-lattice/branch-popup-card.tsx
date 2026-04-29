@@ -3,7 +3,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-import { ANALYSIS_CHAMBER_SHELL_PALETTE as palette } from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
+import {
+  ANALYSIS_CHAMBER_SHELL_PALETTE as palette,
+  BRANCH_TOKENS,
+} from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
 
 import type { BranchNodeData } from "./branch-node";
 
@@ -68,7 +71,7 @@ function ScoreBar({
   return (
     <div
       className="h-1 w-full overflow-hidden rounded-full"
-      style={{ background: "rgba(154,171,184,0.15)" }}
+      style={{ background: BRANCH_TOKENS.popupTrack }}
     >
       <div
         style={{
@@ -178,10 +181,9 @@ export function BranchPopupCard({
             width: CARD_WIDTH,
             "--card-border": accentBorder,
             "--card-glow": accentGlow,
-            background:
-              "linear-gradient(160deg, rgba(26,12,6,0.97) 0%, rgba(18,8,4,0.98) 100%)",
+            background: BRANCH_TOKENS.popupSurface,
             border: `1px solid ${accentBorder}55`,
-            boxShadow: `0 0 0 1px ${accentBorder}22, 0 24px 60px rgba(0,0,0,0.6), 0 0 36px ${accentGlow}`,
+            boxShadow: `0 0 0 1px ${accentBorder}22, ${BRANCH_TOKENS.popupShadow}, 0 0 36px ${accentGlow}`,
             backdropFilter: "blur(12px)",
             animationName: exiting ? "branchPopupOut" : "cardGlowPulse, branchPopupIn",
             animationDuration: exiting ? "200ms" : "280ms, 3s",
@@ -257,7 +259,7 @@ export function BranchPopupCard({
               className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-[10px]"
               onClick={onClose}
               style={{
-                borderColor: "rgba(154,171,184,0.25)",
+                borderColor: BRANCH_TOKENS.popupButtonBorder,
                 color: palette.silver,
               }}
               type="button"
@@ -281,7 +283,7 @@ export function BranchPopupCard({
             <span
               className="rounded-full border px-2.5 py-0.5 text-[9px] uppercase tracking-[0.14em]"
               style={{
-                borderColor: branch.scored ? accentBorder : "rgba(154,171,184,0.28)",
+                borderColor: branch.scored ? accentBorder : BRANCH_TOKENS.popupUnscoredBorder,
                 color: branch.scored ? accentColor : palette.silver,
               }}
             >
@@ -342,23 +344,23 @@ export function BranchPopupCard({
                 {
                   label: "Pos",
                   value: branch.positiveSignals,
-                  color: "rgba(34,197,94,0.9)",
-                  border: "rgba(34,197,94,0.28)",
-                  bg: "rgba(34,197,94,0.07)",
+                  color: BRANCH_TOKENS.popupPositive,
+                  border: BRANCH_TOKENS.popupPositiveBorder,
+                  bg: BRANCH_TOKENS.popupPositiveBg,
                 },
                 {
                   label: "Neg",
                   value: branch.negativeSignals,
-                  color: "rgba(230,80,40,0.9)",
-                  border: "rgba(230,80,40,0.28)",
-                  bg: "rgba(230,80,40,0.07)",
+                  color: BRANCH_TOKENS.popupNegative,
+                  border: BRANCH_TOKENS.popupNegativeBorder,
+                  bg: BRANCH_TOKENS.popupNegativeBg,
                 },
                 {
                   label: "Mix",
                   value: branch.mixedSignals,
-                  color: "rgba(154,171,184,0.9)",
-                  border: "rgba(154,171,184,0.28)",
-                  bg: "rgba(154,171,184,0.07)",
+                  color: BRANCH_TOKENS.popupMixed,
+                  border: BRANCH_TOKENS.popupMixedBorder,
+                  bg: BRANCH_TOKENS.popupMixedBg,
                 },
               ].map(({ label, value, color, border, bg }) => (
                 <div

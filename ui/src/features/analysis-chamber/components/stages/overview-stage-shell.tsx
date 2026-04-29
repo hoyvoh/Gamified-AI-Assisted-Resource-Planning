@@ -9,7 +9,10 @@ import {
   useAnalysisChamberOverviewData,
   useAnalysisChamberShellData,
 } from "@/features/analysis-chamber/hooks/use-analysis-chamber-shell-data";
-import { ANALYSIS_CHAMBER_SHELL_PALETTE as palette } from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
+import {
+  ANALYSIS_CHAMBER_SHELL_PALETTE as palette,
+  OVERVIEW_TOKENS,
+} from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
 import type { ChamberCategoryScore } from "@/features/analysis-chamber/api/analysis-chamber-api.view-models";
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -265,13 +268,13 @@ export const OverviewStageShell = ({ memberId }: { memberId: string }) => {
       <section className="relative flex h-full items-center justify-center overflow-hidden px-6 py-10 text-center">
         <div
           className="pointer-events-none absolute inset-x-[28%] top-14 h-52 rounded-full blur-3xl"
-          style={{ background: "rgba(182,68,53,0.09)" }}
+          style={{ background: OVERVIEW_TOKENS.errorAura }}
         />
         <div
           className="relative max-w-xl rounded-xl border px-6 py-6"
           style={{
-            background: "rgba(255,255,255,0.035)",
-            borderColor: "rgba(182,68,53,0.32)",
+            background: OVERVIEW_TOKENS.errorSurface,
+            borderColor: OVERVIEW_TOKENS.errorBorder,
             color: palette.ink,
           }}
         >
@@ -296,7 +299,7 @@ export const OverviewStageShell = ({ memberId }: { memberId: string }) => {
             disabled={overview.isFetching}
             onClick={() => void overview.refetch()}
             style={{
-              borderColor: "rgba(200,150,30,0.34)",
+              borderColor: OVERVIEW_TOKENS.retryBorder,
               color: palette.gold,
             }}
             type="button"
@@ -313,7 +316,7 @@ export const OverviewStageShell = ({ memberId }: { memberId: string }) => {
       {/* Atmosphere glow — between columns */}
       <div
         className="pointer-events-none absolute inset-x-[32%] top-8 h-52 rounded-full blur-3xl"
-        style={{ background: "rgba(200,150,30,0.07)" }}
+        style={{ background: OVERVIEW_TOKENS.stageAura }}
       />
 
       <div className="relative grid h-full lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)]">
@@ -346,12 +349,12 @@ export const OverviewStageShell = ({ memberId }: { memberId: string }) => {
         {/* ── Right column: hero character ── */}
         <div
           className="relative hidden lg:block"
-          style={{ borderLeft: "1px solid rgba(200,150,30,0.1)" }}
+          style={{ borderLeft: `1px solid ${OVERVIEW_TOKENS.sideDivider}` }}
         >
           {/* Ground shadow */}
           <div
             className="pointer-events-none absolute inset-x-[12%] bottom-20 h-10 rounded-full blur-2xl"
-            style={{ background: "rgba(0,0,0,0.38)" }}
+            style={{ background: OVERVIEW_TOKENS.groundShadow }}
           />
 
           <AnalysisChamberHeroSpotlight
@@ -360,7 +363,10 @@ export const OverviewStageShell = ({ memberId }: { memberId: string }) => {
           />
 
           {/* Fade + name */}
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-linear-to-t from-[#1e1712] via-[#1e1712e8] to-transparent" />
+          <div
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-40"
+            style={{ background: OVERVIEW_TOKENS.portraitFade }}
+          />
           <div className="absolute inset-x-0 bottom-5 z-10 text-center">
             <p
               className="font-display text-[1.6rem] uppercase tracking-[0.14em] md:text-[1.9rem]"

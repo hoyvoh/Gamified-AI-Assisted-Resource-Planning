@@ -3,7 +3,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-import { ANALYSIS_CHAMBER_SHELL_PALETTE as palette } from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
+import {
+  ANALYSIS_CHAMBER_SHELL_PALETTE as palette,
+  BRANCH_TOKENS,
+} from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
 import { resolveTier, getTierEffects } from "@/features/analysis-chamber/lib/branch-tier";
 import { TIER_MASTER_CRIMSON } from "@/features/analysis-chamber/lib/branch-tier-colors";
 
@@ -14,6 +17,17 @@ export interface BranchDetailModalProps {
   branch: BranchNodeData | null;
   onClose: () => void;
 }
+
+const DETAIL_MODAL_TOKENS = {
+  shadow72: "rgba(0,0,0,0.72)",
+  shadow78: "rgba(0,0,0,0.78)",
+  crimsonBloomStrong: "rgba(155,28,28,0.55)",
+  crimsonBloomNone: "rgba(155,28,28,0)",
+  crimsonAuraSoft: "rgba(155,28,28,0.06)",
+  crimsonAuraMid: "rgba(155,28,28,0.28)",
+  crimsonAuraFar: "rgba(155,28,28,0.12)",
+  backdrop: "rgba(9,6,7,0.74)",
+} as const;
 
 const MODAL_KEYFRAMES = `
   /* ── Backdrop ── */
@@ -53,13 +67,13 @@ const MODAL_KEYFRAMES = `
   @keyframes modalBreathGlow {
     0%, 100% {
       box-shadow:
-        0 24px 64px rgba(0,0,0,0.72),
+        0 24px 64px ${DETAIL_MODAL_TOKENS.shadow72},
         0 0 0 1px var(--modal-border),
         0 0 24px var(--modal-glow-dim);
     }
     50% {
       box-shadow:
-        0 28px 80px rgba(0,0,0,0.78),
+        0 28px 80px ${DETAIL_MODAL_TOKENS.shadow78},
         0 0 0 1px var(--modal-border-bright),
         0 0 54px var(--modal-glow),
         0 0 88px var(--modal-glow-far);
@@ -105,27 +119,27 @@ const MODAL_KEYFRAMES = `
 
   /* ── Master tier: crimson secondary bloom ── */
   @keyframes masterCrimsonBloom {
-    0%   { box-shadow: 0 0 0 1px var(--modal-border-bright), 0 0 72px var(--modal-glow-bright), 0 0 140px var(--modal-glow), 0 0 100px rgba(155,28,28,0.55); }
-    100% { box-shadow: 0 0 0 1px var(--modal-border),        0 0 0px transparent,               0 0 0px transparent,     0 0 0px rgba(155,28,28,0); }
+    0%   { box-shadow: 0 0 0 1px var(--modal-border-bright), 0 0 72px var(--modal-glow-bright), 0 0 140px var(--modal-glow), 0 0 100px ${DETAIL_MODAL_TOKENS.crimsonBloomStrong}; }
+    100% { box-shadow: 0 0 0 1px var(--modal-border),        0 0 0px transparent,               0 0 0px transparent,     0 0 0px ${DETAIL_MODAL_TOKENS.crimsonBloomNone}; }
   }
 
   /* ── Master tier: dual breath glow (deep gold + blood crimson) ── */
   @keyframes modalBreathGlowMaster {
     0%, 100% {
       box-shadow:
-        0 24px 64px rgba(0,0,0,0.72),
+        0 24px 64px ${DETAIL_MODAL_TOKENS.shadow72},
         0 0 0 1px var(--modal-border),
         0 0 28px var(--modal-glow-dim),
-        0 0 60px rgba(155,28,28,0.06);
+        0 0 60px ${DETAIL_MODAL_TOKENS.crimsonAuraSoft};
     }
     50% {
       box-shadow:
-        0 28px 80px rgba(0,0,0,0.78),
+        0 28px 80px ${DETAIL_MODAL_TOKENS.shadow78},
         0 0 0 1px var(--modal-border-bright),
         0 0 60px var(--modal-glow),
         0 0 110px var(--modal-glow-far),
-        0 0 160px rgba(155,28,28,0.28),
-        0 0 260px rgba(155,28,28,0.12);
+        0 0 160px ${DETAIL_MODAL_TOKENS.crimsonAuraMid},
+        0 0 260px ${DETAIL_MODAL_TOKENS.crimsonAuraFar};
     }
   }
 
@@ -209,7 +223,7 @@ function ScoreBar({ score, accentColor }: { score: number; accentColor: string }
   return (
     <div
       className="relative h-1.5 w-full overflow-hidden rounded-full"
-      style={{ background: "rgba(154,171,184,0.12)" }}
+      style={{ background: BRANCH_TOKENS.fallbackPlate }}
     >
       {/* filled track */}
       <div
@@ -314,7 +328,7 @@ export function BranchDetailModal({ open, branch, onClose }: BranchDetailModalPr
         aria-hidden="true"
         className="fixed inset-0 z-[1000]"
         style={{
-          background: "rgba(4, 2, 1, 0.74)",
+          background: DETAIL_MODAL_TOKENS.backdrop,
           backdropFilter: "blur(7px)",
           WebkitBackdropFilter: "blur(7px)",
           animation: exiting
@@ -407,8 +421,7 @@ export function BranchDetailModal({ open, branch, onClose }: BranchDetailModalPr
             "--modal-glow-dim":      `${accentColor}22`,
             "--modal-glow-far":      `${accentColor}18`,
             "--modal-glow-bright":   `${accentColor}88`,
-            background:
-              "linear-gradient(160deg, rgba(22,10,4,0.98) 0%, rgba(12,5,2,0.99) 100%)",
+            background: BRANCH_TOKENS.popupSurface,
             border: `1px solid ${accentBorder}44`,
             animation: exiting
               ? "modalCardOut 280ms cubic-bezier(0.4,0,1,1) forwards"
@@ -492,7 +505,7 @@ export function BranchDetailModal({ open, branch, onClose }: BranchDetailModalPr
               className="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-sm transition-colors hover:border-current hover:text-white"
               onClick={onClose}
               style={{
-                borderColor: "rgba(154,171,184,0.22)",
+                borderColor: BRANCH_TOKENS.popupButtonBorder,
                 color: palette.silver,
               }}
               type="button"
@@ -516,7 +529,7 @@ export function BranchDetailModal({ open, branch, onClose }: BranchDetailModalPr
             <span
               className="rounded-full border px-3 py-1 text-[10px] uppercase tracking-[0.14em]"
               style={{
-                borderColor: branch.scored ? accentBorder : "rgba(154,171,184,0.28)",
+                borderColor: branch.scored ? accentBorder : BRANCH_TOKENS.popupUnscoredBorder,
                 color: branch.scored ? accentColor : palette.silver,
                 background: branch.scored ? `${accentColor}0e` : "transparent",
               }}
@@ -578,15 +591,15 @@ export function BranchDetailModal({ open, branch, onClose }: BranchDetailModalPr
                 Signals
               </p>
               <div className="flex items-center gap-3">
-                <span className="text-[11px]" style={{ color: "rgba(34,197,94,0.7)" }}>
+                <span className="text-[11px]" style={{ color: BRANCH_TOKENS.popupPositive }}>
                   ▲ {branch.positiveSignals}
                 </span>
-                <span className="text-[9px]" style={{ color: "rgba(154,171,184,0.22)" }}>·</span>
-                <span className="text-[11px]" style={{ color: "rgba(230,80,40,0.65)" }}>
+                <span className="text-[9px]" style={{ color: BRANCH_TOKENS.popupButtonBorder }}>·</span>
+                <span className="text-[11px]" style={{ color: BRANCH_TOKENS.popupNegative }}>
                   ▼ {branch.negativeSignals}
                 </span>
-                <span className="text-[9px]" style={{ color: "rgba(154,171,184,0.22)" }}>·</span>
-                <span className="text-[11px]" style={{ color: "rgba(154,171,184,0.5)" }}>
+                <span className="text-[9px]" style={{ color: BRANCH_TOKENS.popupButtonBorder }}>·</span>
+                <span className="text-[11px]" style={{ color: BRANCH_TOKENS.popupMixed }}>
                   ◆ {branch.mixedSignals}
                 </span>
                 {branch.totalSignals != null ? (
@@ -658,9 +671,9 @@ export function BranchDetailModal({ open, branch, onClose }: BranchDetailModalPr
                       style={{
                         color:
                           branch.deltaValue > 0
-                            ? "rgba(34,197,94,0.85)"
+                            ? BRANCH_TOKENS.popupPositive
                             : branch.deltaValue < 0
-                              ? "rgba(230,80,40,0.85)"
+                              ? BRANCH_TOKENS.popupNegative
                               : palette.silver,
                       }}
                     >

@@ -6,6 +6,14 @@ import { motion, useReducedMotion } from "framer-motion";
 import { type BranchTier } from "@/features/analysis-chamber/lib/branch-tier";
 import { TIER_MASTER_CRIMSON, TIER_MASTER_GOLD, TIER_ADVANCED_BRASS } from "@/features/analysis-chamber/lib/branch-tier-colors";
 
+const SHIELD_TOKENS = {
+  plateShadow: "#000000",
+  white: "#ffffff",
+  transparentWhite: "rgba(255,255,255,0)",
+  rimDark: "rgba(0,0,0,0.06)",
+  rimDarkSoft: "rgba(0,0,0,0.05)",
+} as const;
+
 export interface BranchShieldProps {
   accent: string;
   background: string;
@@ -114,7 +122,7 @@ export function BranchShield({
               <stop offset="100%" stopColor={withAlpha(TIER_MASTER_CRIMSON, scored ? 0.14 : 0.07)} />
             </>
           ) : (
-            <stop offset="100%" stopColor="rgba(0,0,0,0.06)" />
+            <stop offset="100%" stopColor={SHIELD_TOKENS.rimDark} />
           )}
         </radialGradient>
 
@@ -129,26 +137,26 @@ export function BranchShield({
         </linearGradient>
 
         <linearGradient id={ids.inner} x1="0" x2="1" y1="0" y2="1">
-          <stop offset="0%" stopColor={withAlpha("#ffffff", active ? 0.12 : 0.08)} />
+          <stop offset="0%" stopColor={withAlpha(SHIELD_TOKENS.white, active ? 0.12 : 0.08)} />
           <stop offset="55%" stopColor={withAlpha(accent, active ? 0.10 : 0.06)} />
-          <stop offset="100%" stopColor="rgba(0,0,0,0.05)" />
+          <stop offset="100%" stopColor={SHIELD_TOKENS.rimDarkSoft} />
         </linearGradient>
 
         <linearGradient id={ids.shimmer} x1="0" x2="1" y1="0" y2="0">
-          <stop offset="0%" stopColor="rgba(255,255,255,0)" />
+          <stop offset="0%" stopColor={SHIELD_TOKENS.transparentWhite} />
           <stop offset="45%" stopColor={
             tier === "master"
               ? withAlpha(TIER_MASTER_GOLD, active ? 0.40 : 0.26)
               : tier === "advanced"
               ? withAlpha(TIER_ADVANCED_BRASS, active ? 0.32 : 0.20)
-              : withAlpha("#ffffff", active ? 0.26 : 0.16)
+              : withAlpha(SHIELD_TOKENS.white, active ? 0.26 : 0.16)
           } />
           <stop offset="58%" stopColor={
             tier === "master"
               ? withAlpha(TIER_MASTER_CRIMSON, active ? 0.24 : 0.14)
-              : withAlpha("#ffffff", active ? 0.18 : 0.10)
+              : withAlpha(SHIELD_TOKENS.white, active ? 0.18 : 0.10)
           } />
-          <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+          <stop offset="100%" stopColor={SHIELD_TOKENS.transparentWhite} />
         </linearGradient>
 
         <clipPath id={ids.sigilClip}>
@@ -183,7 +191,7 @@ export function BranchShield({
       {/* shadow plate */}
       <path
         d="M13 7h38c4 0 7 3.1 7 7v19.7c0 13.2-8.4 25.3-26 33.8-17.6-8.5-26-20.6-26-33.8V14c0-3.9 3-7 7-7Z"
-        fill={withAlpha("#000000", 0.28)}
+        fill={withAlpha(SHIELD_TOKENS.plateShadow, 0.28)}
         opacity={active ? 0.38 : 0.26}
         transform="translate(0 2)"
       />
@@ -220,7 +228,7 @@ export function BranchShield({
         cy="32"
         r={rivetR}
         fill={withAlpha(accent, active ? 0.65 : 0.42)}
-        stroke={withAlpha("#ffffff", active ? 0.18 : 0.12)}
+        stroke={withAlpha(SHIELD_TOKENS.white, active ? 0.18 : 0.12)}
         strokeWidth="1"
         opacity={scored ? 1 : 0.72}
       />
@@ -273,7 +281,7 @@ export function BranchShield({
       {/* top glint */}
       <path
         d="M16 12h32c2.4 0 4.3 1.5 4.8 3.7 0 0-7.3 3.9-20.8 3.9S11.2 15.7 11.2 15.7c.5-2.2 2.4-3.7 4.8-3.7Z"
-        fill={withAlpha("#ffffff", active ? 0.10 : 0.06)}
+        fill={withAlpha(SHIELD_TOKENS.white, active ? 0.10 : 0.06)}
       />
     </motion.svg>
   );

@@ -16,6 +16,8 @@ import { MapRouteLayer } from "./map/map-route-layer";
 import { MapSignalCore } from "./map/map-signal-core";
 import { MapSourceStates } from "./map/map-source-states";
 import { getSourceStatuses } from "./map/map-utils";
+import { SCAN_LOBBY_TOKENS } from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
+import { MEDIEVAL_THEME } from "@/lib/theme/medieval-theme";
 
 export function LivingTacticalMap({
   mode,
@@ -41,24 +43,32 @@ export function LivingTacticalMap({
   const completedCount = history.filter((r) => r.status === "completed").length;
   const failedCount = history.filter((r) => r.status === "failed").length;
 
-  const borderClass =
+  const borderColor =
     mode === "failed"
-      ? "border-red-400/30 shadow-red-950/30"
+      ? "rgba(216, 123, 109, 0.30)"
       : mode === "success"
-        ? "border-emerald-300/30 shadow-emerald-950/30"
+        ? "rgba(110, 214, 156, 0.30)"
         : mode === "scouting" || mode === "dispatching"
-          ? "border-sky-300/30 shadow-sky-950/30"
-          : "border-amber-300/20 shadow-black/35";
+          ? "rgba(125, 177, 255, 0.30)"
+          : SCAN_LOBBY_TOKENS.panelBorderStrong;
 
   return (
     <section
-      className={`relative h-[500px] overflow-hidden rounded-lg border bg-[#120b09] shadow-2xl sm:h-[480px] lg:h-[460px] ${borderClass} ${className ?? ""}`}
+      className={`relative h-[500px] overflow-hidden rounded-lg border shadow-2xl sm:h-[480px] lg:h-[460px] ${className ?? ""}`}
+      style={{
+        borderColor,
+        background: MEDIEVAL_THEME.gradients.shell,
+      }}
       aria-labelledby="living-map-title"
     >
       <div
-        className={`absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(214,168,79,0.18),rgba(214,168,79,0.05)_34%,rgba(0,0,0,0.3)_72%,transparent_100%),linear-gradient(135deg,rgba(255,255,255,0.045),transparent_42%),linear-gradient(rgba(255,255,255,0.032)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.032)_1px,transparent_1px)] bg-[size:auto,auto,42px_42px,42px_42px] ${
+        className={`absolute inset-0 bg-[size:auto,auto,42px_42px,42px_42px] ${
           reducedMotion ? "" : "scan-map-grid-drift"
         }`}
+        style={{
+          backgroundImage:
+            "radial-gradient(circle at 50% 50%, rgba(216,175,99,0.18), rgba(216,175,99,0.05) 34%, rgba(0,0,0,0.3) 72%, transparent 100%), linear-gradient(135deg, rgba(255,255,255,0.045), transparent 42%), linear-gradient(rgba(255,255,255,0.032) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.032) 1px, transparent 1px)",
+        }}
       />
 
       <div className="absolute inset-x-2 top-[40px] bottom-[196px] z-10 grid place-items-center sm:inset-x-4 sm:top-[40px] sm:bottom-[196px] md:top-[34px] md:bottom-[112px]">
@@ -91,31 +101,43 @@ export function LivingTacticalMap({
       <div className="relative z-30 flex h-full flex-col justify-between p-4 md:p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-amber-200/55">
+            <p className="font-mono text-[10px] uppercase tracking-[0.22em]" style={{ color: SCAN_LOBBY_TOKENS.eyebrow }}>
               Live Scan Map
             </p>
           </div>
-          <div className="rounded-md border border-amber-200/12 bg-black/20 px-3 py-2 text-right backdrop-blur-sm">
-            <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-white/28">
+          <div
+            className="rounded-md border px-3 py-2 text-right backdrop-blur-sm"
+            style={{
+              borderColor: SCAN_LOBBY_TOKENS.panelBorder,
+              background: "rgba(0,0,0,0.20)",
+            }}
+          >
+            <p className="font-mono text-[9px] uppercase tracking-[0.16em]" style={{ color: SCAN_LOBBY_TOKENS.labelText }}>
               Run markers
             </p>
-            <p className="mt-1 font-mono text-[11px] text-white/68">
+            <p className="mt-1 font-mono text-[11px]" style={{ color: SCAN_LOBBY_TOKENS.bodyTextStrong }}>
               {completedCount} fortified / {failedCount} broken
             </p>
           </div>
         </div>
 
         <div className="grid gap-2 md:grid-cols-[minmax(0,0.5fr)_minmax(170px,0.24fr)] md:items-end md:justify-between">
-          <div className="max-w-[470px] rounded-md border border-white/6 bg-black/12 p-1.5 backdrop-blur-sm">
+          <div
+            className="max-w-[470px] rounded-md border p-1.5 backdrop-blur-sm"
+            style={{
+              borderColor: "rgba(255,255,255,0.06)",
+              background: "rgba(0,0,0,0.12)",
+            }}
+          >
             <MapPhaseRail
               phase={phase}
               mode={mode}
               progressPct={activeRun?.progressPct}
             />
-            <p className="mt-1.5 font-mono text-[7px] uppercase tracking-[0.16em] text-amber-200/38">
+            <p className="mt-1.5 font-mono text-[7px] uppercase tracking-[0.16em]" style={{ color: "rgba(216,175,99,0.38)" }}>
               {phaseCopy.title}
             </p>
-            <p className="mt-0.5 text-[9px] text-amber-50/46">{phaseCopy.detail}</p>
+            <p className="mt-0.5 text-[9px]" style={{ color: "rgba(241,228,207,0.46)" }}>{phaseCopy.detail}</p>
           </div>
 
           <MapSourceStates sourceStatuses={sourceStatuses} />

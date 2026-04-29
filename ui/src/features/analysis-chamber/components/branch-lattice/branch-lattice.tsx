@@ -2,7 +2,10 @@
 
 import React, { useCallback, useRef, useState } from "react";
 
-import { ANALYSIS_CHAMBER_SHELL_PALETTE as palette } from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
+import {
+  ANALYSIS_CHAMBER_SHELL_PALETTE as palette,
+  BRANCH_TOKENS,
+} from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
 
 import { BranchNode } from "./branch-node";
 import { BranchDetailModal } from "./branch-detail-modal";
@@ -174,7 +177,7 @@ export function BranchLattice({
                       <g key={i}>
                         {/* ghost trail */}
                         <line
-                          stroke="rgba(0,0,0,0.22)"
+                          stroke={BRANCH_TOKENS.spineGhost}
                           strokeWidth="1"
                           x1={p1.x} y1={p1.y}
                           x2={p2.x} y2={p2.y}
@@ -258,9 +261,8 @@ export function BranchLattice({
               <div
                 className="rounded-xl border px-4 py-4"
                 style={{
-                  borderColor: "rgba(154,171,184,0.24)",
-                  background:
-                    "linear-gradient(180deg, rgba(154,171,184,0.08), rgba(255,255,255,0.025))",
+                  borderColor: BRANCH_TOKENS.pendingShellBorder,
+                  background: BRANCH_TOKENS.pendingShellBg,
                 }}
               >
                 <p
@@ -281,8 +283,8 @@ export function BranchLattice({
               <div
                 className="rounded-xl border px-4 py-4"
                 style={{
-                  borderColor: "rgba(255,149,0,0.18)",
-                  background: "rgba(255,149,0,0.035)",
+                  borderColor: BRANCH_TOKENS.knownLanesBorder,
+                  background: BRANCH_TOKENS.knownLanesBg,
                 }}
               >
                 <p
@@ -305,15 +307,15 @@ export function BranchLattice({
                         borderColor:
                           popupOpenId === branch.id
                             ? palette.gold
-                            : "rgba(154,171,184,0.30)",
+                            : BRANCH_TOKENS.knownLaneIdleBorder,
                         color:
                           popupOpenId === branch.id
                             ? palette.gold
                             : palette.silver,
                         background:
                           popupOpenId === branch.id
-                            ? "rgba(255,149,0,0.10)"
-                            : "rgba(154,171,184,0.055)",
+                            ? BRANCH_TOKENS.knownLaneActiveBg
+                            : BRANCH_TOKENS.knownLaneIdleBg,
                       }}
                       type="button"
                     >
@@ -327,8 +329,8 @@ export function BranchLattice({
             <div
               className="rounded-md border px-4 py-5 text-sm leading-7"
               style={{
-                borderColor: "rgba(200,150,30,0.22)",
-                background: "rgba(255,255,255,0.05)",
+                borderColor: BRANCH_TOKENS.emptyBorder,
+                background: BRANCH_TOKENS.emptyBg,
                 color: palette.inkSoft,
               }}
             >

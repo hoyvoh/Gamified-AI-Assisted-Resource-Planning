@@ -29,7 +29,10 @@ import {
   useRefreshChamber,
 } from "@/features/analysis-chamber/hooks/use-analysis-chamber-shell-data";
 
-import { ANALYSIS_CHAMBER_SHELL_PALETTE as palette } from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
+import {
+  ANALYSIS_CHAMBER_SHELL_PALETTE as palette,
+  CHAMBER_CHROME_TOKENS,
+} from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
 
 import type { AnalysisChamberRouteKey } from "@/features/analysis-chamber/lib/analysis-chamber-shell.types";
 
@@ -173,12 +176,12 @@ const AnalysisPendingScreen = ({
         className="flex h-24 w-24 items-center justify-center rounded-full border"
         style={{
           borderColor: isRunning
-            ? "rgba(209,172,103,0.5)"
-            : "rgba(209,172,103,0.25)",
+            ? CHAMBER_CHROME_TOKENS.pendingOrbActiveBorder
+            : CHAMBER_CHROME_TOKENS.pendingOrbIdleBorder,
 
           background: isRunning
-            ? "radial-gradient(circle, rgba(209,172,103,0.22) 0%, rgba(209,172,103,0.08) 55%, transparent 70%)"
-            : "radial-gradient(circle, rgba(209,172,103,0.10) 0%, transparent 70%)",
+            ? CHAMBER_CHROME_TOKENS.pendingOrbActiveBg
+            : CHAMBER_CHROME_TOKENS.pendingOrbIdleBg,
 
           animation: isRunning ? "pulse 2s ease-in-out infinite" : undefined,
         }}
@@ -186,7 +189,9 @@ const AnalysisPendingScreen = ({
         <span
           className="font-display text-3xl"
           style={{
-            color: isRunning ? "rgba(209,172,103,0.9)" : "rgba(209,172,103,0.35)",
+            color: isRunning
+              ? CHAMBER_CHROME_TOKENS.pendingOrbActiveText
+              : CHAMBER_CHROME_TOKENS.pendingOrbIdleText,
           }}
         >
           {isRunning ? "⚙" : status === "failed" ? "✕" : "○"}
@@ -198,15 +203,15 @@ const AnalysisPendingScreen = ({
           className="font-display text-sm uppercase tracking-[0.18em]"
           style={{
             color: isRunning
-              ? "rgba(255,232,192,0.85)"
-              : "rgba(255,232,192,0.5)",
+              ? CHAMBER_CHROME_TOKENS.pendingTitleActive
+              : CHAMBER_CHROME_TOKENS.pendingTitleIdle,
           }}
         >
           {copy.headline}
         </p>
         <p
           className="mt-2 max-w-sm text-sm leading-6"
-          style={{ color: "rgba(255,232,192,0.4)" }}
+          style={{ color: CHAMBER_CHROME_TOKENS.pendingBody }}
         >
           {copy.sub}
         </p>
@@ -222,11 +227,9 @@ const AnalysisPendingScreen = ({
             }
             onClick={() => void handleTrigger()}
             style={{
-              borderColor: "rgba(209,172,103,0.55)",
-
-              color: "rgba(209,172,103,0.9)",
-
-              background: "rgba(209,172,103,0.08)",
+              borderColor: CHAMBER_CHROME_TOKENS.pendingActionBorder,
+              color: CHAMBER_CHROME_TOKENS.pendingActionText,
+              background: CHAMBER_CHROME_TOKENS.pendingActionBg,
             }}
             type="button"
           >
@@ -243,7 +246,7 @@ const AnalysisPendingScreen = ({
         {triggerError && (
           <p
             className="max-w-xs text-xs"
-            style={{ color: "rgba(220,80,80,0.85)" }}
+            style={{ color: CHAMBER_CHROME_TOKENS.errorText }}
           >
             {triggerError}
           </p>
@@ -252,7 +255,7 @@ const AnalysisPendingScreen = ({
         <button
           className="font-display text-[10px] uppercase tracking-[0.12em] transition hover:brightness-125"
           onClick={onRefresh}
-          style={{ color: "rgba(255,232,192,0.25)" }}
+          style={{ color: CHAMBER_CHROME_TOKENS.pendingRefreshText }}
           type="button"
         >
           ↺ Refresh status
@@ -335,10 +338,8 @@ export const AnalysisChamberShell = ({
                   <div
                     className="mx-auto mt-8 h-24 w-24 rounded-full border"
                     style={{
-                      borderColor: "rgba(161, 119, 55, 0.35)",
-
-                      background:
-                        "radial-gradient(circle, rgba(209,172,103,0.18) 0%, rgba(209,172,103,0.06) 55%, transparent 70%)",
+                      borderColor: CHAMBER_CHROME_TOKENS.loadingHaloBorder,
+                      background: CHAMBER_CHROME_TOKENS.loadingHalo,
                     }}
                   />
                 </div>

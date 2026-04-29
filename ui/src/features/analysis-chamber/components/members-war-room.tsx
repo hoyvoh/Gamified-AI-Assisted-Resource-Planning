@@ -73,7 +73,7 @@ function MembersWarRoomLoading() {
             key={index}
             className="h-24 animate-pulse border"
             style={{
-              borderColor: "rgba(161, 119, 55, 0.18)",
+              borderColor: MEDIEVAL_THEME.premiumNoir.divider,
               backgroundImage: MEDIEVAL_THEME.gradients.shell,
             }}
           />
@@ -84,20 +84,20 @@ function MembersWarRoomLoading() {
         <div
           className="border p-4"
           style={{
-            borderColor: "rgba(161, 119, 55, 0.18)",
+            borderColor: MEDIEVAL_THEME.premiumNoir.divider,
             backgroundImage: MEDIEVAL_THEME.gradients.ledger,
           }}
         >
           <div
             className="mb-4 h-8 w-52 animate-pulse"
-            style={{ backgroundColor: "rgba(123, 77, 32, 0.15)" }}
+            style={{ backgroundColor: "rgba(216, 175, 99, 0.15)" }}
           />
           <div className="space-y-3">
             {Array.from({ length: 5 }).map((_, index) => (
               <div
                 key={index}
                 className="h-16 animate-pulse"
-                style={{ backgroundColor: "rgba(123, 77, 32, 0.12)" }}
+                style={{ backgroundColor: "rgba(216, 175, 99, 0.12)" }}
               />
             ))}
           </div>
@@ -105,7 +105,7 @@ function MembersWarRoomLoading() {
         <div
           className="h-80 animate-pulse border"
           style={{
-            borderColor: "rgba(161, 119, 55, 0.18)",
+            borderColor: MEDIEVAL_THEME.premiumNoir.divider,
             backgroundImage: MEDIEVAL_THEME.gradients.shell,
           }}
         />
@@ -119,14 +119,14 @@ function MembersWarRoomError() {
     <div
       className="border p-8"
       style={{
-        borderColor: "rgba(143, 69, 56, 0.25)",
+        borderColor: MEDIEVAL_THEME.status.danger.border,
         backgroundImage: MEDIEVAL_THEME.gradients.shell,
         color: MEDIEVAL_THEME.text.primary,
       }}
     >
       <p
         className="font-mono text-[10px] uppercase tracking-[0.18em]"
-        style={{ color: "rgba(228, 174, 162, 0.7)" }}
+        style={{ color: MEDIEVAL_THEME.status.danger.text }}
       >
         Council records unavailable
       </p>
@@ -135,7 +135,7 @@ function MembersWarRoomError() {
       </h2>
       <p
         className="mt-2 max-w-xl text-sm leading-6"
-        style={{ color: "rgba(243, 227, 193, 0.65)" }}
+        style={{ color: MEDIEVAL_THEME.text.soft }}
       >
         The roster could not be loaded. Check that the backend is running and
         reachable, then refresh this page.
@@ -149,7 +149,7 @@ function MembersWarRoomEmpty() {
     <div
       className="border p-8 text-center"
       style={{
-        borderColor: "rgba(161, 119, 55, 0.2)",
+        borderColor: MEDIEVAL_THEME.premiumNoir.divider,
         backgroundImage: MEDIEVAL_THEME.gradients.shell,
         color: MEDIEVAL_THEME.text.primary,
       }}
@@ -161,8 +161,9 @@ function MembersWarRoomEmpty() {
         href="/"
         className="mt-4 inline-flex border px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] transition"
         style={{
-          borderColor: "rgba(161, 119, 55, 0.25)",
-          color: "rgba(243, 227, 193, 0.7)",
+          borderColor: MEDIEVAL_THEME.premiumNoir.divider,
+          color: MEDIEVAL_THEME.text.soft,
+          backgroundImage: MEDIEVAL_THEME.gradients.secondaryButton,
         }}
       >
         Return To Launcher

@@ -55,8 +55,8 @@ export const KptCard = ({
         {
           background: KPT_TOKENS.bgCard,
           border: `1px solid ${isPrimary ? KPT_TOKENS.borderStrong : KPT_TOKENS.borderSubtle}`,
-          boxShadow: "inset 0 1px 0 rgba(255,232,192,0.03)",
-          "--card-glow": `0 16px 32px rgba(0,0,0,0.22)`,
+          boxShadow: KPT_TOKENS.cardInset,
+          "--card-glow": KPT_TOKENS.cardGlow,
           animationDelay: `${index * 60}ms`,
         } as React.CSSProperties
       }

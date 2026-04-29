@@ -4,7 +4,10 @@ import Link from "next/link";
 import { ArrowRight, Map, ScrollText } from "lucide-react";
 
 import { buildAnalysisChamberRouteHref } from "@/features/analysis-chamber/lib/analysis-chamber-route-links";
-import { ANALYSIS_CHAMBER_SHELL_PALETTE as palette } from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
+import {
+  ANALYSIS_CHAMBER_SHELL_PALETTE as palette,
+  OVERVIEW_TOKENS,
+} from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
 
 interface OverviewActionGridProps {
   categoryTarget: string | null;
@@ -65,11 +68,9 @@ export const OverviewActionGrid = ({
         href={primaryAction.href}
         style={{
           color: palette.ink,
-          borderColor: "rgba(255,149,0,0.38)",
-          background:
-            "linear-gradient(180deg, rgba(200,150,30,0.18), rgba(255,255,255,0.035))",
-          boxShadow:
-            "inset 0 1px 0 rgba(255,232,192,0.12), inset 0 -1px 0 rgba(0,0,0,0.3), 0 18px 38px rgba(200,150,30,0.14)",
+          borderColor: OVERVIEW_TOKENS.primaryCardBorder,
+          background: OVERVIEW_TOKENS.primaryCardSurface,
+          boxShadow: OVERVIEW_TOKENS.primaryCardShadow,
         }}
       >
         <span>
@@ -79,7 +80,10 @@ export const OverviewActionGrid = ({
           >
             Primary chamber entry
           </span>
-          <span className="mt-1.5 block font-display text-sm uppercase tracking-[0.12em] transition-colors duration-200 group-hover:text-[#ffe8c0] md:text-base">
+          <span
+            className="mt-1.5 block font-display text-sm uppercase tracking-[0.12em] transition-colors duration-200 md:text-base"
+            style={{ ["--overview-action-hover" as string]: OVERVIEW_TOKENS.actionHoverText }}
+          >
             {primaryAction.title}
           </span>
         </span>
@@ -101,14 +105,13 @@ export const OverviewActionGrid = ({
               href={card.href}
               style={{
                 color: palette.inkSoft,
-                borderColor: "rgba(200,150,30,0.18)",
-                background: "rgba(255,255,255,0.025)",
-                boxShadow:
-                  "inset 0 1px 0 rgba(200,150,30,0.08), inset 0 -1px 0 rgba(0,0,0,0.24)",
+                borderColor: OVERVIEW_TOKENS.secondaryCardBorder,
+                background: OVERVIEW_TOKENS.secondaryCardSurface,
+                boxShadow: OVERVIEW_TOKENS.secondaryCardShadow,
               }}
             >
               <SecondaryIcon aria-hidden="true" size={14} />
-              <span className="transition-colors duration-200 group-hover:text-[#ffe8c0]">
+              <span className="transition-colors duration-200">
                 {card.title}
               </span>
             </Link>

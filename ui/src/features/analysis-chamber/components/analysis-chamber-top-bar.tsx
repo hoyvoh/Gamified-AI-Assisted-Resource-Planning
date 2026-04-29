@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   ANALYSIS_CHAMBER_ROUTE_TITLE,
   ANALYSIS_CHAMBER_SHELL_PALETTE as palette,
+  CHAMBER_CHROME_TOKENS,
 } from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
 import type { AnalysisChamberRouteKey } from "@/features/analysis-chamber/lib/analysis-chamber-shell.types";
 import type { ChamberBootstrap } from "@/features/analysis-chamber/api/analysis-chamber-api.view-models";
@@ -23,7 +24,7 @@ export const AnalysisChamberTopBar = ({
     className="relative z-10 flex min-h-14 items-center gap-3 border-b px-3 py-2.5 md:px-5"
     style={{
       background: MEDIEVAL_THEME.gradients.topBar,
-      borderColor: "rgba(141, 105, 52, 0.5)",
+      borderColor: MEDIEVAL_THEME.premiumNoir.divider,
       color: palette.ink,
     }}
   >
@@ -31,28 +32,28 @@ export const AnalysisChamberTopBar = ({
       <Link
         href="/members"
         className="font-mono text-[10px] uppercase tracking-[0.12em] transition-opacity opacity-40 hover:opacity-80"
-        style={{ color: palette.gold }}
+        style={{ color: MEDIEVAL_THEME.premiumNoir.chromeLabel }}
         title="Back to members"
       >
         ← Members
       </Link>
       <div
         className="h-8 w-px"
-        style={{ background: "rgba(209, 172, 103, 0.15)" }}
+        style={{ background: MEDIEVAL_THEME.premiumNoir.divider }}
       />
       <div
         className="flex h-8 w-8 items-center justify-center rounded-full border text-[11px] font-semibold tracking-[0.16em]"
         style={{
           borderColor: palette.gold,
           color: palette.gold,
-          boxShadow: "0 0 18px rgba(209,172,103,0.16)",
+          boxShadow: `0 0 18px ${CHAMBER_CHROME_TOKENS.goldGlowSoft}`,
         }}
       >
         AC
       </div>
       <div
         className="hidden h-8 w-px md:block"
-        style={{ background: "rgba(209, 172, 103, 0.22)" }}
+        style={{ background: CHAMBER_CHROME_TOKENS.railActiveBorder }}
       />
     </div>
 
@@ -71,13 +72,13 @@ export const AnalysisChamberTopBar = ({
     <div className="hidden text-right md:block">
       <p
         className="font-display text-[10px] uppercase tracking-[0.18em]"
-        style={{ color: palette.gold }}
+        style={{ color: MEDIEVAL_THEME.premiumNoir.chromeLabel }}
       >
         {ANALYSIS_CHAMBER_ROUTE_TITLE[route]}
       </p>
       <p
         className="mt-0.5 text-[9px] uppercase tracking-[0.16em]"
-        style={{ color: "rgba(209,172,103,0.58)" }}
+        style={{ color: CHAMBER_CHROME_TOKENS.railLabelIdle }}
       >
         Profile route
       </p>
@@ -89,9 +90,9 @@ export const AnalysisChamberTopBar = ({
           className="rounded-md border px-2.5 py-1 text-sm font-display transition-all duration-150 hover:brightness-125 active:scale-95"
           onClick={onRefresh}
           style={{
-            borderColor: "rgba(161, 119, 55, 0.35)",
+            borderColor: CHAMBER_CHROME_TOKENS.railActiveBorder,
             color: palette.gold,
-            background: "rgba(209, 172, 103, 0.06)",
+            background: CHAMBER_CHROME_TOKENS.refreshBg,
           }}
           title="Refresh data"
           type="button"
@@ -103,9 +104,9 @@ export const AnalysisChamberTopBar = ({
       <div
         className="rounded-md border px-2.5 py-1 text-[10px] font-display uppercase tracking-[0.14em]"
         style={{
-          borderColor: palette.vert,
-          color: palette.vert,
-          background: "rgba(42,106,58,0.08)",
+          borderColor: CHAMBER_CHROME_TOKENS.statusReadyBorder,
+          color: CHAMBER_CHROME_TOKENS.statusReadyText,
+          background: CHAMBER_CHROME_TOKENS.statusReadyBg,
         }}
       >
         {bootstrap.analysisStatus}

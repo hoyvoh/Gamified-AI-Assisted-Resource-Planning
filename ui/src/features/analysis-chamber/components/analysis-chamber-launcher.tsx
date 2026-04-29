@@ -16,6 +16,7 @@ import type {
   ChamberOrganizationSummaryResponse,
   ChamberOrganizationTeamResponse,
 } from "@/features/analysis-chamber/api/analysis-chamber-api.types";
+import { MEDIEVAL_THEME } from "@/lib/theme/medieval-theme";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -32,24 +33,20 @@ type CreateStatus =
 // ─── Shared primitives ────────────────────────────────────────────────────────
 
 const inputCls =
-  "w-full min-h-10 rounded-md border border-white/10 bg-white/5 px-3 py-2 text-sm text-white/90 outline-none transition placeholder:text-white/30 focus:border-white/30 disabled:opacity-40 disabled:cursor-not-allowed";
+  "w-full min-h-10 rounded-md border px-3 py-2 text-sm outline-none transition disabled:opacity-40 disabled:cursor-not-allowed";
 
 const labelCls =
-  "block font-display text-[10px] uppercase tracking-[0.14em] text-white/50 mb-1.5";
+  "mb-1.5 block font-display text-[10px] uppercase tracking-[0.14em]";
 
 const btnPrimary = (busy: boolean) =>
   `relative flex min-h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-md border px-5 font-display text-xs uppercase tracking-[0.16em] transition duration-200 active:scale-[0.98] ${
     busy
-      ? "cursor-not-allowed border-white/10 bg-white/5 text-white/50"
-      : "border-white/15 bg-white/8 text-white/90 hover:border-white/30 hover:brightness-110"
+      ? "cursor-not-allowed"
+      : "hover:brightness-110"
   }`;
 
-const btnTab = (active: boolean) =>
-  `cursor-pointer flex-1 rounded-md border px-4 py-2 font-display text-[10px] uppercase tracking-[0.14em] transition duration-150 ${
-    active
-      ? "border-white/25 bg-white/10 text-white/90"
-      : "border-transparent text-white/40 hover:text-white/70"
-  }`;
+const btnTab =
+  "cursor-pointer flex-1 rounded-md border px-4 py-2 font-display text-[10px] uppercase tracking-[0.14em] transition duration-150";
 
 // ─── Spinner ──────────────────────────────────────────────────────────────────
 
@@ -84,10 +81,15 @@ const FieldSkeleton = ({ label }: { label: string }) => (
     <span className={labelCls}>{label}</span>
     <div
       className={`${inputCls} flex items-center gap-2 opacity-50`}
+      style={{
+        borderColor: MEDIEVAL_THEME.premiumNoir.divider,
+        background: "rgba(255,255,255,0.03)",
+        color: MEDIEVAL_THEME.text.primary,
+      }}
       aria-busy="true"
     >
       <Spinner />
-      <span className="text-xs text-white/40">Loading…</span>
+      <span className="text-xs" style={{ color: MEDIEVAL_THEME.text.muted }}>Loading…</span>
     </div>
   </div>
 );
@@ -137,6 +139,11 @@ const EnterPanel = ({ onSwitchToCreate }: { onSwitchToCreate: () => void }) => {
           </label>
           <input
             className={inputCls}
+            style={{
+              borderColor: MEDIEVAL_THEME.premiumNoir.divider,
+              background: "rgba(255,255,255,0.05)",
+              color: MEDIEVAL_THEME.text.primary,
+            }}
             disabled={isLoading}
             id="gh-handle-enter"
             onChange={(e) => {
@@ -149,6 +156,16 @@ const EnterPanel = ({ onSwitchToCreate }: { onSwitchToCreate: () => void }) => {
         </div>
         <button
           className={`${btnPrimary(isLoading)} sm:mt-[22px] sm:w-auto sm:min-w-[160px]`}
+          style={{
+            borderColor: isLoading
+              ? "rgba(255,255,255,0.10)"
+              : MEDIEVAL_THEME.premiumNoir.divider,
+            backgroundImage: isLoading
+              ? "none"
+              : MEDIEVAL_THEME.gradients.secondaryButton,
+            backgroundColor: isLoading ? "rgba(255,255,255,0.05)" : undefined,
+            color: isLoading ? MEDIEVAL_THEME.text.muted : MEDIEVAL_THEME.text.primary,
+          }}
           disabled={!canSubmit}
           type="submit"
         >
@@ -158,10 +175,11 @@ const EnterPanel = ({ onSwitchToCreate }: { onSwitchToCreate: () => void }) => {
       </form>
 
       {status === "not_found" && (
-        <p className="text-xs text-red-400/80">
+        <p className="text-xs" style={{ color: MEDIEVAL_THEME.status.danger.text }}>
           No member found for &ldquo;{normalizedHandle}&rdquo;.{" "}
           <button
-            className="cursor-pointer underline underline-offset-2 hover:text-red-300"
+            className="cursor-pointer underline underline-offset-2"
+            style={{ color: MEDIEVAL_THEME.status.danger.text }}
             onClick={onSwitchToCreate}
             type="button"
           >
@@ -341,6 +359,11 @@ const CreatePanel = ({ onSwitchToEnter }: { onSwitchToEnter: () => void }) => {
           </label>
           <input
             className={inputCls}
+            style={{
+              borderColor: MEDIEVAL_THEME.premiumNoir.divider,
+              background: "rgba(255,255,255,0.05)",
+              color: MEDIEVAL_THEME.text.primary,
+            }}
             disabled={isSubmitting}
             id="create-display-name"
             onChange={(e) => setDisplayName(e.target.value)}
@@ -354,6 +377,11 @@ const CreatePanel = ({ onSwitchToEnter }: { onSwitchToEnter: () => void }) => {
           </label>
           <input
             className={inputCls}
+            style={{
+              borderColor: MEDIEVAL_THEME.premiumNoir.divider,
+              background: "rgba(255,255,255,0.05)",
+              color: MEDIEVAL_THEME.text.primary,
+            }}
             disabled={isSubmitting}
             id="create-gh-handle"
             onChange={(e) => setGithubHandle(e.target.value)}
@@ -372,7 +400,8 @@ const CreatePanel = ({ onSwitchToEnter }: { onSwitchToEnter: () => void }) => {
             <span className={labelCls.replace("mb-1.5", "")}>Organisation</span>
             {orgs.length > 0 && (
               <button
-                className="cursor-pointer font-display text-[9px] uppercase tracking-widest text-white/40 transition hover:text-white/70 disabled:pointer-events-none disabled:opacity-30"
+                className="cursor-pointer font-display text-[9px] uppercase tracking-widest transition disabled:pointer-events-none disabled:opacity-30"
+                style={{ color: MEDIEVAL_THEME.text.muted }}
                 disabled={isSubmitting}
                 onClick={() => {
                   setOrgMode(orgMode === "select" ? "new" : "select");
@@ -388,6 +417,11 @@ const CreatePanel = ({ onSwitchToEnter }: { onSwitchToEnter: () => void }) => {
           {orgMode === "select" ? (
             <select
               className={`${inputCls} cursor-pointer`}
+              style={{
+                borderColor: MEDIEVAL_THEME.premiumNoir.divider,
+                background: "rgba(255,255,255,0.05)",
+                color: MEDIEVAL_THEME.text.primary,
+              }}
               disabled={isSubmitting}
               onChange={(e) => setOrgId(e.target.value)}
               value={orgId}
@@ -402,6 +436,11 @@ const CreatePanel = ({ onSwitchToEnter }: { onSwitchToEnter: () => void }) => {
           ) : (
             <input
               className={inputCls}
+              style={{
+                borderColor: MEDIEVAL_THEME.premiumNoir.divider,
+                background: "rgba(255,255,255,0.05)",
+                color: MEDIEVAL_THEME.text.primary,
+              }}
               disabled={isSubmitting}
               onChange={(e) => setNewOrgName(e.target.value)}
               placeholder="Organisation name (will be created)"
@@ -421,7 +460,8 @@ const CreatePanel = ({ onSwitchToEnter }: { onSwitchToEnter: () => void }) => {
               <span className={labelCls.replace("mb-1.5", "")}>Team</span>
               {orgMode === "select" && teams.length > 0 && (
                 <button
-                  className="cursor-pointer font-display text-[9px] uppercase tracking-widest text-white/40 transition hover:text-white/70 disabled:pointer-events-none disabled:opacity-30"
+                  className="cursor-pointer font-display text-[9px] uppercase tracking-widest transition disabled:pointer-events-none disabled:opacity-30"
+                  style={{ color: MEDIEVAL_THEME.text.muted }}
                   disabled={isSubmitting}
                   onClick={() => {
                     setTeamMode(teamMode === "select" ? "new" : "select");
@@ -437,6 +477,11 @@ const CreatePanel = ({ onSwitchToEnter }: { onSwitchToEnter: () => void }) => {
             {effectiveTeamMode === "select" ? (
               <select
                 className={`${inputCls} cursor-pointer`}
+                style={{
+                  borderColor: MEDIEVAL_THEME.premiumNoir.divider,
+                  background: "rgba(255,255,255,0.05)",
+                  color: MEDIEVAL_THEME.text.primary,
+                }}
                 disabled={isSubmitting}
                 onChange={(e) => setTeamId(e.target.value)}
                 value={teamId}
@@ -451,6 +496,11 @@ const CreatePanel = ({ onSwitchToEnter }: { onSwitchToEnter: () => void }) => {
             ) : (
               <input
                 className={inputCls}
+                style={{
+                  borderColor: MEDIEVAL_THEME.premiumNoir.divider,
+                  background: "rgba(255,255,255,0.05)",
+                  color: MEDIEVAL_THEME.text.primary,
+                }}
                 disabled={isSubmitting}
                 onChange={(e) => setNewTeamName(e.target.value)}
                 placeholder="Team name (will be created)"
@@ -462,7 +512,13 @@ const CreatePanel = ({ onSwitchToEnter }: { onSwitchToEnter: () => void }) => {
 
       {/* Progress steps — visible while submitting */}
       {isSubmitting && (
-        <div className="flex items-center gap-1.5 rounded-md border border-white/8 bg-white/3 px-3 py-2.5">
+        <div
+          className="flex items-center gap-1.5 rounded-md border px-3 py-2.5"
+          style={{
+            borderColor: MEDIEVAL_THEME.premiumNoir.divider,
+            background: "rgba(255,255,255,0.03)",
+          }}
+        >
           {STEPS.map((step, i) => {
             const done = currentStepIndex > i;
             const active = currentStepIndex === i;
@@ -497,7 +553,7 @@ const CreatePanel = ({ onSwitchToEnter }: { onSwitchToEnter: () => void }) => {
       )}
 
       {/* Dedup hint */}
-      <p className="text-[10px] leading-4 text-white/25">
+      <p className="text-[10px] leading-4" style={{ color: MEDIEVAL_THEME.text.dim }}>
         If this GitHub username already exists in any org, you will be routed to
         their existing profile instead of creating a duplicate.
       </p>
@@ -505,6 +561,20 @@ const CreatePanel = ({ onSwitchToEnter }: { onSwitchToEnter: () => void }) => {
       {/* Submit */}
       <button
         className={btnPrimary(isSubmitting || !formIsValid)}
+        style={{
+          borderColor: isSubmitting || !formIsValid
+            ? "rgba(255,255,255,0.10)"
+            : MEDIEVAL_THEME.premiumNoir.divider,
+          backgroundImage: isSubmitting || !formIsValid
+            ? "none"
+            : MEDIEVAL_THEME.gradients.primaryButton,
+          backgroundColor:
+            isSubmitting || !formIsValid ? "rgba(255,255,255,0.05)" : undefined,
+          color:
+            isSubmitting || !formIsValid
+              ? MEDIEVAL_THEME.text.muted
+              : MEDIEVAL_THEME.text.inverse,
+        }}
         disabled={isSubmitting || !formIsValid}
         onClick={() => void handleCreate()}
         type="button"
@@ -513,10 +583,11 @@ const CreatePanel = ({ onSwitchToEnter }: { onSwitchToEnter: () => void }) => {
         {CREATE_STEP_LABELS[createStatus]}
       </button>
 
-      <p className="text-center text-[10px] text-white/25">
+      <p className="text-center text-[10px]" style={{ color: MEDIEVAL_THEME.text.dim }}>
         Already registered?{" "}
         <button
-          className="cursor-pointer underline underline-offset-2 hover:text-white/60"
+          className="cursor-pointer underline underline-offset-2"
+          style={{ color: MEDIEVAL_THEME.text.soft }}
           onClick={onSwitchToEnter}
           type="button"
         >
@@ -533,24 +604,43 @@ export const AnalysisChamberLauncher = () => {
   const [mode, setMode] = useState<Mode>("enter");
 
   return (
-    <div className="w-full max-w-xl">
+    <div
+      className="w-full max-w-xl"
+      style={{ color: MEDIEVAL_THEME.text.muted }}
+    >
       {/* Mode tabs */}
       <div
         className="mb-5 flex gap-1 rounded-lg border p-1"
         style={{
-          borderColor: "rgba(255,255,255,0.08)",
+          borderColor: MEDIEVAL_THEME.premiumNoir.divider,
           background: "rgba(255,255,255,0.03)",
         }}
       >
         <button
-          className={btnTab(mode === "enter")}
+          className={btnTab}
+          style={{
+            borderColor:
+              mode === "enter" ? MEDIEVAL_THEME.premiumNoir.divider : "transparent",
+            background:
+              mode === "enter" ? "rgba(255,255,255,0.08)" : "transparent",
+            color:
+              mode === "enter" ? MEDIEVAL_THEME.text.primary : MEDIEVAL_THEME.text.muted,
+          }}
           onClick={() => setMode("enter")}
           type="button"
         >
           Enter username
         </button>
         <button
-          className={btnTab(mode === "create")}
+          className={btnTab}
+          style={{
+            borderColor:
+              mode === "create" ? MEDIEVAL_THEME.premiumNoir.divider : "transparent",
+            background:
+              mode === "create" ? "rgba(255,255,255,0.08)" : "transparent",
+            color:
+              mode === "create" ? MEDIEVAL_THEME.text.primary : MEDIEVAL_THEME.text.muted,
+          }}
           onClick={() => setMode("create")}
           type="button"
         >

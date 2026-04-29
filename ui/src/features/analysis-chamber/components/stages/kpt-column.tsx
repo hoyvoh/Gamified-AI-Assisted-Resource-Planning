@@ -58,8 +58,7 @@ export const KptColumn = ({
         {
           background: KPT_TOKENS.bgColumn,
           border: `1px solid ${KPT_TOKENS.borderStrong}`,
-          boxShadow:
-            "inset 0 1px 0 rgba(255,232,192,0.04), 0 18px 40px rgba(0,0,0,0.22)",
+          boxShadow: KPT_TOKENS.columnShadow,
         } as React.CSSProperties
       }
     >

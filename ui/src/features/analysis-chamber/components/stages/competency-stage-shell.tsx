@@ -9,7 +9,10 @@ import type {
 import { useAnalysisChamberCompetencyData } from "@/features/analysis-chamber/hooks/use-analysis-chamber-shell-data";
 import { useAnalysisChamberRouteState } from "@/features/analysis-chamber/hooks/use-analysis-chamber-route-state";
 
-import { ANALYSIS_CHAMBER_SHELL_PALETTE as palette } from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
+import {
+  ANALYSIS_CHAMBER_SHELL_PALETTE as palette,
+  COMPETENCY_TOKENS,
+} from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
 import { TIER_MASTER_GOLD, TIER_MASTER_PLATE_BG, TIER_ADVANCED_BRASS, TIER_ADVANCED_PLATE_BG, TIER_INTER_SILVER, TIER_INTER_PLATE_BG } from "@/features/analysis-chamber/lib/branch-tier-colors";
 import { CompetencyRadarChart } from "@/features/analysis-chamber/components/competency-radar-chart";
 import { BranchLattice } from "@/features/analysis-chamber/components/branch-lattice";
@@ -29,38 +32,34 @@ const CATEGORY_ACCENT = {
   core_technical_execution: {
     color: palette.gold,
     border: palette.gold,
-    glow: "rgba(200,150,30,0.45)",
-    bg: "linear-gradient(145deg, rgba(200,150,30,0.32), rgba(200,150,30,0.14))",
-    centerBg:
-      "radial-gradient(circle, rgba(200,150,30,0.22), rgba(200,150,30,0.07))",
-    centerGlow: "0 16px 32px rgba(200,150,30,0.18)",
+    glow: COMPETENCY_TOKENS.coreGlow,
+    bg: COMPETENCY_TOKENS.coreBg,
+    centerBg: COMPETENCY_TOKENS.coreCenterBg,
+    centerGlow: COMPETENCY_TOKENS.coreCenterGlow,
   },
   technical_depth_breadth: {
     color: palette.azureLight,
     border: palette.azure,
-    glow: "rgba(42,90,154,0.4)",
-    bg: "linear-gradient(145deg, rgba(42,90,154,0.28), rgba(42,90,154,0.12))",
-    centerBg:
-      "radial-gradient(circle, rgba(42,90,154,0.22), rgba(42,90,154,0.07))",
-    centerGlow: "0 16px 32px rgba(42,90,154,0.18)",
+    glow: COMPETENCY_TOKENS.depthGlow,
+    bg: COMPETENCY_TOKENS.depthBg,
+    centerBg: COMPETENCY_TOKENS.depthCenterBg,
+    centerGlow: COMPETENCY_TOKENS.depthCenterGlow,
   },
   engineering_mindset: {
     color: palette.emberLight,
     border: palette.ember,
-    glow: "rgba(255,122,31,0.4)",
-    bg: "linear-gradient(145deg, rgba(255,122,31,0.24), rgba(255,122,31,0.10))",
-    centerBg:
-      "radial-gradient(circle, rgba(255,122,31,0.20), rgba(255,122,31,0.06))",
-    centerGlow: "0 16px 32px rgba(255,122,31,0.16)",
+    glow: COMPETENCY_TOKENS.mindsetGlow,
+    bg: COMPETENCY_TOKENS.mindsetBg,
+    centerBg: COMPETENCY_TOKENS.mindsetCenterBg,
+    centerGlow: COMPETENCY_TOKENS.mindsetCenterGlow,
   },
   collaboration_growth: {
     color: palette.vertLight,
     border: palette.vert,
-    glow: "rgba(42,106,58,0.4)",
-    bg: "linear-gradient(145deg, rgba(42,106,58,0.28), rgba(42,106,58,0.12))",
-    centerBg:
-      "radial-gradient(circle, rgba(42,106,58,0.22), rgba(42,106,58,0.07))",
-    centerGlow: "0 16px 32px rgba(42,106,58,0.18)",
+    glow: COMPETENCY_TOKENS.collabGlow,
+    bg: COMPETENCY_TOKENS.collabBg,
+    centerBg: COMPETENCY_TOKENS.collabCenterBg,
+    centerGlow: COMPETENCY_TOKENS.collabCenterGlow,
   },
 } as const;
 
@@ -307,8 +306,8 @@ export const CompetencyStageShell = ({ memberId }: { memberId: string }) => {
       mixedSignals: 0,
       summary: null,
       toneColor: palette.inkSoft,
-      toneBorder: "rgba(154,171,184,0.45)",
-      toneBackground: "rgba(255,255,255,0.08)",
+      toneBorder: COMPETENCY_TOKENS.fallbackBorder,
+      toneBackground: COMPETENCY_TOKENS.fallbackBg,
     }));
   }, [
     hasMeasuredDimensions,
@@ -348,10 +347,9 @@ export const CompetencyStageShell = ({ memberId }: { memberId: string }) => {
           <div
             className="relative rounded-[22px] border px-5 py-6 md:px-7"
             style={{
-              borderColor: "rgba(200,150,30,0.25)",
-              background:
-                "radial-gradient(circle at 50% 45%, rgba(255,149,0,0.13), rgba(255,149,0,0.055) 42%, rgba(255,149,0,0.02) 72%, transparent 100%)",
-              boxShadow: "inset 0 0 64px rgba(255,149,0,0.04)",
+              borderColor: COMPETENCY_TOKENS.focusShellBorder,
+              background: COMPETENCY_TOKENS.focusShellAura,
+              boxShadow: COMPETENCY_TOKENS.focusShellInset,
             }}
           >
             <div className="flex flex-wrap items-center justify-between gap-4">
@@ -361,9 +359,9 @@ export const CompetencyStageShell = ({ memberId }: { memberId: string }) => {
                   <span
                     className="rounded-md border px-3 py-1 text-[10px] uppercase tracking-[0.14em]"
                     style={{
-                      borderColor: "rgba(74,122,186,0.34)",
+                      borderColor: COMPETENCY_TOKENS.readingBorder,
                       color: palette.azureLight,
-                      background: "rgba(42,90,154,0.08)",
+                      background: COMPETENCY_TOKENS.readingBg,
                     }}
                   >
                     Reading...
@@ -372,9 +370,9 @@ export const CompetencyStageShell = ({ memberId }: { memberId: string }) => {
                 <span
                   className="rounded-md border px-3 py-1 text-[10px] uppercase tracking-[0.14em]"
                   style={{
-                    borderColor: "rgba(255,149,0,0.34)",
+                    borderColor: COMPETENCY_TOKENS.scoreBorder,
                     color: palette.inkSoft,
-                    background: "rgba(255,149,0,0.06)",
+                    background: COMPETENCY_TOKENS.scoreBg,
                   }}
                 >
                   {formatScore(focusCategory?.score ?? null)}
@@ -382,9 +380,9 @@ export const CompetencyStageShell = ({ memberId }: { memberId: string }) => {
                 <span
                   className="rounded-md border px-3 py-1 text-[10px] uppercase tracking-[0.14em]"
                   style={{
-                    borderColor: "rgba(154,171,184,0.28)",
+                    borderColor: COMPETENCY_TOKENS.confidenceBorder,
                     color: palette.silver,
-                    background: "rgba(154,171,184,0.06)",
+                    background: COMPETENCY_TOKENS.confidenceBg,
                   }}
                 >
                   {focusCategory?.confidenceLabel ?? "Awaiting confidence"}
@@ -407,9 +405,8 @@ export const CompetencyStageShell = ({ memberId }: { memberId: string }) => {
             <div
               className="overflow-hidden rounded-2xl border px-4 py-4"
               style={{
-                borderColor: "rgba(255,149,0,0.20)",
-                background:
-                  "linear-gradient(180deg, rgba(255,149,0,0.055), rgba(255,255,255,0.02))",
+                borderColor: COMPETENCY_TOKENS.latticeShellBorder,
+                background: COMPETENCY_TOKENS.latticeShellSurface,
               }}
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -433,14 +430,14 @@ export const CompetencyStageShell = ({ memberId }: { memberId: string }) => {
                   className="rounded-md border px-2.5 py-1 text-[9px] uppercase tracking-[0.14em]"
                   style={{
                     borderColor: hasMeasuredDimensions
-                      ? "rgba(74,122,186,0.34)"
-                      : "rgba(154,171,184,0.28)",
+                      ? COMPETENCY_TOKENS.latticeActiveBorder
+                      : COMPETENCY_TOKENS.latticeIdleBorder,
                     color: hasMeasuredDimensions
                       ? palette.azureLight
                       : palette.silver,
                     background: hasMeasuredDimensions
-                      ? "rgba(42,90,154,0.08)"
-                      : "rgba(154,171,184,0.06)",
+                      ? COMPETENCY_TOKENS.latticeActiveBg
+                      : COMPETENCY_TOKENS.latticeIdleBg,
                   }}
                 >
                   {hasMeasuredDimensions ? "Scored nodes" : "Awaiting proof"}

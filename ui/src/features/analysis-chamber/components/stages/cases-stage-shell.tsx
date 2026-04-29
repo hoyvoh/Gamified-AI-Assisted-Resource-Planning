@@ -31,10 +31,10 @@ const getImpactTone = (impactLevel: string | null) => {
   const l = impactLevel.toLowerCase();
 
   if (l.includes("high") || l.includes("critical"))
-    return { color: palette.crimsonLight, border: `${palette.crimson}55` };
+    return { color: palette.emberLight, border: `${palette.crimson}44` };
 
   if (l.includes("medium") || l.includes("moderate"))
-    return { color: palette.ember, border: `${palette.ember}55` };
+    return { color: palette.gold, border: `${palette.gold}44` };
 
   return { color: palette.inkSoft, border: CASES_TOKENS.impactNeutralBorder };
 };
@@ -80,8 +80,7 @@ export const CasesStageShell = ({ memberId }: { memberId: string }) => {
           style={{
             borderColor: CASES_TOKENS.cardBorderStrong,
             background: CASES_TOKENS.ledgerShell,
-            boxShadow:
-              "inset 0 1px 0 rgba(255,232,192,0.04), 0 16px 32px rgba(0,0,0,0.18)",
+            boxShadow: CASES_TOKENS.shellShadow,
           }}
         >
           <div
@@ -136,9 +135,9 @@ export const CasesStageShell = ({ memberId }: { memberId: string }) => {
                       transition: "all 160ms ease",
 
                       boxShadow: isSelected
-                        ? "inset 0 1px 0 rgba(255,232,192,0.04), 0 8px 24px rgba(255,184,77,0.10)"
+                        ? CASES_TOKENS.selectedRowShadow
                         : isHovered
-                          ? "inset 0 1px 0 rgba(255,232,192,0.03), 0 4px 14px rgba(255,184,77,0.06)"
+                          ? CASES_TOKENS.hoveredRowShadow
                           : "none",
                     }}
                     type="button"
@@ -247,7 +246,7 @@ export const CasesStageShell = ({ memberId }: { memberId: string }) => {
         style={{
           background: CASES_TOKENS.panelSurface,
           borderColor: CASES_TOKENS.panelBorder,
-          boxShadow: "-8px 0 32px rgba(0,0,0,0.22)",
+          boxShadow: CASES_TOKENS.sidePanelShadow,
         }}
       >
         {selectedCase ? (
@@ -385,7 +384,7 @@ const OpenRecord = ({
           style={{
             borderColor: CASES_TOKENS.cardBorderStrong,
             background: CASES_TOKENS.cardSurfaceStrong,
-            boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+            boxShadow: CASES_TOKENS.spotlightShadow,
           }}
         >
           {entry.whyItMatters ? (

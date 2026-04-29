@@ -3,7 +3,10 @@
 import { useState } from "react";
 import { ChevronDown, Flag } from "lucide-react";
 
-import { ANALYSIS_CHAMBER_SHELL_PALETTE as palette } from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
+import {
+  ANALYSIS_CHAMBER_SHELL_PALETTE as palette,
+  OVERVIEW_TOKENS,
+} from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
 
 interface OverviewFairnessBannerProps {
   notes: string[];
@@ -19,7 +22,7 @@ export const OverviewFairnessBanner = ({
     <section
       className="mt-8 border-t pt-5"
       style={{
-        borderColor: "rgba(255,232,192,0.08)",
+        borderColor: OVERVIEW_TOKENS.fairnessDivider,
       }}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -46,9 +49,9 @@ export const OverviewFairnessBanner = ({
             className="inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 py-2 font-display text-[10px] uppercase tracking-[0.16em] transition-all duration-200 hover:-translate-y-0.5"
             onClick={() => setIsExpanded((current) => !current)}
             style={{
-              borderColor: "rgba(200,150,30,0.18)",
+              borderColor: OVERVIEW_TOKENS.secondaryCardBorder,
               color: palette.gold,
-              background: "rgba(255,255,255,0.025)",
+              background: OVERVIEW_TOKENS.secondaryCardSurface,
             }}
             type="button"
           >

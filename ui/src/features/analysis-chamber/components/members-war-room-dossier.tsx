@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import { cn } from "@/lib/utils";
 import { MEDIEVAL_THEME } from "@/lib/theme/medieval-theme";
 
 import type { FlatMemberRow } from "@/features/analysis-chamber/api/analysis-chamber-api.view-models";
@@ -10,13 +9,13 @@ import {
   getWarRoomStatusDisplay,
 } from "@/features/analysis-chamber/lib/members-war-room";
 
-const STATUS_TONE_CLASS = {
-  active: "border-[#617495]/42 text-[#b7c6dc] bg-[#18202c]",
-  danger: "border-[#8f4538]/45 text-[#e4aea2] bg-[#241412]",
-  idle: "border-[#8f826d]/30 text-[#d5c6a8] bg-[#231b14]",
-  ready: "border-[#4d684f]/45 text-[#bad1bd] bg-[#172019]",
-  unknown: "border-[#b68a44]/30 text-[#ead9b7] bg-[#261d14]",
-};
+const STATUS_TONE_STYLE = {
+  active: MEDIEVAL_THEME.status.active,
+  danger: MEDIEVAL_THEME.status.danger,
+  idle: MEDIEVAL_THEME.status.idle,
+  ready: MEDIEVAL_THEME.status.ready,
+  unknown: MEDIEVAL_THEME.status.unknown,
+} as const;
 
 type MembersWarRoomDossierProps = {
   member: FlatMemberRow;
@@ -29,9 +28,9 @@ export function MembersWarRoomDossier({ member }: MembersWarRoomDossierProps) {
   return (
     <aside
       aria-labelledby="royal-dossier-title"
-      className="border p-5 text-[#f1e1bf] lg:sticky lg:top-8"
+      className="border p-5 lg:sticky lg:top-8"
       style={{
-        borderColor: "rgba(159, 119, 61, 0.28)",
+        borderColor: MEDIEVAL_THEME.premiumNoir.divider,
         backgroundImage: MEDIEVAL_THEME.gradients.shell,
         color: MEDIEVAL_THEME.text.primary,
         boxShadow: MEDIEVAL_THEME.effects.panelShadow,
@@ -39,7 +38,7 @@ export function MembersWarRoomDossier({ member }: MembersWarRoomDossierProps) {
     >
       <p
         className="font-mono text-[10px] uppercase tracking-[0.2em]"
-        style={{ color: "rgba(209, 172, 103, 0.72)" }}
+        style={{ color: MEDIEVAL_THEME.premiumNoir.chromeLabel }}
       >
         Member Brief
       </p>
@@ -52,16 +51,18 @@ export function MembersWarRoomDossier({ member }: MembersWarRoomDossierProps) {
       </h2>
       <p
         className="mt-2 font-mono text-xs"
-        style={{ color: "rgba(216, 193, 155, 0.46)" }}
+        style={{ color: MEDIEVAL_THEME.text.muted }}
       >
         {member.externalId ?? "No external handle"}
       </p>
 
       <div
-        className={cn(
-          "mt-5 border px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]",
-          STATUS_TONE_CLASS[status.tone],
-        )}
+        className="mt-5 border px-3 py-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)]"
+        style={{
+          borderColor: STATUS_TONE_STYLE[status.tone].border,
+          color: STATUS_TONE_STYLE[status.tone].text,
+          background: STATUS_TONE_STYLE[status.tone].background,
+        }}
       >
         <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-current/60">
           Scan Status
@@ -88,7 +89,7 @@ export function MembersWarRoomDossier({ member }: MembersWarRoomDossierProps) {
         href={action.href}
         className="mt-6 inline-flex min-h-10 w-full items-center justify-center border px-4 py-2 font-mono text-[10px] uppercase tracking-[0.16em] transition hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b89254]/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[#18120d]"
         style={{
-          borderColor: "rgba(184, 146, 84, 0.44)",
+          borderColor: MEDIEVAL_THEME.premiumNoir.divider,
           backgroundImage: MEDIEVAL_THEME.gradients.primaryButton,
           color: MEDIEVAL_THEME.text.inverse,
         }}
@@ -109,13 +110,13 @@ function DossierField({ label, value }: DossierFieldProps) {
     <div>
       <dt
         className="font-mono text-[10px] uppercase tracking-[0.16em]"
-        style={{ color: "rgba(209, 172, 103, 0.54)" }}
+        style={{ color: MEDIEVAL_THEME.premiumNoir.chromeLabel }}
       >
         {label}
       </dt>
       <dd
         className="mt-1 text-sm leading-6"
-        style={{ color: "rgba(236, 222, 195, 0.82)" }}
+        style={{ color: MEDIEVAL_THEME.text.secondary }}
       >
         {value}
       </dd>

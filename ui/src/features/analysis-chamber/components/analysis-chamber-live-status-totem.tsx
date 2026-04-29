@@ -22,6 +22,7 @@ import { useAnalysisChamberRouteState } from "@/features/analysis-chamber/hooks/
 import { buildAnalysisChamberRouteHref } from "@/features/analysis-chamber/lib/analysis-chamber-route-links";
 import {
   ANALYSIS_CHAMBER_SHELL_PALETTE as palette,
+  CHAMBER_CHROME_TOKENS,
   DIMENSION_LABELS,
 } from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
 import type { AnalysisChamberRouteKey } from "@/features/analysis-chamber/lib/analysis-chamber-shell.types";
@@ -342,7 +343,7 @@ const RouteSignalContent = ({
       null;
 
     config = {
-      accentColor: palette.emberLight,
+      accentColor: palette.goldLight,
       action: {
         href: buildAnalysisChamberRouteHref(memberId, "overview"),
         kind: "link",
@@ -455,16 +456,14 @@ const TotemLayout = ({
         <div
           className="relative overflow-hidden rounded-[22px] border"
           style={{
-            borderColor: "rgba(200,150,30,0.28)",
-            background:
-              "radial-gradient(circle at 50% 24%, rgba(255,255,255,0.06) 0%, transparent 24%), linear-gradient(180deg, rgba(255,255,255,0.025) 0%, rgba(255,255,255,0.01) 100%)",
-            boxShadow:
-              "inset 0 1px 0 rgba(255,232,192,0.05), 0 14px 28px rgba(0,0,0,0.24)",
+            borderColor: CHAMBER_CHROME_TOKENS.sidePanelBorder,
+            background: CHAMBER_CHROME_TOKENS.portraitCardSurface,
+            boxShadow: CHAMBER_CHROME_TOKENS.portraitCardShadow,
           }}
         >
           <div
             className="flex items-start justify-between gap-3 border-b px-4 py-4"
-            style={{ borderColor: "rgba(200,150,30,0.12)" }}
+            style={{ borderColor: CHAMBER_CHROME_TOKENS.sidePanelInnerBorder }}
           >
             <div className="min-w-0">
               <p
@@ -485,14 +484,14 @@ const TotemLayout = ({
               style={{
                 borderColor:
                   stateBadge === "Completed"
-                    ? "rgba(91,184,122,0.34)"
+                    ? CHAMBER_CHROME_TOKENS.signalStatusReadyBorder
                     : stateBadge === "In progress"
-                      ? "rgba(74,122,186,0.34)"
-                      : "rgba(255,184,77,0.24)",
+                      ? CHAMBER_CHROME_TOKENS.signalStatusActiveBorder
+                      : CHAMBER_CHROME_TOKENS.signalStatusIdleBorder,
                 color:
                   stateBadge === "Completed"
-                    ? "#69cf88"
-                    : stateBadge === "In progress"
+                    ? CHAMBER_CHROME_TOKENS.signalStatusReadyText
+                  : stateBadge === "In progress"
                       ? palette.azureLight
                       : palette.inkMuted,
               }}
@@ -516,16 +515,15 @@ const TotemLayout = ({
             <div
               className="pointer-events-none absolute inset-x-0 bottom-0 h-16"
               style={{
-                background:
-                  "linear-gradient(180deg, rgba(30,21,14,0) 0%, rgba(28,19,12,0.96) 100%)",
+                background: CHAMBER_CHROME_TOKENS.portraitFade,
               }}
             />
             <div className="absolute inset-x-4 bottom-4 z-10 flex items-center justify-center gap-2">
               <span
                 className="inline-flex min-h-8 max-w-[calc(50%-4px)] items-center justify-center rounded-full border px-3 py-1.5 text-center font-display text-[8px] uppercase tracking-[0.12em]"
                 style={{
-                  borderColor: "rgba(200,150,30,0.18)",
-                  background: "rgba(23,14,10,0.72)",
+                  borderColor: CHAMBER_CHROME_TOKENS.portraitChipBorder,
+                  background: CHAMBER_CHROME_TOKENS.portraitChipBg,
                   color: palette.ink,
                   backdropFilter: "blur(8px)",
                 }}
@@ -535,8 +533,8 @@ const TotemLayout = ({
               <span
                 className="inline-flex min-h-8 max-w-[calc(50%-4px)] items-center justify-center rounded-full border px-3 py-1.5 text-center font-display text-[8px] uppercase tracking-[0.12em]"
                 style={{
-                  borderColor: "rgba(200,150,30,0.18)",
-                  background: "rgba(23,14,10,0.72)",
+                  borderColor: CHAMBER_CHROME_TOKENS.portraitChipBorder,
+                  background: CHAMBER_CHROME_TOKENS.portraitChipBg,
                   color: palette.ink,
                   backdropFilter: "blur(8px)",
                 }}
@@ -571,8 +569,8 @@ const TotemLayout = ({
             <div
               className="mt-4 rounded-[18px] border px-4 py-3.5"
               style={{
-                borderColor: "rgba(200,150,30,0.18)",
-                background: "rgba(255,255,255,0.025)",
+                borderColor: CHAMBER_CHROME_TOKENS.signalCardBorder,
+                background: CHAMBER_CHROME_TOKENS.signalCardBg,
               }}
             >
               <p
@@ -595,9 +593,9 @@ const TotemLayout = ({
                   className="inline-flex min-h-11 w-full items-center justify-center rounded-full border px-3 py-2 font-display text-[10px] uppercase tracking-[0.14em] transition hover:brightness-110"
                   href={action.href}
                   style={{
-                    borderColor: "rgba(255,184,77,0.28)",
-                    background: "rgba(255,184,77,0.10)",
-                    color: palette.ink,
+                    borderColor: CHAMBER_CHROME_TOKENS.actionBorder,
+                    background: CHAMBER_CHROME_TOKENS.actionBg,
+                    color: CHAMBER_CHROME_TOKENS.actionText,
                   }}
                 >
                   {action.label}
@@ -607,9 +605,9 @@ const TotemLayout = ({
                   className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center rounded-full border px-3 py-2 font-display text-[10px] uppercase tracking-[0.14em] transition hover:brightness-110"
                   onClick={action.onClick}
                   style={{
-                    borderColor: "rgba(255,184,77,0.28)",
-                    background: "rgba(255,184,77,0.10)",
-                    color: palette.ink,
+                    borderColor: CHAMBER_CHROME_TOKENS.actionBorder,
+                    background: CHAMBER_CHROME_TOKENS.actionBg,
+                    color: CHAMBER_CHROME_TOKENS.actionText,
                   }}
                   type="button"
                 >
@@ -641,10 +639,9 @@ export const AnalysisChamberLiveStatusTotem = ({
     <aside
       className="relative hidden min-w-0 border-l xl:flex xl:flex-col"
       style={{
-        background:
-          "linear-gradient(180deg, rgba(35,26,18,0.92) 0%, rgba(20,10,9,0.98) 100%)",
-        borderColor: "rgba(200, 150, 30, 0.24)",
-        boxShadow: "-12px 0 40px rgba(0,0,0,0.22)",
+        background: CHAMBER_CHROME_TOKENS.sidePanelSurface,
+        borderColor: CHAMBER_CHROME_TOKENS.sidePanelBorder,
+        boxShadow: CHAMBER_CHROME_TOKENS.sidePanelShadow,
       }}
     >
       <div

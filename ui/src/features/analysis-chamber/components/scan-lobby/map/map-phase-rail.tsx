@@ -15,10 +15,10 @@ export function MapPhaseRail({
   return (
     <div>
       <div className="mb-1 flex items-center justify-between">
-        <p className="font-mono text-[8px] uppercase tracking-[0.14em] text-white/26">
+        <p className="font-mono text-[8px] uppercase tracking-[0.14em]" style={{ color: "rgba(233,221,208,0.26)" }}>
           Phase Rail
         </p>
-        <p className="font-mono text-[8px] text-white/34">
+        <p className="font-mono text-[8px]" style={{ color: "rgba(233,221,208,0.34)" }}>
           Phase {currentIndex + 1} of {PHASES.length}
         </p>
       </div>
@@ -38,7 +38,7 @@ export function MapPhaseRail({
                     : complete
                       ? "bg-emerald-200"
                       : current
-                        ? "bg-amber-200 shadow-[0_0_14px_rgba(214,168,79,0.55)]"
+                        ? "bg-amber-200 shadow-[0_0_14px_rgba(216,175,99,0.55)]"
                         : "bg-white/7"
                 }`}
               />

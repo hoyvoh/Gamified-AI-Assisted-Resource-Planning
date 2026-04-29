@@ -4,7 +4,10 @@ import { useMemo } from "react";
 import Image from "next/image";
 
 import type { JourneyMilestoneViewModel } from "@/features/analysis-chamber/components/stages/journey/journey-stage.types";
-import { ANALYSIS_CHAMBER_SHELL_PALETTE as palette } from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
+import {
+  ANALYSIS_CHAMBER_SHELL_PALETTE as palette,
+  JOURNEY_TOKENS,
+} from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
 
 const TERRAIN_LAYERS = [
   {
@@ -116,36 +119,33 @@ const getNodePalette = (state: JourneyMilestoneViewModel["state"]) => {
   switch (state) {
     case "conquered":
       return {
-        border: "rgba(255,184,77,0.58)",
-        surface:
-          "radial-gradient(circle at 50% 24%, rgba(255,220,150,0.20), transparent 42%), linear-gradient(180deg, rgba(73,43,20,0.95) 0%, rgba(35,20,12,0.96) 100%)",
-        glow: "0 0 0 10px rgba(255,184,77,0.08), 0 0 28px rgba(255,184,77,0.18)",
+        border: JOURNEY_TOKENS.mapNodeConqueredBorder,
+        surface: JOURNEY_TOKENS.mapNodeConqueredSurface,
+        glow: JOURNEY_TOKENS.mapNodeConqueredGlow,
         icon: palette.goldLight,
         text: palette.ink,
-        badge: "rgba(255,184,77,0.18)",
-        badgeBorder: "rgba(255,184,77,0.28)",
+        badge: JOURNEY_TOKENS.stateFocusBg,
+        badgeBorder: JOURNEY_TOKENS.dossierChipBorder,
       };
     case "frontier":
       return {
-        border: "rgba(255,184,77,0.92)",
-        surface:
-          "radial-gradient(circle at 50% 16%, rgba(255,224,163,0.34), transparent 46%), linear-gradient(180deg, rgba(92,58,28,0.98) 0%, rgba(37,22,14,0.98) 100%)",
-        glow: "0 0 0 12px rgba(255,184,77,0.12), 0 0 42px rgba(255,184,77,0.36)",
-        icon: "#ffe6b6",
-        text: "#fff1d2",
-        badge: "rgba(255,184,77,0.24)",
-        badgeBorder: "rgba(255,184,77,0.42)",
+        border: JOURNEY_TOKENS.mapNodeFrontierBorder,
+        surface: JOURNEY_TOKENS.mapNodeFrontierSurface,
+        glow: JOURNEY_TOKENS.mapNodeFrontierGlow,
+        icon: JOURNEY_TOKENS.mapNodeFrontierIcon,
+        text: JOURNEY_TOKENS.mapNodeFrontierText,
+        badge: JOURNEY_TOKENS.mapNodeFrontierBadge,
+        badgeBorder: JOURNEY_TOKENS.mapNodeFrontierBadgeBorder,
       };
     default:
       return {
-        border: "rgba(104,89,77,0.46)",
-        surface:
-          "radial-gradient(circle at 50% 16%, rgba(96,99,110,0.10), transparent 36%), linear-gradient(180deg, rgba(31,29,31,0.96) 0%, rgba(18,17,20,0.96) 100%)",
+        border: JOURNEY_TOKENS.mapNodeLockedBorder,
+        surface: JOURNEY_TOKENS.mapNodeLockedSurface,
         glow: "none",
-        icon: "rgba(159,169,180,0.7)",
-        text: "rgba(232,184,116,0.72)",
-        badge: "rgba(255,255,255,0.04)",
-        badgeBorder: "rgba(154,171,184,0.18)",
+        icon: JOURNEY_TOKENS.mapNodeLockedIcon,
+        text: JOURNEY_TOKENS.mapNodeLockedText,
+        badge: JOURNEY_TOKENS.mapNodeLockedBadge,
+        badgeBorder: JOURNEY_TOKENS.mapNodeLockedBadgeBorder,
       };
   }
 };
@@ -162,7 +162,7 @@ const StrongholdGlyph = ({
 
   return (
     <div
-      className="relative drop-shadow-[0_8px_18px_rgba(0,0,0,0.35)]"
+      className="relative"
       style={{ width: size, height: size, opacity }}
     >
       <Image
@@ -186,11 +186,12 @@ const StrongholdGlyph = ({
         style={{
           background:
             state === "frontier"
-              ? "radial-gradient(circle at 50% 24%, rgba(255,224,163,0.24), transparent 48%)"
+              ? JOURNEY_TOKENS.glyphFrontierOverlay
               : state === "conquered"
-                ? "radial-gradient(circle at 50% 28%, rgba(255,204,120,0.16), transparent 52%)"
-                : "linear-gradient(180deg, rgba(16,16,18,0.08), rgba(16,16,18,0.26))",
+                ? JOURNEY_TOKENS.glyphConqueredOverlay
+                : JOURNEY_TOKENS.glyphLockedOverlay,
           mixBlendMode: state === "unconquered" ? "multiply" : "screen",
+          filter: JOURNEY_TOKENS.glyphShadow,
         }}
       />
       {state === "frontier" ? (
@@ -200,9 +201,8 @@ const StrongholdGlyph = ({
             width: size * 0.16,
             height: size * 0.16,
             borderRadius: "999px",
-            background: "rgba(255,230,182,0.95)",
-            boxShadow:
-              "0 0 0 8px rgba(255,184,77,0.12), 0 0 22px rgba(255,214,153,0.55)",
+            background: JOURNEY_TOKENS.glyphFrontierBeacon,
+            boxShadow: JOURNEY_TOKENS.glyphFrontierBeaconShadow,
           }}
         />
       ) : null}
@@ -290,13 +290,11 @@ export const JourneyMapCanvas = ({
     <div
       className="relative min-h-[540px] overflow-hidden rounded-[28px] border"
       style={{
-        borderColor: "rgba(255,184,77,0.18)",
-        background:
-          "radial-gradient(circle at 20% 58%, rgba(255,184,77,0.10) 0%, rgba(255,184,77,0.04) 24%, transparent 48%), radial-gradient(circle at 58% 42%, rgba(255,184,77,0.05) 0%, transparent 22%), linear-gradient(90deg, rgba(78,46,24,0.18) 0%, rgba(78,46,24,0.08) 44%, rgba(12,10,12,0.00) 54%), linear-gradient(180deg, rgba(52,31,20,0.84) 0%, rgba(24,15,12,0.94) 100%), url('/journey-map/backgrounds/base-paper-bg.png')",
+        borderColor: JOURNEY_TOKENS.mapShellBorder,
+        background: JOURNEY_TOKENS.mapShellSurface,
         backgroundSize: "cover",
         backgroundPosition: "center",
-        boxShadow:
-          "inset 0 1px 0 rgba(255,232,192,0.04), inset 0 -18px 40px rgba(0,0,0,0.28)",
+        boxShadow: JOURNEY_TOKENS.mapShellShadow,
       }}
     >
       <Image
@@ -310,15 +308,13 @@ export const JourneyMapCanvas = ({
       <div
         className="pointer-events-none absolute inset-x-0 top-0 h-28"
         style={{
-          background:
-            "linear-gradient(180deg, rgba(255,204,120,0.10), rgba(255,204,120,0.00))",
+          background: JOURNEY_TOKENS.mapTopGlow,
         }}
       />
       <div
         className="pointer-events-none absolute inset-y-0 left-[44%] w-px"
         style={{
-          background:
-            "linear-gradient(180deg, rgba(255,184,77,0.00) 0%, rgba(255,184,77,0.08) 24%, rgba(255,184,77,0.10) 50%, rgba(255,184,77,0.00) 100%)",
+          background: JOURNEY_TOKENS.mapCenterBeam,
           opacity: 0.55,
         }}
       />
@@ -326,31 +322,27 @@ export const JourneyMapCanvas = ({
         className="pointer-events-none absolute inset-y-0 left-0"
         style={{
           width: `${clamp(frontierLeft + 10, 24, 92)}%`,
-          background:
-            "linear-gradient(90deg, rgba(255,184,77,0.10) 0%, rgba(255,184,77,0.04) 72%, rgba(255,184,77,0.00) 100%)",
+          background: JOURNEY_TOKENS.mapProgressField,
         }}
       />
       <div
         className="pointer-events-none absolute inset-y-0 right-0"
         style={{
           width: `${100 - clamp(frontierLeft - 2, 8, 82)}%`,
-          background:
-            "linear-gradient(90deg, rgba(14,14,18,0.00) 0%, rgba(12,11,14,0.48) 26%, rgba(8,8,10,0.82) 100%)",
+          background: JOURNEY_TOKENS.mapFogWall,
         }}
       />
       <div
         className="pointer-events-none absolute inset-y-0 right-0"
         style={{
           width: `${100 - clamp(frontierLeft + 4, 18, 86)}%`,
-          background:
-            "radial-gradient(circle at 24% 42%, rgba(255,255,255,0.04) 0%, transparent 18%), radial-gradient(circle at 56% 72%, rgba(255,255,255,0.03) 0%, transparent 16%), linear-gradient(90deg, rgba(16,14,16,0.00) 0%, rgba(10,10,12,0.18) 100%)",
+          background: JOURNEY_TOKENS.mapFogTexture,
         }}
       />
       <div
         className="pointer-events-none absolute inset-0"
         style={{
-          background:
-            "radial-gradient(circle at 76% 52%, rgba(255,255,255,0.03) 0%, transparent 14%), radial-gradient(circle at 84% 28%, rgba(255,255,255,0.02) 0%, transparent 18%), radial-gradient(circle at 91% 68%, rgba(255,255,255,0.025) 0%, transparent 20%)",
+          background: JOURNEY_TOKENS.mapMist,
           mixBlendMode: "screen",
         }}
       />
@@ -420,9 +412,9 @@ export const JourneyMapCanvas = ({
       >
         <defs>
           <linearGradient id="journey-route-glow" x1="0%" x2="100%">
-            <stop offset="0%" stopColor="rgba(255,184,77,0.50)" />
-            <stop offset="50%" stopColor="rgba(255,214,153,0.95)" />
-            <stop offset="100%" stopColor="rgba(255,184,77,0.38)" />
+            <stop offset="0%" stopColor={JOURNEY_TOKENS.routeGlowStart} />
+            <stop offset="50%" stopColor={JOURNEY_TOKENS.routeGlowMid} />
+            <stop offset="100%" stopColor={JOURNEY_TOKENS.routeGlowEnd} />
           </linearGradient>
           <filter id="journey-route-shadow">
             <feGaussianBlur stdDeviation="1.5" result="blurred" />
@@ -436,7 +428,7 @@ export const JourneyMapCanvas = ({
           <path
             d={routePath}
             fill="none"
-            stroke="rgba(117,102,92,0.42)"
+            stroke={JOURNEY_TOKENS.routeBase}
             strokeWidth="1.2"
             strokeLinecap="round"
           />
@@ -452,7 +444,7 @@ export const JourneyMapCanvas = ({
                 key={segment.key}
                 d={segment.d}
                 fill="none"
-                stroke="rgba(141,151,161,0.30)"
+                stroke={JOURNEY_TOKENS.routeLocked}
                 strokeWidth="0.7"
                 strokeLinecap="round"
                 strokeDasharray="1.8 2.4"
@@ -479,7 +471,7 @@ export const JourneyMapCanvas = ({
               key={segment.key}
               d={segment.d}
               fill="none"
-              stroke="rgba(255,184,77,0.62)"
+              stroke={JOURNEY_TOKENS.routeConquered}
               strokeWidth="1.05"
               strokeLinecap="round"
             />
@@ -538,13 +530,13 @@ export const JourneyMapCanvas = ({
                     item.index,
                   )}`}
                   style={{
-                    borderColor: isFocused ? "rgba(255,184,77,0.42)" : tone.badgeBorder,
+                    borderColor: isFocused ? JOURNEY_TOKENS.annotationFocusBorder : tone.badgeBorder,
                     background: isFocused
-                      ? "linear-gradient(180deg, rgba(255,184,77,0.18) 0%, rgba(255,184,77,0.10) 100%)"
+                      ? JOURNEY_TOKENS.annotationFocusBg
                       : tone.badge,
                     boxShadow: isFocused
-                      ? "0 10px 20px rgba(0,0,0,0.24)"
-                      : "0 6px 14px rgba(0,0,0,0.14)",
+                      ? JOURNEY_TOKENS.annotationFocusShadow
+                      : JOURNEY_TOKENS.annotationIdleShadow,
                   }}
                 >
                   <p
@@ -562,23 +554,23 @@ export const JourneyMapCanvas = ({
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 px-6 text-center">
           <div
             className="relative h-28 w-28 rounded-full border"
-            style={{ borderColor: "rgba(255,184,77,0.18)" }}
+            style={{ borderColor: JOURNEY_TOKENS.emptyMapBorder }}
           >
             <div
               className="absolute inset-4 rounded-full border"
-              style={{ borderColor: "rgba(255,184,77,0.12)" }}
+              style={{ borderColor: JOURNEY_TOKENS.emptyMapInnerBorder }}
             />
             <div
               className="absolute left-1/2 top-3 h-[calc(100%-24px)] w-px -translate-x-1/2"
-              style={{ background: "rgba(255,184,77,0.14)" }}
+              style={{ background: JOURNEY_TOKENS.emptyMapLine }}
             />
             <div
               className="absolute left-3 top-1/2 h-px w-[calc(100%-24px)] -translate-y-1/2"
-              style={{ background: "rgba(255,184,77,0.14)" }}
+              style={{ background: JOURNEY_TOKENS.emptyMapLine }}
             />
             <div
               className="absolute left-1/2 top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full"
-              style={{ background: "rgba(255,184,77,0.4)" }}
+              style={{ background: JOURNEY_TOKENS.emptyMapDot }}
             />
           </div>
           <div>
@@ -588,7 +580,7 @@ export const JourneyMapCanvas = ({
             >
               Expedition map pending
             </p>
-            <p className="mt-2 max-w-sm text-sm leading-6" style={{ color: "rgba(232,168,80,0.66)" }}>
+            <p className="mt-2 max-w-sm text-sm leading-6" style={{ color: JOURNEY_TOKENS.emptyMapBody }}>
               No landmarks have been charted for this period yet.
             </p>
           </div>
@@ -601,14 +593,14 @@ export const JourneyMapCanvas = ({
           100% {
             transform: translateY(0) scale(1);
             box-shadow:
-              0 0 0 12px rgba(255, 184, 77, 0.12),
-              0 0 42px rgba(255, 184, 77, 0.36);
+              0 0 0 12px ${JOURNEY_TOKENS.frontierPulseOuter},
+              0 0 42px ${JOURNEY_TOKENS.frontierPulseGlow};
           }
           50% {
             transform: translateY(-2px) scale(1.015);
             box-shadow:
-              0 0 0 14px rgba(255, 184, 77, 0.16),
-              0 0 54px rgba(255, 208, 128, 0.4);
+              0 0 0 14px ${JOURNEY_TOKENS.frontierPulseOuterStrong},
+              0 0 54px ${JOURNEY_TOKENS.frontierPulseGlowStrong};
           }
         }
 

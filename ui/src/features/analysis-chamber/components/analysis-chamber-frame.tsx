@@ -6,7 +6,10 @@ import { MEDIEVAL_THEME } from "@/lib/theme/medieval-theme";
 export const AnalysisChamberFrame = ({ children }: { children: ReactNode }) => (
   <div
     className="relative min-h-screen overflow-hidden px-2 py-2 md:px-4 md:py-4"
-    style={{ background: MEDIEVAL_THEME.gradients.shellFrame }}
+    style={{
+      backgroundColor: MEDIEVAL_THEME.backgrounds.pageBase,
+      backgroundImage: MEDIEVAL_THEME.gradients.shellFrame,
+    }}
   >
     <div
       className="pointer-events-none absolute inset-x-0 top-0 h-44"
@@ -16,13 +19,13 @@ export const AnalysisChamberFrame = ({ children }: { children: ReactNode }) => (
       className="relative mx-auto min-h-[calc(100vh-16px)] max-w-[1720px] overflow-hidden rounded-[18px] border md:min-h-[calc(100vh-32px)]"
       style={{
         background: MEDIEVAL_THEME.gradients.shell,
-        borderColor: "rgba(161, 119, 55, 0.5)",
+        borderColor: MEDIEVAL_THEME.accents.brassBorder,
         boxShadow: palette.shellShadow,
       }}
     >
       <div
         className="pointer-events-none absolute inset-[7px] rounded-xl border"
-        style={{ borderColor: "rgba(141, 105, 52, 0.3)" }}
+        style={{ borderColor: MEDIEVAL_THEME.premiumNoir.divider }}
       />
       {children}
     </div>

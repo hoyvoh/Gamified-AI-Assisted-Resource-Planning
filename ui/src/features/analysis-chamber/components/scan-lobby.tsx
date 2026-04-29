@@ -19,6 +19,10 @@ import {
 import { getAnalysisChamberBootstrap } from "@/features/analysis-chamber/api/analysis-chamber-api";
 import type { ChamberAnalysisRun } from "@/features/analysis-chamber/api/analysis-chamber-api.view-models";
 import { LiveScanChamber } from "@/features/analysis-chamber/components/scan-lobby/live-scan-chamber";
+import {
+  ANALYSIS_CHAMBER_SHELL_PALETTE as palette,
+  SCAN_LOBBY_TOKENS,
+} from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
 import type {
   LiveScanChamberState,
   ScanLobbyMode,
@@ -46,27 +50,27 @@ import {
 const toneClasses = {
   pending: {
     dot: "bg-amber-200",
-    text: "text-amber-100",
-    border: "border-amber-200/20",
-    bg: "bg-amber-200/5",
+    text: palette.goldLight,
+    border: SCAN_LOBBY_TOKENS.chipBorder,
+    bg: SCAN_LOBBY_TOKENS.chipBg,
   },
   scouting: {
     dot: "bg-sky-300",
-    text: "text-sky-200",
-    border: "border-sky-300/25",
-    bg: "bg-sky-300/5",
+    text: "#c9ddff",
+    border: "rgba(125, 177, 255, 0.26)",
+    bg: "rgba(91, 140, 255, 0.08)",
   },
   completed: {
     dot: "bg-emerald-300",
-    text: "text-emerald-200",
-    border: "border-emerald-300/25",
-    bg: "bg-emerald-300/5",
+    text: "#cff6df",
+    border: "rgba(110, 214, 156, 0.24)",
+    bg: "rgba(78, 209, 165, 0.08)",
   },
   failed: {
     dot: "bg-red-300",
-    text: "text-red-200",
-    border: "border-red-300/25",
-    bg: "bg-red-300/5",
+    text: "#ffc3bb",
+    border: "rgba(216, 123, 109, 0.24)",
+    bg: "rgba(130, 71, 64, 0.12)",
   },
 } as const;
 
@@ -376,23 +380,35 @@ function ScanLobbyHeader({
       data-animate="panel"
     >
       <div>
-        <p className="font-mono text-[10px] uppercase tracking-[0.24em] text-amber-200/55">
+        <p
+          className="font-mono text-[10px] uppercase tracking-[0.24em]"
+          style={{ color: SCAN_LOBBY_TOKENS.eyebrow }}
+        >
           Scan Lobby
         </p>
-        <h1 className="mt-2 font-serif text-[1.5rem] leading-none text-amber-50 md:text-[2rem]">
+        <h1
+          className="mt-2 font-serif text-[1.5rem] leading-none md:text-[2rem]"
+          style={{ color: SCAN_LOBBY_TOKENS.title }}
+        >
           {displayName}
         </h1>
-        <p className="mt-2 font-mono text-xs text-white/42">
+        <p className="mt-2 font-mono text-xs" style={{ color: SCAN_LOBBY_TOKENS.metaText }}>
           {[identity, externalId ? `@${externalId}` : null].filter(Boolean).join(" / ")}
         </p>
       </div>
 
       <div className="flex flex-wrap items-stretch gap-3 md:items-stretch">
-        <div className="flex min-h-[44px] min-w-[160px] flex-col justify-center rounded-md border border-amber-200/20 bg-amber-200/5 px-3 py-1.5">
-          <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-white/38">
+        <div
+          className="flex min-h-[44px] min-w-[160px] flex-col justify-center rounded-md border px-3 py-1.5"
+          style={{
+            borderColor: SCAN_LOBBY_TOKENS.chipBorder,
+            background: SCAN_LOBBY_TOKENS.chipBg,
+          }}
+        >
+          <p className="font-mono text-[9px] uppercase tracking-[0.18em]" style={{ color: SCAN_LOBBY_TOKENS.labelText }}>
             Chamber Status
           </p>
-          <p className="mt-0.5 flex items-center gap-2 font-mono text-xs text-amber-100">
+          <p className="mt-0.5 flex items-center gap-2 font-mono text-xs" style={{ color: SCAN_LOBBY_TOKENS.chipText }}>
             <CircleDot className="h-3 w-3" aria-hidden="true" />
             {statusText}
           </p>
@@ -433,26 +449,33 @@ function ControlRoomSummary({
     <section
       className="rounded-lg border border-white/10 bg-[#120c0a] p-5"
       data-animate="panel"
+      style={{
+        borderColor: SCAN_LOBBY_TOKENS.panelBorder,
+        background: SCAN_LOBBY_TOKENS.panelSurface,
+      }}
     >
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="max-w-2xl">
-          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-amber-200/50">
+          <p className="font-mono text-[10px] uppercase tracking-[0.2em]" style={{ color: SCAN_LOBBY_TOKENS.eyebrow }}>
             Scan Control Room
           </p>
-          <h2 className="mt-2 font-serif text-xl text-amber-50">
+          <h2 className="mt-2 font-serif text-xl" style={{ color: SCAN_LOBBY_TOKENS.title }}>
             Starting a scan opens the live chamber
           </h2>
-          <p className="mt-3 text-sm leading-6 text-white/60">
+          <p className="mt-3 text-sm leading-6" style={{ color: SCAN_LOBBY_TOKENS.bodyText }}>
             The live scan map no longer sits inline on this page. When a scan
             starts, the chamber takes full focus until the run reaches a final status.
           </p>
         </div>
 
-        <div className={`rounded-md border px-4 py-3 ${tone.border} ${tone.bg}`}>
-          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/35">
+        <div
+          className="rounded-md border px-4 py-3"
+          style={{ borderColor: tone.border, background: tone.bg }}
+        >
+          <p className="font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: SCAN_LOBBY_TOKENS.labelText }}>
             Current readiness
           </p>
-          <p className={`mt-1 font-mono text-xs uppercase tracking-[0.12em] ${tone.text}`}>
+          <p className="mt-1 font-mono text-xs uppercase tracking-[0.12em]" style={{ color: tone.text }}>
             {mode === "scouting" || mode === "dispatching"
               ? "Live chamber engaged"
               : mode === "failed"
@@ -464,42 +487,67 @@ function ControlRoomSummary({
 
       {focusRun ? (
         <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
-          <div className="rounded-md border border-white/8 bg-black/18 p-4">
-            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/35">
+          <div
+            className="rounded-md border p-4"
+            style={{
+              borderColor: SCAN_LOBBY_TOKENS.panelBorderSubtle,
+              background: SCAN_LOBBY_TOKENS.panelInsetStrong,
+            }}
+          >
+            <p className="font-mono text-[10px] uppercase tracking-[0.16em]" style={{ color: SCAN_LOBBY_TOKENS.labelText }}>
               Latest known run
             </p>
             <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className={`text-lg font-semibold ${tone.text}`}>{meta?.label}</p>
-                <p className="mt-2 text-sm text-white/60">{meta?.summary}</p>
+                <p className="text-lg font-semibold" style={{ color: tone.text }}>{meta?.label}</p>
+                <p className="mt-2 text-sm" style={{ color: SCAN_LOBBY_TOKENS.bodyText }}>{meta?.summary}</p>
                 {focusRun.progressStage && (
-                  <p className="mt-2 font-mono text-xs text-white/42">
+                  <p className="mt-2 font-mono text-xs" style={{ color: SCAN_LOBBY_TOKENS.metaText }}>
                     {focusRun.progressStage}
                   </p>
                 )}
               </div>
-              <div className="rounded border border-white/10 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-white/40">
+              <div
+                className="rounded border px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em]"
+                style={{
+                  borderColor: SCAN_LOBBY_TOKENS.panelBorderSubtle,
+                  color: SCAN_LOBBY_TOKENS.metaText,
+                }}
+              >
                 {focusRun.periodStart} - {focusRun.periodEnd}
               </div>
             </div>
           </div>
 
-          <div className="rounded-md border border-white/8 bg-black/18 p-4">
-            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/35">
+          <div
+            className="rounded-md border p-4"
+            style={{
+              borderColor: SCAN_LOBBY_TOKENS.panelBorderSubtle,
+              background: SCAN_LOBBY_TOKENS.panelInsetStrong,
+            }}
+          >
+            <p className="font-mono text-[10px] uppercase tracking-[0.16em]" style={{ color: SCAN_LOBBY_TOKENS.labelText }}>
               Chamber motion
             </p>
-            <p className="mt-3 text-sm text-white/62">
+            <p className="mt-3 text-sm" style={{ color: SCAN_LOBBY_TOKENS.bodyText }}>
               {reducedMotion
                 ? "Reduced motion is active. The live chamber should still show clear state progression."
                 : "Starting a scan will open a full-focus live chamber with phase and source progression."}
             </p>
-            <p className="mt-3 font-mono text-[11px] text-amber-100/65">
+            <p className="mt-3 font-mono text-[11px]" style={{ color: SCAN_LOBBY_TOKENS.bodyTextStrong }}>
               Current phase key: {phase}
             </p>
           </div>
         </div>
       ) : (
-        <div className="mt-5 rounded-md border border-dashed border-amber-200/18 bg-amber-200/5 px-4 py-5 text-sm text-white/56">
+        <div
+          className="mt-5 rounded-md border border-dashed px-4 py-5 text-sm"
+          style={{
+            borderColor: SCAN_LOBBY_TOKENS.dashedBorder,
+            background: SCAN_LOBBY_TOKENS.chipBg,
+            color: SCAN_LOBBY_TOKENS.bodyMuted,
+          }}
+        >
           No previous run is selected. Choose a campaign window to dispatch the first scout.
         </div>
       )}
@@ -588,26 +636,32 @@ function DispatchOrderForm({
   };
 
   const inputClass =
-    "w-full rounded-md border border-amber-200/15 bg-black/25 px-3 py-2.5 font-mono text-xs text-amber-50 outline-none transition placeholder:text-white/25 focus:border-amber-100/45 focus:bg-black/35 disabled:cursor-not-allowed disabled:opacity-45";
+    "w-full rounded-md border px-3 py-2.5 font-mono text-xs outline-none transition disabled:cursor-not-allowed disabled:opacity-45";
 
   return (
-    <section className="rounded-lg border border-amber-200/20 bg-[#19100d] p-5">
+    <section
+      className="rounded-lg border p-5"
+      style={{
+        borderColor: SCAN_LOBBY_TOKENS.panelBorderStrong,
+        background: SCAN_LOBBY_TOKENS.panelSurfaceStrong,
+      }}
+    >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-amber-200/55">
+          <p className="font-mono text-[10px] uppercase tracking-[0.2em]" style={{ color: SCAN_LOBBY_TOKENS.eyebrow }}>
             Scan Order
           </p>
-          <h2 className="mt-2 font-serif text-2xl text-amber-50">
+          <h2 className="mt-2 font-serif text-2xl" style={{ color: SCAN_LOBBY_TOKENS.title }}>
             Select a campaign window
           </h2>
         </div>
-        <CheckCircle2 className="mt-1 h-5 w-5 text-amber-200/55" aria-hidden="true" />
+        <CheckCircle2 className="mt-1 h-5 w-5" style={{ color: SCAN_LOBBY_TOKENS.eyebrow }} aria-hidden="true" />
       </div>
 
       <form onSubmit={handleSubmit} className="mt-5 space-y-4">
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block" htmlFor="scan-campaign-start">
-            <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-[0.15em] text-white/38">
+            <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-[0.15em]" style={{ color: SCAN_LOBBY_TOKENS.labelText }}>
               Window Start
             </span>
             <input
@@ -617,10 +671,15 @@ function DispatchOrderForm({
               onChange={(event) => setPeriodStart(event.target.value)}
               disabled={disabled || isDispatching}
               className={inputClass}
+              style={{
+                borderColor: SCAN_LOBBY_TOKENS.panelBorderStrong,
+                background: SCAN_LOBBY_TOKENS.inputBg,
+                color: SCAN_LOBBY_TOKENS.title,
+              }}
             />
           </label>
           <label className="block" htmlFor="scan-campaign-end">
-            <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-[0.15em] text-white/38">
+            <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-[0.15em]" style={{ color: SCAN_LOBBY_TOKENS.labelText }}>
               Window End
             </span>
             <input
@@ -630,6 +689,11 @@ function DispatchOrderForm({
               onChange={(event) => setPeriodEnd(event.target.value)}
               disabled={disabled || isDispatching}
               className={inputClass}
+              style={{
+                borderColor: SCAN_LOBBY_TOKENS.panelBorderStrong,
+                background: SCAN_LOBBY_TOKENS.inputBg,
+                color: SCAN_LOBBY_TOKENS.title,
+              }}
             />
           </label>
         </div>
@@ -644,7 +708,12 @@ function DispatchOrderForm({
           type="submit"
           disabled={disabled || isDispatching}
           title={disabled ? "A scan is already running" : undefined}
-          className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-md border border-amber-200/25 bg-amber-200/10 px-4 py-3 font-mono text-xs uppercase tracking-[0.16em] text-amber-100 transition hover:border-amber-100/50 hover:bg-amber-200/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200 disabled:cursor-not-allowed disabled:opacity-45"
+          className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-md border px-4 py-3 font-mono text-xs uppercase tracking-[0.16em] transition hover:brightness-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200 disabled:cursor-not-allowed disabled:opacity-45"
+          style={{
+            borderColor: "rgba(224, 185, 105, 0.8)",
+            backgroundImage: "linear-gradient(135deg, #f2cb7f, #d6a759)",
+            color: SCAN_LOBBY_TOKENS.buttonPrimaryText,
+          }}
           data-animate="dispatch-button"
         >
           <Play className="h-3.5 w-3.5" aria-hidden="true" />
@@ -680,24 +749,41 @@ function CampaignChronicle({
     <section
       className="rounded-lg border border-white/10 bg-[#120c0a] p-5"
       data-animate="panel"
+      style={{
+        borderColor: SCAN_LOBBY_TOKENS.panelBorder,
+        background: SCAN_LOBBY_TOKENS.panelSurface,
+      }}
     >
       <div className="flex items-center justify-between gap-4">
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-amber-200/50">
+          <p className="font-mono text-[10px] uppercase tracking-[0.2em]" style={{ color: SCAN_LOBBY_TOKENS.eyebrow }}>
             Scan History
           </p>
-          <h2 className="mt-2 font-serif text-2xl text-amber-50">
+          <h2 className="mt-2 font-serif text-2xl" style={{ color: SCAN_LOBBY_TOKENS.title }}>
             Previous scan runs
           </h2>
         </div>
-        <span className="rounded border border-white/10 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-white/35">
+        <span
+          className="rounded border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.12em]"
+          style={{
+            borderColor: SCAN_LOBBY_TOKENS.panelBorderSubtle,
+            color: SCAN_LOBBY_TOKENS.labelText,
+          }}
+        >
           {runs.length} records
         </span>
       </div>
 
       <div className="mt-5 space-y-3">
         {isLoading && (
-          <p className="rounded-md border border-white/8 bg-white/5 p-5 font-mono text-xs text-white/40">
+          <p
+            className="rounded-md border p-5 font-mono text-xs"
+            style={{
+              borderColor: SCAN_LOBBY_TOKENS.loadingBorder,
+              background: SCAN_LOBBY_TOKENS.loadingBg,
+              color: SCAN_LOBBY_TOKENS.metaText,
+            }}
+          >
             Loading scan history...
           </p>
         )}
@@ -725,9 +811,15 @@ function CampaignChronicle({
 
 function EmptyChronicleState() {
   return (
-    <div className="rounded-md border border-dashed border-amber-200/20 bg-amber-200/5 px-5 py-8 text-center">
-      <p className="font-serif text-xl text-amber-50">No scan history yet</p>
-      <p className="mx-auto mt-2 max-w-md text-sm text-white/50">
+    <div
+      className="rounded-md border border-dashed px-5 py-8 text-center"
+      style={{
+        borderColor: SCAN_LOBBY_TOKENS.dashedBorder,
+        background: SCAN_LOBBY_TOKENS.chipBg,
+      }}
+    >
+      <p className="font-serif text-xl" style={{ color: SCAN_LOBBY_TOKENS.title }}>No scan history yet</p>
+      <p className="mx-auto mt-2 max-w-md text-sm" style={{ color: SCAN_LOBBY_TOKENS.recordMeta }}>
         Choose a campaign window and start the first profile scan.
       </p>
     </div>
@@ -757,9 +849,11 @@ function CampaignRecordCard({
 
   return (
     <article
-      className={`rounded-md border p-4 transition ${
-        selected ? `${tone.border} ${tone.bg}` : "border-white/8 bg-white/[0.025]"
-      }`}
+      className="rounded-md border p-4 transition"
+      style={{
+        borderColor: selected ? tone.border : SCAN_LOBBY_TOKENS.cardIdleBorder,
+        background: selected ? tone.bg : SCAN_LOBBY_TOKENS.cardIdleBg,
+      }}
       data-animate="chronicle-card"
     >
       <button
@@ -770,11 +864,11 @@ function CampaignRecordCard({
         <div className="flex min-w-0 gap-3">
           <span className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${tone.dot}`} />
           <div className="min-w-0">
-            <h3 className={`font-medium ${tone.text}`}>{meta.label}</h3>
-            <p className="mt-1 font-mono text-xs text-white/50">
+            <h3 className="font-medium" style={{ color: tone.text }}>{meta.label}</h3>
+            <p className="mt-1 font-mono text-xs" style={{ color: SCAN_LOBBY_TOKENS.recordMeta }}>
               {run.periodStart} - {run.periodEnd}
             </p>
-            <p className="mt-2 text-sm text-white/55">{meta.summary}</p>
+            <p className="mt-2 text-sm" style={{ color: SCAN_LOBBY_TOKENS.bodyMuted }}>{meta.summary}</p>
             {run.errorMessage && !hasLongError && (
               <p className="mt-2 font-mono text-xs text-red-100/72">
                 {run.errorMessage}
@@ -787,7 +881,13 @@ function CampaignRecordCard({
             )}
           </div>
         </div>
-        <span className="shrink-0 rounded border border-white/10 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-white/35">
+        <span
+          className="shrink-0 rounded border px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em]"
+          style={{
+            borderColor: SCAN_LOBBY_TOKENS.panelBorderSubtle,
+            color: SCAN_LOBBY_TOKENS.labelText,
+          }}
+        >
           {active ? `${run.progressPct}%` : formatRunDate(run.completedAt)}
         </span>
       </button>
@@ -817,7 +917,11 @@ function CampaignRecordCard({
               <button
                 type="button"
                 onClick={() => setShowErrorTrace((current) => !current)}
-                className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-white/12 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-white/55 transition hover:border-white/28 hover:text-white/78 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200"
+                className="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200"
+                style={{
+                  borderColor: "rgba(255,255,255,0.12)",
+                  color: SCAN_LOBBY_TOKENS.bodyMuted,
+                }}
               >
                 {showErrorTrace ? "Hide Error Trace" : "View Error Trace"}
               </button>
@@ -848,19 +952,29 @@ function ScoutAdvisor({
     <aside
       className="rounded-lg border border-white/10 bg-[#120c0a] p-5"
       data-animate="panel"
+      style={{
+        borderColor: SCAN_LOBBY_TOKENS.panelBorder,
+        background: SCAN_LOBBY_TOKENS.panelSurface,
+      }}
     >
-      <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-amber-200/50">
+      <p className="font-mono text-[10px] uppercase tracking-[0.2em]" style={{ color: SCAN_LOBBY_TOKENS.eyebrow }}>
         Scan Advisor
       </p>
-      <p className="mt-3 text-sm leading-6 text-white/62">
+      <p className="mt-3 text-sm leading-6" style={{ color: SCAN_LOBBY_TOKENS.bodyText }}>
         {getAdvisorCopy({ mode, activeRun, selectedRun, hasHistory })}
       </p>
 
-      <div className="mt-5 rounded-md border border-amber-200/15 bg-amber-200/5 p-3">
-        <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-amber-200/50">
+      <div
+        className="mt-5 rounded-md border p-3"
+        style={{
+          borderColor: SCAN_LOBBY_TOKENS.panelBorderStrong,
+          background: SCAN_LOBBY_TOKENS.chipBg,
+        }}
+      >
+        <p className="font-mono text-[10px] uppercase tracking-[0.16em]" style={{ color: SCAN_LOBBY_TOKENS.eyebrow }}>
           Recommended Next Action
         </p>
-        <p className="mt-2 text-sm text-amber-50/76">
+        <p className="mt-2 text-sm" style={{ color: SCAN_LOBBY_TOKENS.bodyTextStrong }}>
           {getRecommendedNextAction({ mode, selectedRun, hasCompletedRun })}
         </p>
       </div>
@@ -874,16 +988,20 @@ function ScoutAdvisor({
       </div>
 
       <div className="mt-5">
-        <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/35">
+        <p className="font-mono text-[10px] uppercase tracking-[0.16em]" style={{ color: SCAN_LOBBY_TOKENS.labelText }}>
           Source Health
         </p>
         <div className="mt-3 space-y-2">
           {sourceHealth.map((source) => (
             <div
               key={source.label}
-              className="flex items-center justify-between gap-3 rounded border border-white/8 bg-white/[0.025] px-3 py-2"
+              className="flex items-center justify-between gap-3 rounded border px-3 py-2"
+              style={{
+                borderColor: SCAN_LOBBY_TOKENS.advisorNodeBorder,
+                background: SCAN_LOBBY_TOKENS.advisorNodeBg,
+              }}
             >
-              <span className="truncate text-xs text-white/55">{source.label}</span>
+              <span className="truncate text-xs" style={{ color: SCAN_LOBBY_TOKENS.bodyMuted }}>{source.label}</span>
               <span className={`font-mono text-[10px] uppercase tracking-[0.12em] ${source.className}`}>
                 {source.status}
               </span>
@@ -937,11 +1055,17 @@ function getAdvisorSourceHealth(
 
 function AdvisorMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md border border-white/10 bg-white/[0.025] p-3">
-      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/35">
+    <div
+      className="rounded-md border p-3"
+      style={{
+        borderColor: SCAN_LOBBY_TOKENS.panelBorderSubtle,
+        background: SCAN_LOBBY_TOKENS.advisorNodeBg,
+      }}
+    >
+      <p className="font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: SCAN_LOBBY_TOKENS.labelText }}>
         {label}
       </p>
-      <p className="mt-1 text-sm font-medium text-amber-50">{value}</p>
+      <p className="mt-1 text-sm font-medium" style={{ color: SCAN_LOBBY_TOKENS.title }}>{value}</p>
     </div>
   );
 }

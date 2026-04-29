@@ -12,6 +12,7 @@ import {
   RadarChart,
   ResponsiveContainer,
 } from "recharts";
+import { RADAR_TOKENS } from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
 
 // Short display labels per category axis
 
@@ -323,7 +324,7 @@ export function CompetencyRadarChart({
             filter={`url(#${
               isActive ? ACTIVE_NODE_GLOW_FILTER_ID : NODE_GLOW_FILTER_ID
             })`}
-            stroke={isActive ? "rgba(255,255,255,0.55)" : "transparent"}
+            stroke={isActive ? RADAR_TOKENS.activeNodeStroke : "transparent"}
             strokeWidth={1.5}
           />
         </g>
@@ -440,7 +441,7 @@ export function CompetencyRadarChart({
 
           {/* Concentric polygon grid */}
           <PolarGrid
-            stroke="rgba(255,184,77,0.18)"
+            stroke={RADAR_TOKENS.gridStroke}
             strokeWidth={0.8}
             gridType="polygon"
           />
@@ -452,7 +453,7 @@ export function CompetencyRadarChart({
             domain={[0, 100]}
             tickCount={5}
             tick={{
-              fill: "rgba(255,232,192,0.36)",
+              fill: RADAR_TOKENS.tickFill,
               fontSize: 10,
               letterSpacing: 0,
             }}

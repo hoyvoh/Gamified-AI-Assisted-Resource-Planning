@@ -1,6 +1,9 @@
 "use client";
 
-import { ANALYSIS_CHAMBER_SHELL_PALETTE as palette } from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
+import {
+  ANALYSIS_CHAMBER_SHELL_PALETTE as palette,
+  CHAMBER_CHROME_TOKENS,
+} from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
 
 interface OverviewInlineMetricsProps {
   activeDimensionCount: number;
@@ -35,7 +38,7 @@ export const OverviewInlineMetrics = ({
           {index > 0 ? (
             <span
               aria-hidden="true"
-              style={{ color: "rgba(255,232,192,0.34)" }}
+              style={{ color: CHAMBER_CHROME_TOKENS.railLabelIdle }}
             >
               /
             </span>

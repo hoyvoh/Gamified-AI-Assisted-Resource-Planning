@@ -1,25 +1,27 @@
 "use client";
 
 import type { JourneyMilestoneViewModel } from "@/features/analysis-chamber/components/stages/journey/journey-stage.types";
-import { ANALYSIS_CHAMBER_SHELL_PALETTE as palette } from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
+import {
+  ANALYSIS_CHAMBER_SHELL_PALETTE as palette,
+  JOURNEY_TOKENS,
+} from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
 
 const stateTone = {
   conquered: {
-    border: "rgba(255,184,77,0.20)",
-    background: "rgba(255,184,77,0.10)",
+    border: JOURNEY_TOKENS.stateConqueredBorder,
+    background: JOURNEY_TOKENS.stateConqueredBg,
     text: palette.ink,
     dot: palette.gold,
   },
   frontier: {
-    border: "rgba(255,184,77,0.38)",
-    background:
-      "linear-gradient(90deg, rgba(255,184,77,0.20) 0%, rgba(255,184,77,0.10) 100%)",
-    text: "#fff1d2",
-    dot: "#ffe6b6",
+    border: JOURNEY_TOKENS.stateFrontierBorder,
+    background: JOURNEY_TOKENS.stateFrontierBg,
+    text: JOURNEY_TOKENS.stateFrontierText,
+    dot: JOURNEY_TOKENS.stateFrontierDot,
   },
   unconquered: {
-    border: "rgba(154,171,184,0.16)",
-    background: "rgba(255,255,255,0.03)",
+    border: JOURNEY_TOKENS.stateLockedBorder,
+    background: JOURNEY_TOKENS.stateLockedBg,
     text: palette.inkMuted,
     dot: palette.silver,
   },
@@ -38,7 +40,7 @@ export const JourneyExpeditionLog = ({
     className="border-t px-5 py-4 md:px-7"
     style={{
       background: palette.parchmentMid,
-      borderColor: "rgba(255,184,77,0.18)",
+      borderColor: JOURNEY_TOKENS.stateStripBorder,
     }}
   >
     <div className="flex items-start justify-between gap-6">
@@ -68,10 +70,10 @@ export const JourneyExpeditionLog = ({
                 className="group flex cursor-pointer items-center gap-2 rounded-full border px-3 py-2 text-left transition duration-150 hover:brightness-110"
                 onClick={() => onSelectMilestone(item.milestone.id)}
                 style={{
-                  borderColor: isFocused ? "rgba(255,184,77,0.42)" : tone.border,
-                  background: isFocused ? "rgba(255,184,77,0.18)" : tone.background,
+                  borderColor: isFocused ? JOURNEY_TOKENS.stateFocusBorder : tone.border,
+                  background: isFocused ? JOURNEY_TOKENS.stateFocusBg : tone.background,
                   color: tone.text,
-                  boxShadow: isFocused ? "0 6px 18px rgba(0,0,0,0.18)" : "none",
+                  boxShadow: isFocused ? JOURNEY_TOKENS.stateFocusShadow : "none",
                 }}
               >
                 <span
@@ -95,8 +97,8 @@ export const JourneyExpeditionLog = ({
                   style={{
                     color:
                       item.state === "unconquered"
-                        ? "rgba(154,171,184,0.34)"
-                        : "rgba(255,184,77,0.34)",
+                        ? JOURNEY_TOKENS.railLocked
+                        : JOURNEY_TOKENS.railActive,
                   }}
                 >
                   →
@@ -107,7 +109,7 @@ export const JourneyExpeditionLog = ({
         })}
       </div>
     ) : (
-      <p className="mt-4 text-xs" style={{ color: "rgba(138,112,88,0.56)" }}>
+      <p className="mt-4 text-xs" style={{ color: JOURNEY_TOKENS.emptyText }}>
         No expedition entries yet.
       </p>
     )}

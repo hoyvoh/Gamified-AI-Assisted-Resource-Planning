@@ -5,7 +5,10 @@ import {
   formatMilestoneDate,
   humanizeMilestoneType,
 } from "@/features/analysis-chamber/components/stages/journey/journey-stage.utils";
-import { ANALYSIS_CHAMBER_SHELL_PALETTE as palette } from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
+import {
+  ANALYSIS_CHAMBER_SHELL_PALETTE as palette,
+  JOURNEY_TOKENS,
+} from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
 
 const stateLabel = {
   conquered: "Secured stronghold",
@@ -31,10 +34,9 @@ export const JourneyDossierPanel = ({
   <aside
     className="flex h-full flex-col rounded-[28px] border px-5 py-5"
     style={{
-      borderColor: "rgba(255,184,77,0.18)",
-      background:
-        "radial-gradient(circle at 0% 0%, rgba(255,184,77,0.08) 0%, transparent 20%), linear-gradient(180deg, rgba(28,17,12,0.98) 0%, rgba(21,13,10,0.98) 100%)",
-      boxShadow: "inset 0 1px 0 rgba(255,232,192,0.03)",
+      borderColor: JOURNEY_TOKENS.dossierBorder,
+      background: JOURNEY_TOKENS.dossierSurface,
+      boxShadow: JOURNEY_TOKENS.dossierInset,
     }}
   >
     {focusedMilestone ? (
@@ -50,7 +52,7 @@ export const JourneyDossierPanel = ({
             <span
               className="rounded-full border px-2.5 py-1 text-[9px] uppercase tracking-[0.18em]"
               style={{
-                borderColor: "rgba(255,184,77,0.28)",
+                borderColor: JOURNEY_TOKENS.dossierChipBorder,
                 color: palette.ink,
               }}
             >
@@ -59,7 +61,7 @@ export const JourneyDossierPanel = ({
             <span
               className="rounded-full border px-2.5 py-1 text-[9px] uppercase tracking-[0.18em]"
               style={{
-                borderColor: "rgba(154,171,184,0.22)",
+                borderColor: JOURNEY_TOKENS.stateLockedBorder,
                 color:
                   focusedMilestone.state === "frontier" ? palette.goldLight : palette.inkMuted,
               }}
@@ -74,16 +76,16 @@ export const JourneyDossierPanel = ({
             {focusedMilestone.milestone.title}
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[0.16em]">
-            <span style={{ color: "rgba(154,171,184,0.9)" }}>
+            <span style={{ color: JOURNEY_TOKENS.dossierMeta }}>
               {focusedMilestone.archetypeLabel}
             </span>
-            <span style={{ color: "rgba(154,171,184,0.36)" }}>•</span>
+            <span style={{ color: JOURNEY_TOKENS.dossierMetaDivider }}>•</span>
             <span style={{ color: palette.inkMuted }}>
               {humanizeMilestoneType(focusedMilestone.milestone.milestoneType)}
             </span>
             {formatMilestoneDate(focusedMilestone.milestone.timestamp) ? (
               <>
-                <span style={{ color: "rgba(154,171,184,0.36)" }}>•</span>
+                <span style={{ color: JOURNEY_TOKENS.dossierMetaDivider }}>•</span>
                 <span style={{ color: palette.inkMuted }}>
                   {formatMilestoneDate(focusedMilestone.milestone.timestamp)}
                 </span>
@@ -95,8 +97,8 @@ export const JourneyDossierPanel = ({
         <div
           className="mt-5 rounded-2xl border px-4 py-4"
           style={{
-            borderColor: "rgba(255,184,77,0.18)",
-            background: "rgba(255,184,77,0.05)",
+            borderColor: JOURNEY_TOKENS.dossierBorder,
+            background: JOURNEY_TOKENS.dossierImpactBg,
           }}
         >
           <p
@@ -124,7 +126,7 @@ export const JourneyDossierPanel = ({
             >
               Milestone summary
             </p>
-            <p className="mt-2 text-sm leading-6" style={{ color: "rgba(200,210,220,0.85)" }}>
+            <p className="mt-2 text-sm leading-6" style={{ color: JOURNEY_TOKENS.dossierBody }}>
               {focusedMilestone.milestone.summary ??
                 "This stronghold is marked on the route, but its field notes have not been written yet."}
             </p>
@@ -138,7 +140,7 @@ export const JourneyDossierPanel = ({
               >
                 Current growth path
               </p>
-              <p className="mt-2 text-sm leading-6" style={{ color: "rgba(200,210,220,0.85)" }}>
+              <p className="mt-2 text-sm leading-6" style={{ color: JOURNEY_TOKENS.dossierBody }}>
                 {currentGrowthPath}
               </p>
             </div>
@@ -152,7 +154,7 @@ export const JourneyDossierPanel = ({
               >
                 Expedition brief
               </p>
-              <p className="mt-2 text-sm leading-6" style={{ color: "rgba(200,210,220,0.85)" }}>
+              <p className="mt-2 text-sm leading-6" style={{ color: JOURNEY_TOKENS.dossierBody }}>
                 {journeySummary}
               </p>
             </div>
@@ -167,9 +169,9 @@ export const JourneyDossierPanel = ({
                 className="cursor-pointer rounded-full border px-3 py-2 text-[10px] uppercase tracking-[0.16em] transition duration-150 hover:brightness-110"
                 onClick={() => onSelectMilestone(previousMilestone.milestone.id)}
                 style={{
-                  borderColor: "rgba(255,184,77,0.20)",
+                  borderColor: JOURNEY_TOKENS.dossierButtonIdleBorder,
                   color: palette.inkMuted,
-                  background: "rgba(255,255,255,0.03)",
+                  background: JOURNEY_TOKENS.dossierButtonIdleBg,
                 }}
               >
                 Prev stronghold
@@ -181,9 +183,9 @@ export const JourneyDossierPanel = ({
                 className="cursor-pointer rounded-full border px-3 py-2 text-[10px] uppercase tracking-[0.16em] transition duration-150 hover:brightness-110"
                 onClick={() => onSelectMilestone(nextMilestone.milestone.id)}
                 style={{
-                  borderColor: "rgba(255,184,77,0.34)",
+                  borderColor: JOURNEY_TOKENS.dossierButtonActiveBorder,
                   color: palette.ink,
-                  background: "rgba(255,184,77,0.12)",
+                  background: JOURNEY_TOKENS.dossierButtonActiveBg,
                 }}
               >
                 Next frontier

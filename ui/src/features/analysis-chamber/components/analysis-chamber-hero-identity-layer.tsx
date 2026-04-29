@@ -3,7 +3,10 @@
 import { CharacterStage } from "@/systems/character/character-stage";
 import { getStatusColor } from "@/systems/character/character-shared";
 import type { AnalysisStatus } from "@/types/organization";
-import { ANALYSIS_CHAMBER_SHELL_PALETTE as palette } from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
+import {
+  ANALYSIS_CHAMBER_SHELL_PALETTE as palette,
+  CHAMBER_CHROME_TOKENS,
+} from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
 import { useEffect, useState } from "react";
 
 const formatConfidenceLabel = (confidence: number) =>
@@ -31,9 +34,8 @@ export const AnalysisChamberHeroIdentityLayer = ({
     <aside
       className="relative hidden min-w-0 border-l xl:flex xl:flex-col"
       style={{
-        background:
-          "linear-gradient(180deg, rgba(35,26,18,0.92) 0%, rgba(20,10,9,0.98) 100%)",
-        borderColor: "rgba(200, 150, 30, 0.35)",
+        background: CHAMBER_CHROME_TOKENS.sidePanelSurface,
+        borderColor: CHAMBER_CHROME_TOKENS.sidePanelBorder,
       }}
     >
       {/* Mini avatar strip */}
@@ -45,9 +47,8 @@ export const AnalysisChamberHeroIdentityLayer = ({
         <div
           className="relative overflow-hidden rounded-lg border"
           style={{
-            borderColor: "rgba(200, 150, 30, 0.3)",
-            background:
-              "radial-gradient(circle at 50% 30%, rgba(200,140,30,0.10) 0%, transparent 70%)",
+            borderColor: CHAMBER_CHROME_TOKENS.sidePanelInnerBorder,
+            background: CHAMBER_CHROME_TOKENS.heroAuraBg,
           }}
         >
           <div className="relative h-36 overflow-hidden">
@@ -71,8 +72,7 @@ export const AnalysisChamberHeroIdentityLayer = ({
           <div
             className="absolute inset-x-0 bottom-0 h-10"
             style={{
-              background:
-                "linear-gradient(180deg, rgba(30,21,14,0) 0%, rgba(28,19,12,0.96) 100%)",
+              background: CHAMBER_CHROME_TOKENS.portraitFade,
             }}
           />
         </div>
@@ -113,7 +113,7 @@ export const AnalysisChamberHeroIdentityLayer = ({
           <span
             className="self-start rounded-md border px-2 py-0.5 text-[9px] uppercase tracking-[0.12em]"
             style={{
-              borderColor: "rgba(200, 150, 30, 0.4)",
+              borderColor: CHAMBER_CHROME_TOKENS.sidePanelBorder,
               color: palette.inkSoft,
             }}
           >

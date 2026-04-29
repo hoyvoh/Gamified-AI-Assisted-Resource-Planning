@@ -3,7 +3,10 @@
 import React, { forwardRef, useMemo } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 
-import { ANALYSIS_CHAMBER_SHELL_PALETTE as palette } from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
+import {
+  ANALYSIS_CHAMBER_SHELL_PALETTE as palette,
+  BRANCH_TOKENS,
+} from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
 
 import { BranchShield } from "./branch-shield";
 import { resolveTier } from "@/features/analysis-chamber/lib/branch-tier";
@@ -54,9 +57,9 @@ export const BranchNode = forwardRef<HTMLButtonElement, BranchNodeProps>(
     ref,
   ) {
     const reducedMotion = useReducedMotion();
-    const accent = data.scored ? data.toneBorder : "rgba(154,171,184,0.44)";
+    const accent = data.scored ? data.toneBorder : BRANCH_TOKENS.fallbackBorder;
     const sigilColor = data.scored ? data.toneColor : palette.silver;
-    const plate = data.scored ? data.toneBackground : "rgba(154,171,184,0.10)";
+    const plate = data.scored ? data.toneBackground : BRANCH_TOKENS.fallbackPlate;
     const nodeTier = data.scored ? resolveTier(data.tier) : "intermediate";
     const isMaster = nodeTier === "master";
 
@@ -119,8 +122,8 @@ export const BranchNode = forwardRef<HTMLButtonElement, BranchNodeProps>(
           : ` drop-shadow(0 0 16px ${withAlpha(TIER_MASTER_CRIMSON, 0.12)})`)
       : "";
     const baseGlow = isActive
-      ? `drop-shadow(0 18px 26px rgba(0,0,0,0.35)) drop-shadow(0 0 18px ${accentGlow})${crimsonGlow}`
-      : `drop-shadow(0 18px 26px rgba(0,0,0,0.32)) drop-shadow(0 0 12px ${accentGlow})${crimsonGlow}`;
+      ? `drop-shadow(0 18px 26px ${BRANCH_TOKENS.baseShadowActive}) drop-shadow(0 0 18px ${accentGlow})${crimsonGlow}`
+      : `drop-shadow(0 18px 26px ${BRANCH_TOKENS.baseShadowIdle}) drop-shadow(0 0 12px ${accentGlow})${crimsonGlow}`;
 
     return (
       <motion.button
@@ -198,7 +201,7 @@ export const BranchNode = forwardRef<HTMLButtonElement, BranchNodeProps>(
           style={{
             filter: isActive
               ? `drop-shadow(0 0 18px ${withAlpha(accent, 0.16)})`
-              : "drop-shadow(0 0 12px rgba(0,0,0,0.18))",
+              : `drop-shadow(0 0 12px ${BRANCH_TOKENS.inactiveDropShadow})`,
           }}
         >
           <BranchShield
@@ -227,12 +230,12 @@ export const BranchNode = forwardRef<HTMLButtonElement, BranchNodeProps>(
           style={{
             borderColor: data.scored
               ? accent
-              : "rgba(154,171,184,0.26)",
+              : BRANCH_TOKENS.tierIdleBorder,
             color: data.scored ? sigilColor : palette.silver,
             transition: "border-color 0.3s ease, color 0.3s ease",
             background: isActive
-              ? "rgba(255,255,255,0.03)"
-              : "rgba(0,0,0,0.12)",
+              ? BRANCH_TOKENS.tierActiveBg
+              : BRANCH_TOKENS.tierIdleBg,
           }}
         >
           {data.scored ? data.tier : "Proof"}
@@ -244,8 +247,8 @@ export const BranchNode = forwardRef<HTMLButtonElement, BranchNodeProps>(
             className="mt-2 text-[9px] uppercase tracking-[0.08em]"
             style={{
               color: isActive
-                ? "rgba(255,232,192,0.70)"
-                : "rgba(255,184,77,0.58)",
+                ? BRANCH_TOKENS.signalTextActive
+                : BRANCH_TOKENS.signalTextIdle,
             }}
           >
             +{data.positiveSignals} -{data.negativeSignals} ~{data.mixedSignals}
@@ -253,7 +256,7 @@ export const BranchNode = forwardRef<HTMLButtonElement, BranchNodeProps>(
         ) : (
           <span
             className="mt-2 text-[9px] uppercase tracking-[0.08em]"
-            style={{ color: "rgba(255,184,77,0.44)" }}
+            style={{ color: BRANCH_TOKENS.pendingText }}
           >
             Not sealed
           </span>

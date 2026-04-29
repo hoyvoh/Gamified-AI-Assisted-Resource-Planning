@@ -3,6 +3,8 @@
 import { RotateCcw } from "lucide-react";
 
 import { LivingTacticalMap } from "@/features/analysis-chamber/components/scan-lobby/scan-lobby-map";
+import { SCAN_LOBBY_TOKENS } from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
+import { MEDIEVAL_THEME } from "@/lib/theme/medieval-theme";
 import type {
   LiveScanChamberState,
   ScanProgressPhase,
@@ -14,45 +16,52 @@ const toneClasses: Record<
   {
     border: string;
     badge: string;
-    panel: string;
+    panelBg: string;
+    panelBorder: string;
     title: string;
   }
 > = {
   opening: {
-    border: "border-amber-200/20",
-    badge: "text-amber-100",
-    panel: "border-amber-200/15 bg-amber-200/5",
-    title: "text-amber-50",
+    border: SCAN_LOBBY_TOKENS.panelBorderStrong,
+    badge: SCAN_LOBBY_TOKENS.chipText,
+    panelBg: SCAN_LOBBY_TOKENS.chipBg,
+    panelBorder: SCAN_LOBBY_TOKENS.chipBorder,
+    title: SCAN_LOBBY_TOKENS.title,
   },
   dispatching: {
-    border: "border-sky-300/20",
-    badge: "text-sky-100",
-    panel: "border-sky-300/15 bg-sky-300/5",
-    title: "text-amber-50",
+    border: "rgba(125, 177, 255, 0.24)",
+    badge: "#d8e7ff",
+    panelBg: "rgba(91, 140, 255, 0.08)",
+    panelBorder: "rgba(125, 177, 255, 0.18)",
+    title: SCAN_LOBBY_TOKENS.title,
   },
   scouting: {
-    border: "border-sky-300/20",
-    badge: "text-sky-100",
-    panel: "border-sky-300/15 bg-sky-300/5",
-    title: "text-amber-50",
+    border: "rgba(125, 177, 255, 0.24)",
+    badge: "#d8e7ff",
+    panelBg: "rgba(91, 140, 255, 0.08)",
+    panelBorder: "rgba(125, 177, 255, 0.18)",
+    title: SCAN_LOBBY_TOKENS.title,
   },
   success: {
-    border: "border-emerald-300/25",
-    badge: "text-emerald-100",
-    panel: "border-emerald-300/15 bg-emerald-300/6",
-    title: "text-emerald-50",
+    border: "rgba(110, 214, 156, 0.28)",
+    badge: "#cff6df",
+    panelBg: "rgba(78, 209, 165, 0.08)",
+    panelBorder: "rgba(110, 214, 156, 0.18)",
+    title: "#e5fff0",
   },
   redirecting: {
-    border: "border-emerald-300/25",
-    badge: "text-emerald-100",
-    panel: "border-emerald-300/15 bg-emerald-300/6",
-    title: "text-emerald-50",
+    border: "rgba(110, 214, 156, 0.28)",
+    badge: "#cff6df",
+    panelBg: "rgba(78, 209, 165, 0.08)",
+    panelBorder: "rgba(110, 214, 156, 0.18)",
+    title: "#e5fff0",
   },
   failed: {
-    border: "border-red-300/25",
-    badge: "text-red-100",
-    panel: "border-red-300/15 bg-red-950/16",
-    title: "text-red-50",
+    border: "rgba(216, 123, 109, 0.28)",
+    badge: "#ffc3bb",
+    panelBg: "rgba(130, 71, 64, 0.14)",
+    panelBorder: "rgba(216, 123, 109, 0.18)",
+    title: "#ffe3de",
   },
 };
 
@@ -133,35 +142,53 @@ export function LiveScanChamber({
   return (
     <div className="fixed inset-0 z-[120]">
       <div className="absolute inset-0 bg-black/72 backdrop-blur-md" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_36%,rgba(214,168,79,0.14),transparent_34%),linear-gradient(180deg,rgba(8,5,5,0.74),rgba(3,2,2,0.92))]" />
+      <div
+        className="absolute inset-0"
+        style={{ background: MEDIEVAL_THEME.gradients.page }}
+      />
 
       <section className="relative flex h-screen items-center justify-center overflow-y-auto p-3 sm:p-5 lg:p-6">
         <div
-          className={`relative my-auto flex max-h-[calc(100vh-24px)] w-full max-w-[1320px] flex-col overflow-hidden rounded-[28px] border bg-[#0d0807]/96 shadow-[0_30px_120px_rgba(0,0,0,0.58)] sm:max-h-[calc(100vh-40px)] lg:max-h-[calc(100vh-48px)] ${tone.border}`}
+          className="relative my-auto flex max-h-[calc(100vh-24px)] w-full max-w-[1320px] flex-col overflow-hidden rounded-[28px] border shadow-[0_30px_120px_rgba(0,0,0,0.58)] sm:max-h-[calc(100vh-40px)] lg:max-h-[calc(100vh-48px)]"
+          style={{
+            borderColor: tone.border,
+            background: MEDIEVAL_THEME.gradients.shell,
+          }}
         >
-          <div className="absolute inset-x-0 top-0 h-28 bg-[linear-gradient(180deg,rgba(214,168,79,0.08),transparent)]" />
+          <div
+            className="absolute inset-x-0 top-0 h-28"
+            style={{ background: MEDIEVAL_THEME.gradients.shellOverlay }}
+          />
 
           <div className="relative z-10 flex flex-1 flex-col gap-3.5 overflow-y-auto p-4 sm:gap-4 sm:p-5 lg:gap-5 lg:px-6 lg:pb-6 lg:pt-6">
             <header className="flex flex-col gap-2.5 pt-1 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2">
                 <span
-                  className={`rounded-full border px-2 py-0.75 font-mono text-[8px] uppercase tracking-[0.18em] ${tone.panel} ${tone.badge}`}
+                  className="rounded-full border px-2 py-0.75 font-mono text-[8px] uppercase tracking-[0.18em]"
+                  style={{
+                    borderColor: tone.panelBorder,
+                    background: tone.panelBg,
+                    color: tone.badge,
+                  }}
                 >
                   {headline.badge}
                 </span>
-                <p className="truncate font-serif text-[1.35rem] leading-none text-amber-50 sm:text-[1.55rem]">
+                <p className="truncate font-serif text-[1.35rem] leading-none sm:text-[1.55rem]" style={{ color: tone.title }}>
                   {memberName}
                 </p>
-                <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-white/44">
+                <p className="font-mono text-[9px] uppercase tracking-[0.16em]" style={{ color: SCAN_LOBBY_TOKENS.metaText }}>
                   {headline.status}
                 </p>
               </div>
 
-              <div className={`rounded-lg border px-3 py-2 ${tone.panel}`}>
-                <p className="font-mono text-[8px] uppercase tracking-[0.14em] text-white/30">
+              <div
+                className="rounded-lg border px-3 py-2"
+                style={{ borderColor: tone.panelBorder, background: tone.panelBg }}
+              >
+                <p className="font-mono text-[8px] uppercase tracking-[0.14em]" style={{ color: SCAN_LOBBY_TOKENS.labelText }}>
                   Campaign Window
                 </p>
-                <p className="mt-1 font-mono text-[10px] text-white/64">{periodLabel}</p>
+                <p className="mt-1 font-mono text-[10px]" style={{ color: SCAN_LOBBY_TOKENS.bodyTextStrong }}>{periodLabel}</p>
               </div>
             </header>
 
@@ -194,7 +221,12 @@ export function LiveScanChamber({
                     <button
                       type="button"
                       onClick={onReturnToScan}
-                      className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-white/12 bg-white/[0.03] px-4 py-3 font-mono text-xs uppercase tracking-[0.14em] text-white/70 transition hover:border-white/25 hover:text-white/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200"
+                      className="inline-flex cursor-pointer items-center gap-2 rounded-lg border px-4 py-3 font-mono text-xs uppercase tracking-[0.14em] transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200"
+                      style={{
+                        borderColor: "rgba(255,255,255,0.12)",
+                        background: "rgba(255,255,255,0.03)",
+                        color: SCAN_LOBBY_TOKENS.bodyTextStrong,
+                      }}
                     >
                       Return to Scan
                     </button>

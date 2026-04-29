@@ -1,6 +1,10 @@
 "use client";
 
-import { DIMENSION_LABELS } from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
+import {
+  CHAMBER_CHROME_TOKENS,
+  DIMENSION_LABELS,
+} from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
+import { MEDIEVAL_THEME } from "@/lib/theme/medieval-theme";
 
 interface OverviewDimensionChipsProps {
   growthDimensionIds: string[];
@@ -12,12 +16,12 @@ const renderDimensionLabel = (id: string) =>
 
 const labelStyles = {
   strength: {
-    color: "rgba(214, 184, 123, 0.8)",
+    color: MEDIEVAL_THEME.accents.brassSoft,
     textShadow:
       "0 0 8px rgba(255, 198, 116, 0.12), 0 0 18px rgba(196, 140, 42, 0.06)",
   },
   growth: {
-    color: "rgba(191, 186, 175, 0.74)",
+    color: MEDIEVAL_THEME.text.soft,
     textShadow:
       "0 0 8px rgba(176, 193, 255, 0.1), 0 0 18px rgba(120, 138, 184, 0.05)",
   },
@@ -27,10 +31,10 @@ const chipStyles = {
   strength: {
     lead: {
       auraColor: "rgba(232, 167, 64, 0.42)",
-      borderColor: "rgba(156, 126, 62, 0.42)",
+      borderColor: CHAMBER_CHROME_TOKENS.actionBorder,
       background:
         "linear-gradient(180deg, rgba(118,92,34,0.18), rgba(86,72,28,0.08))",
-      color: "#e9d8ae",
+      color: MEDIEVAL_THEME.text.secondary,
       boxShadow:
         "inset 0 1px 0 rgba(255,232,192,0.16), 0 0 0 1px rgba(196,140,42,0.06), 0 0 20px rgba(148,96,24,0.08)",
       glowColor: "rgba(255, 210, 132, 0.92)",
@@ -40,7 +44,7 @@ const chipStyles = {
       borderColor: "rgba(112, 106, 79, 0.3)",
       background:
         "linear-gradient(180deg, rgba(76,68,40,0.12), rgba(54,48,28,0.06))",
-      color: "#b8c89a",
+      color: "#c7d7b0",
       boxShadow:
         "inset 0 1px 0 rgba(255,232,192,0.05), 0 0 14px rgba(120,150,82,0.05)",
       glowColor: "rgba(197, 224, 164, 0.82)",
@@ -52,7 +56,7 @@ const chipStyles = {
       borderColor: "rgba(104, 112, 164, 0.38)",
       background:
         "linear-gradient(180deg, rgba(55,66,114,0.18), rgba(40,46,84,0.08))",
-      color: "#d6def6",
+      color: "#dde5fb",
       boxShadow:
         "inset 0 1px 0 rgba(226,232,255,0.1), 0 0 0 1px rgba(104,112,164,0.05), 0 0 20px rgba(84,96,164,0.08)",
       glowColor: "rgba(220, 228, 255, 0.94)",
@@ -62,7 +66,7 @@ const chipStyles = {
       borderColor: "rgba(83, 95, 145, 0.28)",
       background:
         "linear-gradient(180deg, rgba(42,48,82,0.12), rgba(30,34,60,0.06))",
-      color: "#97abd9",
+      color: "#a9bce4",
       boxShadow:
         "inset 0 1px 0 rgba(210,220,255,0.05), 0 0 14px rgba(94,116,194,0.05)",
       glowColor: "rgba(178, 194, 248, 0.84)",

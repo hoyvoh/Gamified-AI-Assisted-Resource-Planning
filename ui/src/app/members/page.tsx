@@ -23,7 +23,7 @@ export default function MembersPage() {
           <Link
             href="/"
             className="font-mono text-xs uppercase tracking-[0.14em] transition"
-            style={{ color: "rgba(213, 191, 144, 0.55)" }}
+            style={{ color: MEDIEVAL_THEME.premiumNoir.chromeMeta }}
           >
             Back To Launcher
           </Link>
@@ -31,7 +31,7 @@ export default function MembersPage() {
 
         <p
           className="font-mono text-[11px] uppercase tracking-[0.22em]"
-          style={{ color: "rgba(209, 172, 103, 0.8)" }}
+          style={{ color: MEDIEVAL_THEME.premiumNoir.chromeLabel }}
         >
           Analysis Chamber / Medieval Members Direction
         </p>
@@ -43,7 +43,7 @@ export default function MembersPage() {
         </h1>
         <p
           className="mt-4 max-w-3xl text-sm leading-7"
-          style={{ color: "rgba(228, 211, 175, 0.62)" }}
+          style={{ color: MEDIEVAL_THEME.text.soft }}
         >
           Reframing the members page as a medieval campaign room: champions,
           houses, banners, scan states, and analysis profiles. The interface
