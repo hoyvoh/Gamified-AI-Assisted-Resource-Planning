@@ -21,7 +21,7 @@ However, the implementation assumes one command shape:
 This is not a valid abstraction for all agent CLIs. Codex uses a different non-interactive command shape:
 
 ```bash
-codex exec --model <model> <prompt>
+codex exec --model <model> -
 codex mcp list
 ```
 
