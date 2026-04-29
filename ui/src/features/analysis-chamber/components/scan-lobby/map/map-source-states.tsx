@@ -11,8 +11,8 @@ export function MapSourceStates({
   sourceStatuses: Record<string, SourceStatus>;
 }) {
   return (
-    <div className="rounded-md border border-white/7 bg-black/16 p-2 backdrop-blur">
-      <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-white/35">
+    <div className="rounded-md border border-white/6 bg-black/12 p-2 backdrop-blur-sm">
+      <p className="font-mono text-[9px] uppercase tracking-[0.18em] text-white/28">
         Source States
       </p>
       <div className="mt-2 space-y-1">
@@ -33,7 +33,7 @@ export function MapSourceStates({
                       : ""
                   }`}
                 />
-                <span className="truncate text-white/55">
+                <span className="truncate text-white/48">
                   {anchor.label} / {anchor.technicalLabel}
                 </span>
               </div>

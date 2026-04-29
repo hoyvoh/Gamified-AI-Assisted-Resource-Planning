@@ -3,26 +3,25 @@
 import { useEffect, useRef, useState } from "react";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { animate, stagger } from "animejs";
 import {
   AlertTriangle,
   ArrowRight,
   CheckCircle2,
   CircleDot,
-  Compass,
   Play,
   RotateCcw,
-  ShieldCheck,
 } from "lucide-react";
 
 import { getAnalysisChamberBootstrap } from "@/features/analysis-chamber/api/analysis-chamber-api";
 import type { ChamberAnalysisRun } from "@/features/analysis-chamber/api/analysis-chamber-api.view-models";
-import { LivingTacticalMap } from "@/features/analysis-chamber/components/scan-lobby/scan-lobby-map";
+import { LiveScanChamber } from "@/features/analysis-chamber/components/scan-lobby/live-scan-chamber";
 import type {
+  LiveScanChamberState,
   ScanLobbyMode,
-  ScanProgressPhase,
   ScanRun,
 } from "@/features/analysis-chamber/components/scan-lobby/scan-lobby.types";
 import {
@@ -34,6 +33,7 @@ import {
   getRunStatusMeta,
   getScanMode,
   isActiveRun,
+  isTerminalRun,
   today,
 } from "@/features/analysis-chamber/components/scan-lobby/scan-lobby.utils";
 import { MAP_ANCHORS } from "@/features/analysis-chamber/components/scan-lobby/map/map-constants";
@@ -42,22 +42,6 @@ import {
   useMemberRunHistory,
   useTriggerNewScan,
 } from "@/features/analysis-chamber/hooks/use-scan-lobby";
-
-const PHASES: ScanProgressPhase[] = [
-  "sealing-order",
-  "crossing-signal-realm",
-  "gathering-fragments",
-  "forging-dossier",
-  "verdict",
-];
-
-const PHASE_LABELS: Record<ScanProgressPhase, string> = {
-  "sealing-order": "Seal",
-  "crossing-signal-realm": "Cross",
-  "gathering-fragments": "Gather",
-  "forging-dossier": "Forge",
-  verdict: "Verdict",
-};
 
 const toneClasses = {
   pending: {
@@ -145,6 +129,8 @@ function useScanLobbyAnimations(reducedMotion: boolean, dependency: unknown) {
 }
 
 export function ScanLobby({ memberId }: { memberId: string }) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const reducedMotion = usePrefersReducedMotion();
   const { data: bootstrap } = useQuery({
     queryKey: ["analysis-chamber", memberId, "bootstrap"],
@@ -162,6 +148,9 @@ export function ScanLobby({ memberId }: { memberId: string }) {
   const activeFromHistory = history?.find((run) => isActiveRun(run.status));
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
+  const [dismissedTerminalRunId, setDismissedTerminalRunId] = useState<string | null>(null);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  const redirectedRunIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (activeFromHistory?.id) setActiveRunId(activeFromHistory.id);
@@ -177,9 +166,6 @@ export function ScanLobby({ memberId }: { memberId: string }) {
     activeRun,
     isDispatching: triggerScan.isPending,
   });
-  const phase = activeRun
-    ? getProgressPhase(activeRun.status, activeRun.progressPct)
-    : "sealing-order";
   const hasActiveRun = !!activeRun && isActiveRun(activeRun.status);
   const hasCompletedRun = historyRuns.some((run) => run.status === "completed");
   const hasHistory = historyRuns.length > 0;
@@ -187,6 +173,53 @@ export function ScanLobby({ memberId }: { memberId: string }) {
   const displayName = member?.displayName ?? memberId;
   const identity = [bootstrap?.roleName, bootstrap?.teamName].filter(Boolean).join(" / ");
   const rootRef = useScanLobbyAnimations(reducedMotion, `${mode}-${historyRuns.length}`);
+  const selectedRunLabel = selectedRun ?? activeRun ?? historyRuns[0];
+
+  useEffect(() => {
+    if (triggerScan.isPending) {
+      setDismissedTerminalRunId(null);
+      setIsRedirecting(false);
+      return;
+    }
+
+    if (activeRun && !isTerminalRun(activeRun.status)) {
+      setDismissedTerminalRunId(null);
+      setIsRedirecting(false);
+    }
+  }, [activeRun, triggerScan.isPending]);
+
+  useEffect(() => {
+    if (!activeRun || !isTerminalRun(activeRun.status)) return;
+
+    void queryClient.invalidateQueries({
+      queryKey: ["analysis-chamber", memberId],
+    });
+    void queryClient.invalidateQueries({
+      queryKey: ["scan-lobby", memberId],
+    });
+  }, [activeRun, memberId, queryClient]);
+
+  useEffect(() => {
+    if (!activeRun || activeRun.status !== "completed") return;
+    if (redirectedRunIdRef.current === activeRun.id) return;
+
+    redirectedRunIdRef.current = activeRun.id;
+    setIsRedirecting(false);
+    void router.prefetch(`/profile/${memberId}`);
+
+    const redirectBeatTimer = window.setTimeout(() => {
+      setIsRedirecting(true);
+    }, 900);
+
+    const pushTimer = window.setTimeout(() => {
+      router.push(`/profile/${memberId}`);
+    }, 1450);
+
+    return () => {
+      window.clearTimeout(redirectBeatTimer);
+      window.clearTimeout(pushTimer);
+    };
+  }, [activeRun, memberId, router]);
 
   const dispatchScan = (periodStart: string, periodEnd: string) => {
     if (hasActiveRun || triggerScan.isPending) return;
@@ -194,11 +227,58 @@ export function ScanLobby({ memberId }: { memberId: string }) {
       { periodStart, periodEnd },
       {
         onSuccess: (run) => {
+          setDismissedTerminalRunId(null);
+          setIsRedirecting(false);
           setActiveRunId(run.analysis_run_id);
           setSelectedRunId(null);
         },
       },
     );
+  };
+
+  const chamberVisible =
+    triggerScan.isPending ||
+    (!!activeRun &&
+      (!isTerminalRun(activeRun.status) || activeRun.id !== dismissedTerminalRunId));
+
+  const chamberState: LiveScanChamberState | null = !chamberVisible
+    ? null
+    : isRedirecting
+      ? "redirecting"
+      : triggerScan.isPending && !activeRun
+        ? "opening"
+        : activeRun?.status === "completed"
+          ? "success"
+          : activeRun?.status === "failed"
+            ? "failed"
+            : activeRun?.status === "pending" || mode === "dispatching"
+              ? "dispatching"
+              : "scouting";
+
+  const chamberRun = activeRun;
+  const chamberPhase =
+    chamberRun?.status === "failed" || chamberRun?.status === "completed"
+      ? "verdict"
+      : chamberRun
+        ? getProgressPhase(chamberRun.status, chamberRun.progressPct)
+        : "sealing-order";
+  const chamberPeriodLabel =
+    chamberRun?.periodStart && chamberRun?.periodEnd
+      ? `${chamberRun.periodStart} - ${chamberRun.periodEnd}`
+      : selectedRunLabel?.periodStart && selectedRunLabel?.periodEnd
+        ? `${selectedRunLabel.periodStart} - ${selectedRunLabel.periodEnd}`
+        : "Preparing campaign window";
+
+  const handleReturnToScan = () => {
+    if (!chamberRun) return;
+    setSelectedRunId(chamberRun.id);
+    setDismissedTerminalRunId(chamberRun.id);
+    setActiveRunId(null);
+  };
+
+  const handleRetryFromChamber = () => {
+    if (!chamberRun) return;
+    dispatchScan(chamberRun.periodStart, chamberRun.periodEnd);
   };
 
   return (
@@ -212,19 +292,14 @@ export function ScanLobby({ memberId }: { memberId: string }) {
         memberId={memberId}
       />
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.42fr)_minmax(360px,0.58fr)]">
-        <LivingTacticalMap
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.58fr)]">
+        <ControlRoomSummary
           mode={mode}
-          phase={phase}
           activeRun={activeRun}
-          history={historyRuns}
+          displayRun={displayRun}
           reducedMotion={reducedMotion}
         />
-
         <MissionControlPanel
-          memberId={memberId}
-          mode={mode}
-          activeRun={activeRun}
           displayRun={displayRun}
           disabled={hasActiveRun}
           isDispatching={triggerScan.isPending}
@@ -253,6 +328,20 @@ export function ScanLobby({ memberId }: { memberId: string }) {
           hasCompletedRun={hasCompletedRun}
         />
       </div>
+
+      {chamberState && (
+        <LiveScanChamber
+          state={chamberState}
+          phase={chamberPhase}
+          run={chamberRun}
+          history={historyRuns}
+          reducedMotion={reducedMotion}
+          memberName={displayName}
+          periodLabel={chamberPeriodLabel}
+          onRetry={chamberState === "failed" ? handleRetryFromChamber : null}
+          onReturnToScan={chamberState === "failed" ? handleReturnToScan : null}
+        />
+      )}
     </div>
   );
 }
@@ -322,19 +411,110 @@ function ScanLobbyHeader({
   );
 }
 
-function MissionControlPanel({
-  memberId,
+function ControlRoomSummary({
   mode,
   activeRun,
+  displayRun,
+  reducedMotion,
+}: {
+  mode: ScanLobbyMode;
+  activeRun: ScanRun | undefined;
+  displayRun: ScanRun | undefined;
+  reducedMotion: boolean;
+}) {
+  const focusRun = activeRun ?? displayRun;
+  const meta = focusRun ? getRunStatusMeta(focusRun.status) : null;
+  const phase = focusRun
+    ? getProgressPhase(focusRun.status, focusRun.progressPct)
+    : "sealing-order";
+  const tone = meta ? toneClasses[meta.tone] : toneClasses.pending;
+
+  return (
+    <section
+      className="rounded-lg border border-white/10 bg-[#120c0a] p-5"
+      data-animate="panel"
+    >
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="max-w-2xl">
+          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-amber-200/50">
+            Scan Control Room
+          </p>
+          <h2 className="mt-2 font-serif text-2xl text-amber-50">
+            Dispatch is now a blocking chamber flow
+          </h2>
+          <p className="mt-3 text-sm leading-6 text-white/60">
+            The live reconnaissance map no longer sits inline on this page. When a
+            scout is dispatched, the chamber takes full focus until the scan reaches
+            a verdict.
+          </p>
+        </div>
+
+        <div className={`rounded-md border px-4 py-3 ${tone.border} ${tone.bg}`}>
+          <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/35">
+            Current readiness
+          </p>
+          <p className={`mt-1 font-mono text-xs uppercase tracking-[0.12em] ${tone.text}`}>
+            {mode === "scouting" || mode === "dispatching"
+              ? "Live chamber engaged"
+              : mode === "failed"
+                ? "Repair required"
+                : "Control room ready"}
+          </p>
+        </div>
+      </div>
+
+      {focusRun ? (
+        <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
+          <div className="rounded-md border border-white/8 bg-black/18 p-4">
+            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/35">
+              Latest known run
+            </p>
+            <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <p className={`text-lg font-semibold ${tone.text}`}>{meta?.label}</p>
+                <p className="mt-2 text-sm text-white/60">{meta?.summary}</p>
+                {focusRun.progressStage && (
+                  <p className="mt-2 font-mono text-xs text-white/42">
+                    {focusRun.progressStage}
+                  </p>
+                )}
+              </div>
+              <div className="rounded border border-white/10 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-white/40">
+                {focusRun.periodStart} - {focusRun.periodEnd}
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-md border border-white/8 bg-black/18 p-4">
+            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/35">
+              Chamber motion
+            </p>
+            <p className="mt-3 text-sm text-white/62">
+              {reducedMotion
+                ? "Reduced motion is active. The live chamber should still show clear state progression."
+                : "Dispatch will open a full-focus live chamber with phase and source progression."}
+            </p>
+            <p className="mt-3 font-mono text-[11px] text-amber-100/65">
+              Current phase key: {phase}
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="mt-5 rounded-md border border-dashed border-amber-200/18 bg-amber-200/5 px-4 py-5 text-sm text-white/56">
+          No previous run is selected. Choose a campaign window to dispatch the first scout.
+        </div>
+      )}
+    </section>
+  );
+}
+
+function MissionControlPanel({
   displayRun,
   disabled,
   isDispatching,
   mutationError,
   onDispatch,
 }: {
-  memberId: string;
-  mode: ScanLobbyMode;
-  activeRun: ScanRun | undefined;
   displayRun: ScanRun | undefined;
   disabled: boolean;
   isDispatching: boolean;
@@ -343,10 +523,7 @@ function MissionControlPanel({
 }) {
   return (
     <aside className="space-y-4" data-animate="panel">
-      {activeRun && (
-        <CurrentMissionStatus activeRun={activeRun} mode={mode} memberId={memberId} />
-      )}
-      {!activeRun && displayRun?.status === "failed" && (
+      {displayRun?.status === "failed" && (
         <BrokenBannerDetail run={displayRun} />
       )}
       <DispatchOrderForm
@@ -356,99 +533,6 @@ function MissionControlPanel({
         onDispatch={onDispatch}
       />
     </aside>
-  );
-}
-
-function CurrentMissionStatus({
-  activeRun,
-  mode,
-  memberId,
-}: {
-  activeRun: ScanRun;
-  mode: ScanLobbyMode;
-  memberId: string;
-}) {
-  const meta = getRunStatusMeta(activeRun.status);
-  const tone = toneClasses[meta.tone];
-  const phase = getProgressPhase(activeRun.status, activeRun.progressPct);
-  const currentIndex = PHASES.indexOf(phase);
-
-  return (
-    <section className={`rounded-lg border ${tone.border} ${tone.bg} p-5`}>
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-white/38">
-            Current Mission
-          </p>
-          <h2 className={`mt-2 flex items-center gap-2 text-xl font-semibold ${tone.text}`}>
-            {meta.tone === "failed" ? (
-              <AlertTriangle className="h-5 w-5" aria-hidden="true" />
-            ) : meta.tone === "completed" ? (
-              <ShieldCheck className="h-5 w-5" aria-hidden="true" />
-            ) : (
-              <Compass className="h-5 w-5" aria-hidden="true" />
-            )}
-            {mode === "dispatching" ? "Sealing Order" : meta.label}
-          </h2>
-        </div>
-        <span className="rounded border border-white/10 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-white/45">
-          {meta.technicalLabel}
-        </span>
-      </div>
-
-      <p className="mt-3 text-sm text-white/62">{meta.summary}</p>
-      {activeRun.progressStage && (
-        <p className="mt-2 font-mono text-xs text-white/42">{activeRun.progressStage}</p>
-      )}
-
-      {meta.tone !== "failed" && meta.tone !== "completed" && (
-        <>
-          <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/10">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-sky-300 via-amber-200 to-emerald-300 transition-all duration-500"
-              style={{ width: `${Math.max(activeRun.progressPct, 8)}%` }}
-            />
-          </div>
-          <div className="mt-4 grid grid-cols-5 gap-2">
-            {PHASES.map((phaseKey, index) => {
-              const complete = index <= currentIndex;
-              return (
-                <div key={phaseKey} className="min-w-0">
-                  <div
-                    className={`h-1 rounded-full ${
-                      complete ? "bg-sky-200" : "bg-white/12"
-                    }`}
-                  />
-                  <p className="mt-1 truncate font-mono text-[9px] uppercase tracking-[0.12em] text-white/35">
-                    {PHASE_LABELS[phaseKey]}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        </>
-      )}
-
-      {meta.tone === "completed" && (
-        <Link
-          href={`/profile/${memberId}`}
-          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-md border border-emerald-200/30 bg-emerald-200/10 px-4 py-3 font-mono text-xs uppercase tracking-[0.14em] text-emerald-100 transition hover:border-emerald-100/50 hover:bg-emerald-200/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-200"
-        >
-          Open Dossier
-          <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-        </Link>
-      )}
-
-      {meta.tone === "failed" && activeRun.errorMessage && (
-        <p className="mt-4 rounded-md border border-red-300/20 bg-red-950/20 p-3 font-mono text-xs text-red-100/80">
-          {activeRun.errorMessage}
-        </p>
-      )}
-
-      <p className="mt-4 font-mono text-[10px] text-white/30">
-        {activeRun.periodStart} - {activeRun.periodEnd}
-      </p>
-    </section>
   );
 }
 

@@ -23,12 +23,14 @@ export function LivingTacticalMap({
   activeRun,
   history,
   reducedMotion,
+  className,
 }: {
   mode: ScanLobbyMode;
   phase: ScanProgressPhase;
   activeRun: ScanRun | undefined;
   history: ScanRun[];
   reducedMotion: boolean;
+  className?: string;
 }) {
   const sourceStatuses = useMemo(
     () => getSourceStatuses(mode, phase),
@@ -50,7 +52,7 @@ export function LivingTacticalMap({
 
   return (
     <section
-      className={`relative h-[500px] overflow-hidden rounded-lg border bg-[#120b09] shadow-2xl sm:h-[480px] lg:h-[460px] ${borderClass}`}
+      className={`relative h-[500px] overflow-hidden rounded-lg border bg-[#120b09] shadow-2xl sm:h-[480px] lg:h-[460px] ${borderClass} ${className ?? ""}`}
       aria-labelledby="living-map-title"
     >
       <div
@@ -59,7 +61,7 @@ export function LivingTacticalMap({
         }`}
       />
 
-      <div className="absolute inset-x-2 top-[44px] bottom-[240px] z-10 grid place-items-center sm:inset-x-4 sm:top-[44px] sm:bottom-[240px] md:top-[44px] md:bottom-[136px]">
+      <div className="absolute inset-x-2 top-[40px] bottom-[196px] z-10 grid place-items-center sm:inset-x-4 sm:top-[40px] sm:bottom-[196px] md:top-[34px] md:bottom-[112px]">
         <div className="relative aspect-[5/2] h-full max-w-full min-w-0">
           <MapNetworkSvg mode={mode} sourceStatuses={sourceStatuses} />
           <MapRouteLayer
@@ -93,27 +95,27 @@ export function LivingTacticalMap({
               Living Reconnaissance Map
             </p>
           </div>
-          <div className="rounded-md border border-amber-200/15 bg-black/28 px-3 py-2 text-right backdrop-blur">
-            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/35">
+          <div className="rounded-md border border-amber-200/12 bg-black/20 px-3 py-2 text-right backdrop-blur-sm">
+            <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-white/28">
               Campaign markers
             </p>
-            <p className="mt-1 font-mono text-xs text-white/75">
+            <p className="mt-1 font-mono text-[11px] text-white/68">
               {completedCount} fortified / {failedCount} broken
             </p>
           </div>
         </div>
 
-        <div className="grid gap-2 md:grid-cols-[minmax(0,0.56fr)_minmax(180px,0.25fr)] md:items-end md:justify-between">
-          <div className="rounded-md border border-white/7 bg-black/18 p-2 backdrop-blur">
+        <div className="grid gap-2 md:grid-cols-[minmax(0,0.5fr)_minmax(170px,0.24fr)] md:items-end md:justify-between">
+          <div className="max-w-[470px] rounded-md border border-white/6 bg-black/12 p-1.5 backdrop-blur-sm">
             <MapPhaseRail
               phase={phase}
               mode={mode}
               progressPct={activeRun?.progressPct}
             />
-            <p className="mt-2 font-mono text-[8px] uppercase tracking-[0.18em] text-amber-200/48">
+            <p className="mt-1.5 font-mono text-[7px] uppercase tracking-[0.16em] text-amber-200/38">
               {phaseCopy.title}
             </p>
-            <p className="mt-1 text-[10px] text-amber-50/62">{phaseCopy.detail}</p>
+            <p className="mt-0.5 text-[9px] text-amber-50/46">{phaseCopy.detail}</p>
           </div>
 
           <MapSourceStates sourceStatuses={sourceStatuses} />

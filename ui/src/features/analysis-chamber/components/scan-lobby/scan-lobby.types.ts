@@ -8,6 +8,14 @@ export type ScanLobbyMode =
   | "success"
   | "failed";
 
+export type LiveScanChamberState =
+  | "opening"
+  | "dispatching"
+  | "scouting"
+  | "success"
+  | "redirecting"
+  | "failed";
+
 export type ScanProgressPhase =
   | "sealing-order"
   | "crossing-signal-realm"

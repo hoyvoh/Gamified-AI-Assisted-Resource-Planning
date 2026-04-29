@@ -14,16 +14,16 @@ export function MapPhaseRail({
 
   return (
     <div>
-      <div className="mb-1.5 flex items-center justify-between">
-        <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-white/30">
+      <div className="mb-1 flex items-center justify-between">
+        <p className="font-mono text-[8px] uppercase tracking-[0.14em] text-white/26">
           Phase Rail
         </p>
-        <p className="font-mono text-[9px] text-white/40">
+        <p className="font-mono text-[8px] text-white/34">
           Phase {currentIndex + 1} of {PHASES.length}
         </p>
       </div>
 
-      <div className="grid grid-cols-5 gap-2">
+      <div className="grid grid-cols-5 gap-1.5">
         {PHASES.map((phaseKey, index) => {
           const complete = index < currentIndex || mode === "success";
           const current = index === currentIndex && mode !== "success";
@@ -32,7 +32,7 @@ export function MapPhaseRail({
           return (
             <div key={phaseKey} className="min-w-0">
               <div
-                className={`h-[3px] rounded-full ${
+                className={`h-0.75 rounded-full ${
                   failed
                     ? "bg-red-300"
                     : complete
@@ -43,7 +43,7 @@ export function MapPhaseRail({
                 }`}
               />
               <p
-                className={`mt-0.5 truncate font-mono text-[7px] uppercase tracking-[0.12em] ${
+                className={`mt-0.5 truncate font-mono text-[6px] uppercase tracking-[0.1em] ${
                   failed
                     ? "text-red-100"
                     : complete || current
@@ -59,7 +59,7 @@ export function MapPhaseRail({
       </div>
 
       {typeof progressPct === "number" && (
-        <div className="mt-2 h-[3px] overflow-hidden rounded-full bg-white/10">
+        <div className="mt-1.5 h-0.75 overflow-hidden rounded-full bg-white/10">
           <div
             className="h-full rounded-full bg-gradient-to-r from-sky-300 via-amber-200 to-emerald-300 transition-all duration-500"
             style={{ width: `${Math.max(progressPct, 8)}%` }}

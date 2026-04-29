@@ -13,6 +13,9 @@ export const daysAgo = (n: number) =>
 export const isActiveRun = (status: string) =>
   status !== "completed" && status !== "failed";
 
+export const isTerminalRun = (status: string | null | undefined) =>
+  status === "completed" || status === "failed";
+
 export const getRunStatusMeta = (status: string): ScanStatusMeta => {
   if (status === "completed") {
     return {
@@ -131,7 +134,7 @@ export const getRecommendedNextAction = ({
   if (selectedRun?.status === "failed") return "Review error trace, repair, then send again.";
   if (mode === "failed") return "Repair the broken banner, then dispatch a retry.";
   if (mode === "scouting" || mode === "dispatching") {
-    return "Watch the live mission state until the chamber verdict returns.";
+    return "The Live Scan Chamber will hold focus until the chamber verdict returns.";
   }
   if (hasCompletedRun) return "Open latest dossier or dispatch a fresh scout.";
   return "Choose a campaign window and dispatch the first scout.";
