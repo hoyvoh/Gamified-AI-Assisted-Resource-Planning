@@ -31,9 +31,11 @@ class AgentCliProvider(Protocol):
 
     async def health_check(self) -> AgentCliHealth:
         """Return readiness information for diagnostics."""
+        ...
 
     async def list_mcp_sources(self) -> list[str]:
         """Return configured MCP source names understood by the app."""
+        ...
 
     async def run_prompt(
         self,
@@ -42,4 +44,5 @@ class AgentCliProvider(Protocol):
         timeout_seconds: int,
     ) -> str:
         """Run a non-interactive prompt and return stdout text."""
+        ...
 
