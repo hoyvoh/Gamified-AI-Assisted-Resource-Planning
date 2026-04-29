@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
@@ -46,7 +44,6 @@ export const useAnalysisRunPolling = (runId: string | null) =>
 
 export const useTriggerNewScan = (memberId: string) => {
   const qc = useQueryClient();
-  const [activeRunId, setActiveRunId] = useState<string | null>(null);
 
   const mutation = useMutation({
     mutationFn: ({
@@ -57,12 +54,17 @@ export const useTriggerNewScan = (memberId: string) => {
       periodEnd: string;
     }) => refreshMemberAnalysis(memberId, periodStart, periodEnd),
     onSuccess: (run) => {
-      setActiveRunId(run.analysis_run_id);
       void qc.invalidateQueries({
         queryKey: SCAN_LOBBY_KEYS.history(memberId),
+      });
+      void qc.invalidateQueries({
+        queryKey: ["analysis-chamber", memberId, "bootstrap"],
+      });
+      void qc.invalidateQueries({
+        queryKey: SCAN_LOBBY_KEYS.run(run.analysis_run_id),
       });
     },
   });
 
-  return { mutation, activeRunId, setActiveRunId };
+  return mutation;
 };

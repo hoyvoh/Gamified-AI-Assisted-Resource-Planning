@@ -256,6 +256,49 @@ body {
   font-family: var(--font-mono);
 }
 
+@keyframes scan-map-grid-drift {
+  from {
+    background-position:
+      0 0,
+      0 0,
+      0 0,
+      0 0;
+  }
+  to {
+    background-position:
+      0 0,
+      0 0,
+      24px 12px,
+      24px 12px;
+  }
+}
+
+@keyframes scan-map-core-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.scan-map-grid-drift {
+  animation: scan-map-grid-drift 18s linear infinite;
+}
+
+.scan-map-core-spin {
+  animation: scan-map-core-spin 24s linear infinite;
+}
+
+.scan-map-core-spin-slow {
+  animation: scan-map-core-spin 36s linear infinite reverse;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scan-map-grid-drift,
+  .scan-map-core-spin,
+  .scan-map-core-spin-slow {
+    animation: none;
+  }
+}
+
 /* Early Renaissance serif for body descriptions in Analysis Chamber */
 .font-body-serif {
   font-family: var(--font-serif);
