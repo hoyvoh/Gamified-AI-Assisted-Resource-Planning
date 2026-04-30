@@ -11,6 +11,17 @@ const compat = new FlatCompat({ baseDirectory: __dirname })
 
 /** @type {import('eslint').Linter.Config[]} */
 const config = [
+  {
+    ignores: [
+      '.next/**',
+      '.next-phase1/**',
+      'debug/**',
+      'node_modules/**',
+      'playwright-artifacts/**',
+      'test-results/**',
+      'tmp/**',
+    ],
+  },
   ...compat.extends('next/core-web-vitals', 'next/typescript'),
   ...pluginOxlint.buildFromOxlintConfigFile('.oxlintrc.json'),
   skipFormatting,

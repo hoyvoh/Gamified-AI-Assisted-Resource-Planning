@@ -1,0 +1,1071 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { animate, stagger } from "animejs";
+import {
+  AlertTriangle,
+  ArrowRight,
+  CheckCircle2,
+  CircleDot,
+  Play,
+  RotateCcw,
+} from "lucide-react";
+
+import { getAnalysisChamberBootstrap } from "@/features/analysis-chamber/api/analysis-chamber-api";
+import type { ChamberAnalysisRun } from "@/features/analysis-chamber/api/analysis-chamber-api.view-models";
+import { LiveScanChamber } from "@/features/analysis-chamber/components/scan-lobby/live-scan-chamber";
+import {
+  ANALYSIS_CHAMBER_SHELL_PALETTE as palette,
+  SCAN_LOBBY_TOKENS,
+} from "@/features/analysis-chamber/lib/analysis-chamber-shell.constants";
+import type {
+  LiveScanChamberState,
+  ScanLobbyMode,
+  ScanRun,
+} from "@/features/analysis-chamber/components/scan-lobby/scan-lobby.types";
+import {
+  daysAgo,
+  formatRunDate,
+  getAdvisorCopy,
+  getProgressPhase,
+  getRecommendedNextAction,
+  getRunStatusMeta,
+  getScanMode,
+  isActiveRun,
+  isTerminalRun,
+  today,
+} from "@/features/analysis-chamber/components/scan-lobby/scan-lobby.utils";
+import { MAP_ANCHORS } from "@/features/analysis-chamber/components/scan-lobby/map/map-constants";
+import {
+  useAnalysisRunPolling,
+  useMemberRunHistory,
+  useTriggerNewScan,
+} from "@/features/analysis-chamber/hooks/use-scan-lobby";
+
+const toneClasses = {
+  pending: {
+    dot: "bg-amber-200",
+    text: palette.goldLight,
+    border: SCAN_LOBBY_TOKENS.chipBorder,
+    bg: SCAN_LOBBY_TOKENS.chipBg,
+  },
+  scouting: {
+    dot: "bg-sky-300",
+    text: "#c9ddff",
+    border: "rgba(125, 177, 255, 0.26)",
+    bg: "rgba(91, 140, 255, 0.08)",
+  },
+  completed: {
+    dot: "bg-emerald-300",
+    text: "#cff6df",
+    border: "rgba(110, 214, 156, 0.24)",
+    bg: "rgba(78, 209, 165, 0.08)",
+  },
+  failed: {
+    dot: "bg-red-300",
+    text: "#ffc3bb",
+    border: "rgba(216, 123, 109, 0.24)",
+    bg: "rgba(130, 71, 64, 0.12)",
+  },
+} as const;
+
+function usePrefersReducedMotion() {
+  const [reducedMotion, setReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReducedMotion(media.matches);
+    const handleChange = () => setReducedMotion(media.matches);
+    media.addEventListener("change", handleChange);
+    return () => media.removeEventListener("change", handleChange);
+  }, []);
+
+  return reducedMotion;
+}
+
+function useScanLobbyAnimations(reducedMotion: boolean, dependency: unknown) {
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (reducedMotion || !rootRef.current) return;
+
+    const cards = rootRef.current.querySelectorAll('[data-animate="chronicle-card"]');
+    const panels = rootRef.current.querySelectorAll('[data-animate="panel"]');
+    const sourceNodes = rootRef.current.querySelectorAll('[data-animate="source-node"]');
+
+    if (panels.length > 0) {
+      animate(panels, {
+        opacity: [0, 1],
+        translateY: [14, 0],
+        duration: 360,
+        delay: stagger(55),
+        ease: "outQuad",
+      });
+    }
+
+    if (cards.length > 0) {
+      animate(cards, {
+        opacity: [0, 1],
+        translateY: [12, 0],
+        duration: 420,
+        delay: stagger(70),
+        ease: "outQuad",
+      });
+    }
+
+    if (sourceNodes.length > 0) {
+      animate(sourceNodes, {
+        opacity: [0.42, 1],
+        scale: [0.96, 1],
+        duration: 520,
+        delay: stagger(90),
+        ease: "outExpo",
+      });
+    }
+  }, [dependency, reducedMotion]);
+
+  return rootRef;
+}
+
+export function ScanLobby({ memberId }: { memberId: string }) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const reducedMotion = usePrefersReducedMotion();
+  const { data: bootstrap } = useQuery({
+    queryKey: ["analysis-chamber", memberId, "bootstrap"],
+    queryFn: () => getAnalysisChamberBootstrap(memberId),
+    staleTime: 60_000,
+  });
+
+  const {
+    data: history,
+    isLoading: historyLoading,
+    isError: historyError,
+  } = useMemberRunHistory(memberId);
+
+  const triggerScan = useTriggerNewScan(memberId);
+  const activeFromHistory = history?.find((run) => isActiveRun(run.status));
+  const [activeRunId, setActiveRunId] = useState<string | null>(null);
+  const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
+  const [dismissedTerminalRunId, setDismissedTerminalRunId] = useState<string | null>(null);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  const redirectedRunIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (activeFromHistory?.id) setActiveRunId(activeFromHistory.id);
+  }, [activeFromHistory?.id]);
+
+  const { data: polledActiveRun } = useAnalysisRunPolling(activeRunId);
+  const historyRuns = history ?? [];
+  const selectedRun = historyRuns.find((run) => run.id === selectedRunId);
+  const activeRun = polledActiveRun ?? activeFromHistory;
+  const displayRun = activeRun ?? selectedRun ?? historyRuns[0];
+  const mode = getScanMode({
+    history,
+    activeRun,
+    isDispatching: triggerScan.isPending,
+  });
+  const hasActiveRun = !!activeRun && isActiveRun(activeRun.status);
+  const hasCompletedRun = historyRuns.some((run) => run.status === "completed");
+  const hasHistory = historyRuns.length > 0;
+  const member = bootstrap?.member;
+  const displayName = member?.displayName ?? memberId;
+  const identity = [bootstrap?.roleName, bootstrap?.teamName].filter(Boolean).join(" / ");
+  const rootRef = useScanLobbyAnimations(reducedMotion, `${mode}-${historyRuns.length}`);
+  const selectedRunLabel = selectedRun ?? activeRun ?? historyRuns[0];
+
+  useEffect(() => {
+    if (triggerScan.isPending) {
+      setDismissedTerminalRunId(null);
+      setIsRedirecting(false);
+      return;
+    }
+
+    if (activeRun && !isTerminalRun(activeRun.status)) {
+      setDismissedTerminalRunId(null);
+      setIsRedirecting(false);
+    }
+  }, [activeRun, triggerScan.isPending]);
+
+  useEffect(() => {
+    if (!activeRun || !isTerminalRun(activeRun.status)) return;
+
+    void queryClient.invalidateQueries({
+      queryKey: ["analysis-chamber", memberId],
+    });
+    void queryClient.invalidateQueries({
+      queryKey: ["scan-lobby", memberId],
+    });
+  }, [activeRun, memberId, queryClient]);
+
+  useEffect(() => {
+    if (!activeRun || activeRun.status !== "completed") return;
+    if (redirectedRunIdRef.current === activeRun.id) return;
+
+    redirectedRunIdRef.current = activeRun.id;
+    setIsRedirecting(false);
+    void router.prefetch(`/profile/${memberId}`);
+
+    const redirectBeatTimer = window.setTimeout(() => {
+      setIsRedirecting(true);
+    }, 900);
+
+    const pushTimer = window.setTimeout(() => {
+      router.push(`/profile/${memberId}`);
+    }, 1450);
+
+    return () => {
+      window.clearTimeout(redirectBeatTimer);
+      window.clearTimeout(pushTimer);
+    };
+  }, [activeRun, memberId, router]);
+
+  const dispatchScan = (periodStart: string, periodEnd: string) => {
+    if (hasActiveRun || triggerScan.isPending) return;
+    triggerScan.mutate(
+      { periodStart, periodEnd },
+      {
+        onSuccess: (run) => {
+          setDismissedTerminalRunId(null);
+          setIsRedirecting(false);
+          setActiveRunId(run.analysis_run_id);
+          setSelectedRunId(null);
+        },
+      },
+    );
+  };
+
+  const chamberVisible =
+    triggerScan.isPending ||
+    (!!activeRun &&
+      (!isTerminalRun(activeRun.status) || activeRun.id !== dismissedTerminalRunId));
+
+  const chamberState: LiveScanChamberState | null = !chamberVisible
+    ? null
+    : isRedirecting
+      ? "redirecting"
+      : triggerScan.isPending && !activeRun
+        ? "opening"
+        : activeRun?.status === "completed"
+          ? "success"
+          : activeRun?.status === "failed"
+            ? "failed"
+            : activeRun?.status === "pending" || mode === "dispatching"
+              ? "dispatching"
+              : "scouting";
+
+  const chamberRun = activeRun;
+  const chamberPhase =
+    chamberRun?.status === "failed" || chamberRun?.status === "completed"
+      ? "verdict"
+      : chamberRun
+        ? getProgressPhase(chamberRun.status, chamberRun.progressPct)
+        : "sealing-order";
+  const chamberPeriodLabel =
+    chamberRun?.periodStart && chamberRun?.periodEnd
+      ? `${chamberRun.periodStart} - ${chamberRun.periodEnd}`
+      : selectedRunLabel?.periodStart && selectedRunLabel?.periodEnd
+        ? `${selectedRunLabel.periodStart} - ${selectedRunLabel.periodEnd}`
+        : "Preparing campaign window";
+
+  const handleReturnToScan = () => {
+    if (!chamberRun) return;
+    setSelectedRunId(chamberRun.id);
+    setDismissedTerminalRunId(chamberRun.id);
+    setActiveRunId(null);
+  };
+
+  const handleRetryFromChamber = () => {
+    if (!chamberRun) return;
+    dispatchScan(chamberRun.periodStart, chamberRun.periodEnd);
+  };
+
+  return (
+    <div ref={rootRef} className="space-y-6">
+      <ScanLobbyHeader
+        displayName={displayName}
+        identity={identity}
+        externalId={member?.externalId}
+        mode={mode}
+        hasCompletedRun={hasCompletedRun}
+        memberId={memberId}
+      />
+
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.58fr)]">
+        <ControlRoomSummary
+          mode={mode}
+          activeRun={activeRun}
+          displayRun={displayRun}
+          reducedMotion={reducedMotion}
+        />
+        <MissionControlPanel
+          displayRun={displayRun}
+          disabled={hasActiveRun}
+          isDispatching={triggerScan.isPending}
+          mutationError={triggerScan.error}
+          onDispatch={dispatchScan}
+        />
+      </div>
+
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <CampaignChronicle
+          memberId={memberId}
+          runs={historyRuns}
+          isLoading={historyLoading}
+          isError={historyError}
+          selectedRunId={selectedRunId}
+          activeRunId={activeRun?.id}
+          isRetryDisabled={hasActiveRun || triggerScan.isPending}
+          onSelect={setSelectedRunId}
+          onRetry={(run) => dispatchScan(run.periodStart, run.periodEnd)}
+        />
+        <ScoutAdvisor
+          mode={mode}
+          activeRun={activeRun}
+          selectedRun={selectedRun}
+          hasHistory={hasHistory}
+          hasCompletedRun={hasCompletedRun}
+        />
+      </div>
+
+      {chamberState && (
+        <LiveScanChamber
+          state={chamberState}
+          phase={chamberPhase}
+          run={chamberRun}
+          history={historyRuns}
+          reducedMotion={reducedMotion}
+          memberName={displayName}
+          periodLabel={chamberPeriodLabel}
+          onRetry={chamberState === "failed" ? handleRetryFromChamber : null}
+          onReturnToScan={chamberState === "failed" ? handleReturnToScan : null}
+        />
+      )}
+    </div>
+  );
+}
+
+function ScanLobbyHeader({
+  displayName,
+  identity,
+  externalId,
+  mode,
+  hasCompletedRun,
+  memberId,
+}: {
+  displayName: string;
+  identity: string;
+  externalId: string | null | undefined;
+  mode: ScanLobbyMode;
+  hasCompletedRun: boolean;
+  memberId: string;
+}) {
+  const statusText =
+    mode === "failed"
+      ? "Scan Failed"
+      : mode === "success"
+        ? "Profile Ready"
+        : mode === "scouting" || mode === "dispatching"
+          ? "Scan Running"
+          : "Ready";
+
+  return (
+    <header
+      className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between"
+      data-animate="panel"
+    >
+      <div>
+        <p
+          className="font-mono text-[10px] uppercase tracking-[0.24em]"
+          style={{ color: SCAN_LOBBY_TOKENS.eyebrow }}
+        >
+          Scan Lobby
+        </p>
+        <h1
+          className="mt-2 font-serif text-[1.5rem] leading-none md:text-[2rem]"
+          style={{ color: SCAN_LOBBY_TOKENS.title }}
+        >
+          {displayName}
+        </h1>
+        <p className="mt-2 font-mono text-xs" style={{ color: SCAN_LOBBY_TOKENS.metaText }}>
+          {[identity, externalId ? `@${externalId}` : null].filter(Boolean).join(" / ")}
+        </p>
+      </div>
+
+      <div className="flex flex-wrap items-stretch gap-3 md:items-stretch">
+        <div
+          className="flex min-h-[44px] min-w-[160px] flex-col justify-center rounded-md border px-3 py-1.5"
+          style={{
+            borderColor: SCAN_LOBBY_TOKENS.chipBorder,
+            background: SCAN_LOBBY_TOKENS.chipBg,
+          }}
+        >
+          <p className="font-mono text-[9px] uppercase tracking-[0.18em]" style={{ color: SCAN_LOBBY_TOKENS.labelText }}>
+            Chamber Status
+          </p>
+          <p className="mt-0.5 flex items-center gap-2 font-mono text-xs" style={{ color: SCAN_LOBBY_TOKENS.chipText }}>
+            <CircleDot className="h-3 w-3" aria-hidden="true" />
+            {statusText}
+          </p>
+        </div>
+        {hasCompletedRun && (
+          <Link
+            href={`/profile/${memberId}`}
+            className="inline-flex min-h-[44px] min-w-[200px] items-center gap-2 rounded-md border border-emerald-200/25 bg-emerald-200/8 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-emerald-100 transition hover:border-emerald-100/45 hover:bg-emerald-200/12 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-200"
+          >
+            Open Latest Profile
+            <ArrowRight className="h-3 w-3" aria-hidden="true" />
+          </Link>
+        )}
+      </div>
+    </header>
+  );
+}
+
+function ControlRoomSummary({
+  mode,
+  activeRun,
+  displayRun,
+  reducedMotion,
+}: {
+  mode: ScanLobbyMode;
+  activeRun: ScanRun | undefined;
+  displayRun: ScanRun | undefined;
+  reducedMotion: boolean;
+}) {
+  const focusRun = activeRun ?? displayRun;
+  const meta = focusRun ? getRunStatusMeta(focusRun.status) : null;
+  const phase = focusRun
+    ? getProgressPhase(focusRun.status, focusRun.progressPct)
+    : "sealing-order";
+  const tone = meta ? toneClasses[meta.tone] : toneClasses.pending;
+
+  return (
+    <section
+      className="rounded-lg border border-white/10 bg-[#120c0a] p-5"
+      data-animate="panel"
+      style={{
+        borderColor: SCAN_LOBBY_TOKENS.panelBorder,
+        background: SCAN_LOBBY_TOKENS.panelSurface,
+      }}
+    >
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="max-w-2xl">
+          <p className="font-mono text-[10px] uppercase tracking-[0.2em]" style={{ color: SCAN_LOBBY_TOKENS.eyebrow }}>
+            Scan Control Room
+          </p>
+          <h2 className="mt-2 font-serif text-xl" style={{ color: SCAN_LOBBY_TOKENS.title }}>
+            Starting a scan opens the live chamber
+          </h2>
+          <p className="mt-3 text-sm leading-6" style={{ color: SCAN_LOBBY_TOKENS.bodyText }}>
+            The live scan map no longer sits inline on this page. When a scan
+            starts, the chamber takes full focus until the run reaches a final status.
+          </p>
+        </div>
+
+        <div
+          className="rounded-md border px-4 py-3"
+          style={{ borderColor: tone.border, background: tone.bg }}
+        >
+          <p className="font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: SCAN_LOBBY_TOKENS.labelText }}>
+            Current readiness
+          </p>
+          <p className="mt-1 font-mono text-xs uppercase tracking-[0.12em]" style={{ color: tone.text }}>
+            {mode === "scouting" || mode === "dispatching"
+              ? "Live chamber engaged"
+              : mode === "failed"
+                ? "Retry required"
+                : "Control room ready"}
+          </p>
+        </div>
+      </div>
+
+      {focusRun ? (
+        <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
+          <div
+            className="rounded-md border p-4"
+            style={{
+              borderColor: SCAN_LOBBY_TOKENS.panelBorderSubtle,
+              background: SCAN_LOBBY_TOKENS.panelInsetStrong,
+            }}
+          >
+            <p className="font-mono text-[10px] uppercase tracking-[0.16em]" style={{ color: SCAN_LOBBY_TOKENS.labelText }}>
+              Latest known run
+            </p>
+            <div className="mt-3 flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <p className="text-lg font-semibold" style={{ color: tone.text }}>{meta?.label}</p>
+                <p className="mt-2 text-sm" style={{ color: SCAN_LOBBY_TOKENS.bodyText }}>{meta?.summary}</p>
+                {focusRun.progressStage && (
+                  <p className="mt-2 font-mono text-xs" style={{ color: SCAN_LOBBY_TOKENS.metaText }}>
+                    {focusRun.progressStage}
+                  </p>
+                )}
+              </div>
+              <div
+                className="rounded border px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em]"
+                style={{
+                  borderColor: SCAN_LOBBY_TOKENS.panelBorderSubtle,
+                  color: SCAN_LOBBY_TOKENS.metaText,
+                }}
+              >
+                {focusRun.periodStart} - {focusRun.periodEnd}
+              </div>
+            </div>
+          </div>
+
+          <div
+            className="rounded-md border p-4"
+            style={{
+              borderColor: SCAN_LOBBY_TOKENS.panelBorderSubtle,
+              background: SCAN_LOBBY_TOKENS.panelInsetStrong,
+            }}
+          >
+            <p className="font-mono text-[10px] uppercase tracking-[0.16em]" style={{ color: SCAN_LOBBY_TOKENS.labelText }}>
+              Chamber motion
+            </p>
+            <p className="mt-3 text-sm" style={{ color: SCAN_LOBBY_TOKENS.bodyText }}>
+              {reducedMotion
+                ? "Reduced motion is active. The live chamber should still show clear state progression."
+                : "Starting a scan will open a full-focus live chamber with phase and source progression."}
+            </p>
+            <p className="mt-3 font-mono text-[11px]" style={{ color: SCAN_LOBBY_TOKENS.bodyTextStrong }}>
+              Current phase key: {phase}
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div
+          className="mt-5 rounded-md border border-dashed px-4 py-5 text-sm"
+          style={{
+            borderColor: SCAN_LOBBY_TOKENS.dashedBorder,
+            background: SCAN_LOBBY_TOKENS.chipBg,
+            color: SCAN_LOBBY_TOKENS.bodyMuted,
+          }}
+        >
+          No previous run is selected. Choose a campaign window to dispatch the first scout.
+        </div>
+      )}
+    </section>
+  );
+}
+
+function MissionControlPanel({
+  displayRun,
+  disabled,
+  isDispatching,
+  mutationError,
+  onDispatch,
+}: {
+  displayRun: ScanRun | undefined;
+  disabled: boolean;
+  isDispatching: boolean;
+  mutationError: Error | null;
+  onDispatch: (periodStart: string, periodEnd: string) => void;
+}) {
+  return (
+    <aside className="space-y-4" data-animate="panel">
+      {displayRun?.status === "failed" && (
+        <BrokenBannerDetail run={displayRun} />
+      )}
+      <DispatchOrderForm
+        disabled={disabled}
+        isDispatching={isDispatching}
+        mutationError={mutationError}
+        onDispatch={onDispatch}
+      />
+    </aside>
+  );
+}
+
+function BrokenBannerDetail({ run }: { run: ScanRun }) {
+  return (
+    <section className="rounded-lg border border-red-300/25 bg-red-950/12 p-5">
+      <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-red-100/50">
+        Scan Failure
+      </p>
+      <h2 className="mt-2 flex items-center gap-2 text-xl font-semibold text-red-100">
+        <AlertTriangle className="h-5 w-5" aria-hidden="true" />
+        Failed Scan
+      </h2>
+      <p className="mt-3 text-sm text-red-50/70">
+        The scan could not gather enough signal from this campaign window.
+      </p>
+      {run.errorMessage && (
+        <p className="mt-3 rounded-md border border-red-300/20 bg-black/25 p-3 font-mono text-xs text-red-100/80">
+          {run.errorMessage}
+        </p>
+      )}
+    </section>
+  );
+}
+
+function DispatchOrderForm({
+  disabled,
+  isDispatching,
+  mutationError,
+  onDispatch,
+}: {
+  disabled: boolean;
+  isDispatching: boolean;
+  mutationError: Error | null;
+  onDispatch: (periodStart: string, periodEnd: string) => void;
+}) {
+  const [periodStart, setPeriodStart] = useState(daysAgo(90));
+  const [periodEnd, setPeriodEnd] = useState(today());
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (disabled || isDispatching) return;
+    if (!periodStart || !periodEnd) {
+      setValidationError("Campaign start and end are required.");
+      return;
+    }
+    if (periodStart > periodEnd) {
+      setValidationError("Campaign start must be before campaign end.");
+      return;
+    }
+    setValidationError(null);
+    onDispatch(periodStart, periodEnd);
+  };
+
+  const inputClass =
+    "w-full rounded-md border px-3 py-2.5 font-mono text-xs outline-none transition disabled:cursor-not-allowed disabled:opacity-45";
+
+  return (
+    <section
+      className="rounded-lg border p-5"
+      style={{
+        borderColor: SCAN_LOBBY_TOKENS.panelBorderStrong,
+        background: SCAN_LOBBY_TOKENS.panelSurfaceStrong,
+      }}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="font-mono text-[10px] uppercase tracking-[0.2em]" style={{ color: SCAN_LOBBY_TOKENS.eyebrow }}>
+            Scan Order
+          </p>
+          <h2 className="mt-2 font-serif text-2xl" style={{ color: SCAN_LOBBY_TOKENS.title }}>
+            Select a campaign window
+          </h2>
+        </div>
+        <CheckCircle2 className="mt-1 h-5 w-5" style={{ color: SCAN_LOBBY_TOKENS.eyebrow }} aria-hidden="true" />
+      </div>
+
+      <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="block" htmlFor="scan-campaign-start">
+            <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-[0.15em]" style={{ color: SCAN_LOBBY_TOKENS.labelText }}>
+              Window Start
+            </span>
+            <input
+              id="scan-campaign-start"
+              type="date"
+              value={periodStart}
+              onChange={(event) => setPeriodStart(event.target.value)}
+              disabled={disabled || isDispatching}
+              className={inputClass}
+              style={{
+                borderColor: SCAN_LOBBY_TOKENS.panelBorderStrong,
+                background: SCAN_LOBBY_TOKENS.inputBg,
+                color: SCAN_LOBBY_TOKENS.title,
+              }}
+            />
+          </label>
+          <label className="block" htmlFor="scan-campaign-end">
+            <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-[0.15em]" style={{ color: SCAN_LOBBY_TOKENS.labelText }}>
+              Window End
+            </span>
+            <input
+              id="scan-campaign-end"
+              type="date"
+              value={periodEnd}
+              onChange={(event) => setPeriodEnd(event.target.value)}
+              disabled={disabled || isDispatching}
+              className={inputClass}
+              style={{
+                borderColor: SCAN_LOBBY_TOKENS.panelBorderStrong,
+                background: SCAN_LOBBY_TOKENS.inputBg,
+                color: SCAN_LOBBY_TOKENS.title,
+              }}
+            />
+          </label>
+        </div>
+
+        {(validationError || mutationError) && (
+          <p className="rounded-md border border-red-300/20 bg-red-950/20 p-3 font-mono text-xs text-red-100/80">
+            {validationError ?? mutationError?.message ?? "Failed to start the scan."}
+          </p>
+        )}
+
+        <button
+          type="submit"
+          disabled={disabled || isDispatching}
+          title={disabled ? "A scan is already running" : undefined}
+          className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-md border px-4 py-3 font-mono text-xs uppercase tracking-[0.16em] transition hover:brightness-105 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200 disabled:cursor-not-allowed disabled:opacity-45"
+          style={{
+            borderColor: "rgba(224, 185, 105, 0.8)",
+            backgroundImage: "linear-gradient(135deg, #f2cb7f, #d6a759)",
+            color: SCAN_LOBBY_TOKENS.buttonPrimaryText,
+          }}
+          data-animate="dispatch-button"
+        >
+          <Play className="h-3.5 w-3.5" aria-hidden="true" />
+          {isDispatching ? "Starting Scan..." : disabled ? "Scan Running" : "Start Scan"}
+        </button>
+      </form>
+    </section>
+  );
+}
+
+function CampaignChronicle({
+  memberId,
+  runs,
+  isLoading,
+  isError,
+  selectedRunId,
+  activeRunId,
+  isRetryDisabled,
+  onSelect,
+  onRetry,
+}: {
+  memberId: string;
+  runs: ChamberAnalysisRun[];
+  isLoading: boolean;
+  isError: boolean;
+  selectedRunId: string | null;
+  activeRunId: string | undefined;
+  isRetryDisabled: boolean;
+  onSelect: (runId: string) => void;
+  onRetry: (run: ChamberAnalysisRun) => void;
+}) {
+  return (
+    <section
+      className="rounded-lg border border-white/10 bg-[#120c0a] p-5"
+      data-animate="panel"
+      style={{
+        borderColor: SCAN_LOBBY_TOKENS.panelBorder,
+        background: SCAN_LOBBY_TOKENS.panelSurface,
+      }}
+    >
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <p className="font-mono text-[10px] uppercase tracking-[0.2em]" style={{ color: SCAN_LOBBY_TOKENS.eyebrow }}>
+            Scan History
+          </p>
+          <h2 className="mt-2 font-serif text-2xl" style={{ color: SCAN_LOBBY_TOKENS.title }}>
+            Previous scan runs
+          </h2>
+        </div>
+        <span
+          className="rounded border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.12em]"
+          style={{
+            borderColor: SCAN_LOBBY_TOKENS.panelBorderSubtle,
+            color: SCAN_LOBBY_TOKENS.labelText,
+          }}
+        >
+          {runs.length} records
+        </span>
+      </div>
+
+      <div className="mt-5 space-y-3">
+        {isLoading && (
+          <p
+            className="rounded-md border p-5 font-mono text-xs"
+            style={{
+              borderColor: SCAN_LOBBY_TOKENS.loadingBorder,
+              background: SCAN_LOBBY_TOKENS.loadingBg,
+              color: SCAN_LOBBY_TOKENS.metaText,
+            }}
+          >
+            Loading scan history...
+          </p>
+        )}
+        {isError && (
+          <p className="rounded-md border border-red-300/20 bg-red-950/15 p-5 font-mono text-xs text-red-100/75">
+            Failed to load scan history.
+          </p>
+        )}
+        {!isLoading && !isError && runs.length === 0 && <EmptyChronicleState />}
+        {runs.map((run) => (
+          <CampaignRecordCard
+            key={run.id}
+            memberId={memberId}
+            run={run}
+            selected={run.id === selectedRunId || run.id === activeRunId}
+            retryDisabled={isRetryDisabled}
+            onSelect={() => onSelect(run.id)}
+            onRetry={() => onRetry(run)}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function EmptyChronicleState() {
+  return (
+    <div
+      className="rounded-md border border-dashed px-5 py-8 text-center"
+      style={{
+        borderColor: SCAN_LOBBY_TOKENS.dashedBorder,
+        background: SCAN_LOBBY_TOKENS.chipBg,
+      }}
+    >
+      <p className="font-serif text-xl" style={{ color: SCAN_LOBBY_TOKENS.title }}>No scan history yet</p>
+      <p className="mx-auto mt-2 max-w-md text-sm" style={{ color: SCAN_LOBBY_TOKENS.recordMeta }}>
+        Choose a campaign window and start the first profile scan.
+      </p>
+    </div>
+  );
+}
+
+function CampaignRecordCard({
+  memberId,
+  run,
+  selected,
+  retryDisabled,
+  onSelect,
+  onRetry,
+}: {
+  memberId: string;
+  run: ChamberAnalysisRun;
+  selected: boolean;
+  retryDisabled: boolean;
+  onSelect: () => void;
+  onRetry: () => void;
+}) {
+  const meta = getRunStatusMeta(run.status);
+  const tone = toneClasses[meta.tone];
+  const active = isActiveRun(run.status);
+  const [showErrorTrace, setShowErrorTrace] = useState(false);
+  const hasLongError = Boolean(run.errorMessage && run.errorMessage.length > 96);
+
+  return (
+    <article
+      className="rounded-md border p-4 transition"
+      style={{
+        borderColor: selected ? tone.border : SCAN_LOBBY_TOKENS.cardIdleBorder,
+        background: selected ? tone.bg : SCAN_LOBBY_TOKENS.cardIdleBg,
+      }}
+      data-animate="chronicle-card"
+    >
+      <button
+        type="button"
+        onClick={onSelect}
+        className="flex w-full cursor-pointer items-start justify-between gap-4 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200"
+      >
+        <div className="flex min-w-0 gap-3">
+          <span className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${tone.dot}`} />
+          <div className="min-w-0">
+            <h3 className="font-medium" style={{ color: tone.text }}>{meta.label}</h3>
+            <p className="mt-1 font-mono text-xs" style={{ color: SCAN_LOBBY_TOKENS.recordMeta }}>
+              {run.periodStart} - {run.periodEnd}
+            </p>
+            <p className="mt-2 text-sm" style={{ color: SCAN_LOBBY_TOKENS.bodyMuted }}>{meta.summary}</p>
+            {run.errorMessage && !hasLongError && (
+              <p className="mt-2 font-mono text-xs text-red-100/72">
+                {run.errorMessage}
+              </p>
+            )}
+            {run.errorMessage && hasLongError && showErrorTrace && (
+              <p className="mt-2 rounded border border-red-300/20 bg-black/20 p-2 font-mono text-xs text-red-100/72">
+                {run.errorMessage}
+              </p>
+            )}
+          </div>
+        </div>
+        <span
+          className="shrink-0 rounded border px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em]"
+          style={{
+            borderColor: SCAN_LOBBY_TOKENS.panelBorderSubtle,
+            color: SCAN_LOBBY_TOKENS.labelText,
+          }}
+        >
+          {active ? `${run.progressPct}%` : formatRunDate(run.completedAt)}
+        </span>
+      </button>
+
+      <div className="mt-4 flex flex-wrap gap-2 pl-5">
+        {run.status === "completed" && (
+          <Link
+            href={`/profile/${memberId}`}
+            className="inline-flex items-center gap-2 rounded-md border border-emerald-200/25 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-emerald-100 transition hover:border-emerald-100/45 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-200"
+          >
+            Open Profile
+            <ArrowRight className="h-3 w-3" aria-hidden="true" />
+          </Link>
+        )}
+        {run.status === "failed" && (
+          <>
+            <button
+              type="button"
+              onClick={onRetry}
+              disabled={retryDisabled}
+              className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-red-200/25 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-red-100 transition hover:border-red-100/45 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-200 disabled:cursor-not-allowed disabled:opacity-45"
+            >
+              <RotateCcw className="h-3 w-3" aria-hidden="true" />
+              Retry Scan
+            </button>
+            {run.errorMessage && (
+              <button
+                type="button"
+                onClick={() => setShowErrorTrace((current) => !current)}
+                className="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-200"
+                style={{
+                  borderColor: "rgba(255,255,255,0.12)",
+                  color: SCAN_LOBBY_TOKENS.bodyMuted,
+                }}
+              >
+                {showErrorTrace ? "Hide Error Trace" : "View Error Trace"}
+              </button>
+            )}
+          </>
+        )}
+      </div>
+    </article>
+  );
+}
+
+function ScoutAdvisor({
+  mode,
+  activeRun,
+  selectedRun,
+  hasHistory,
+  hasCompletedRun,
+}: {
+  mode: ScanLobbyMode;
+  activeRun: ScanRun | undefined;
+  selectedRun: ScanRun | undefined;
+  hasHistory: boolean;
+  hasCompletedRun: boolean;
+}) {
+  const sourceHealth = getAdvisorSourceHealth(mode, selectedRun ?? activeRun);
+
+  return (
+    <aside
+      className="rounded-lg border border-white/10 bg-[#120c0a] p-5"
+      data-animate="panel"
+      style={{
+        borderColor: SCAN_LOBBY_TOKENS.panelBorder,
+        background: SCAN_LOBBY_TOKENS.panelSurface,
+      }}
+    >
+      <p className="font-mono text-[10px] uppercase tracking-[0.2em]" style={{ color: SCAN_LOBBY_TOKENS.eyebrow }}>
+        Scan Advisor
+      </p>
+      <p className="mt-3 text-sm leading-6" style={{ color: SCAN_LOBBY_TOKENS.bodyText }}>
+        {getAdvisorCopy({ mode, activeRun, selectedRun, hasHistory })}
+      </p>
+
+      <div
+        className="mt-5 rounded-md border p-3"
+        style={{
+          borderColor: SCAN_LOBBY_TOKENS.panelBorderStrong,
+          background: SCAN_LOBBY_TOKENS.chipBg,
+        }}
+      >
+        <p className="font-mono text-[10px] uppercase tracking-[0.16em]" style={{ color: SCAN_LOBBY_TOKENS.eyebrow }}>
+          Recommended Next Action
+        </p>
+        <p className="mt-2 text-sm" style={{ color: SCAN_LOBBY_TOKENS.bodyTextStrong }}>
+          {getRecommendedNextAction({ mode, selectedRun, hasCompletedRun })}
+        </p>
+      </div>
+
+      <div className="mt-5 grid grid-cols-2 gap-3">
+        <AdvisorMetric label="Profile" value={hasCompletedRun ? "Ready" : "Pending"} />
+        <AdvisorMetric
+          label="Motion"
+          value={mode === "scouting" || mode === "dispatching" ? "Live" : "Calm"}
+        />
+      </div>
+
+      <div className="mt-5">
+        <p className="font-mono text-[10px] uppercase tracking-[0.16em]" style={{ color: SCAN_LOBBY_TOKENS.labelText }}>
+          Source Health
+        </p>
+        <div className="mt-3 space-y-2">
+          {sourceHealth.map((source) => (
+            <div
+              key={source.label}
+              className="flex items-center justify-between gap-3 rounded border px-3 py-2"
+              style={{
+                borderColor: SCAN_LOBBY_TOKENS.advisorNodeBorder,
+                background: SCAN_LOBBY_TOKENS.advisorNodeBg,
+              }}
+            >
+              <span className="truncate text-xs" style={{ color: SCAN_LOBBY_TOKENS.bodyMuted }}>{source.label}</span>
+              <span className={`font-mono text-[10px] uppercase tracking-[0.12em] ${source.className}`}>
+                {source.status}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </aside>
+  );
+}
+
+function getAdvisorSourceHealth(
+  mode: ScanLobbyMode,
+  run: ScanRun | undefined,
+) {
+  const sourceLabels = MAP_ANCHORS.map((anchor) => ({
+    id: anchor.id,
+    label: `${anchor.label} / ${anchor.technicalLabel}`,
+  }));
+
+  if (run?.status === "failed" || mode === "failed") {
+    return sourceLabels.map((source) => ({
+      label: source.label,
+      status: source.id === "github" ? "Broken" : "Dormant",
+      className: source.id === "github" ? "text-red-100" : "text-white/45",
+    }));
+  }
+
+  if (run?.status === "completed" || mode === "success") {
+    return sourceLabels.map((source) => ({
+      label: source.label,
+      status: "Sealed",
+      className: "text-emerald-100",
+    }));
+  }
+
+  if (mode === "scouting" || mode === "dispatching") {
+    return sourceLabels.map((source) => ({
+      label: source.label,
+      status: source.id === "github" ? "Watching" : "Dormant",
+      className: source.id === "github" ? "text-sky-100" : "text-white/45",
+    }));
+  }
+
+  return sourceLabels.map((source) => ({
+    label: source.label,
+    status: "Dormant",
+    className: "text-white/45",
+  }));
+}
+
+function AdvisorMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div
+      className="rounded-md border p-3"
+      style={{
+        borderColor: SCAN_LOBBY_TOKENS.panelBorderSubtle,
+        background: SCAN_LOBBY_TOKENS.advisorNodeBg,
+      }}
+    >
+      <p className="font-mono text-[10px] uppercase tracking-[0.14em]" style={{ color: SCAN_LOBBY_TOKENS.labelText }}>
+        {label}
+      </p>
+      <p className="mt-1 text-sm font-medium" style={{ color: SCAN_LOBBY_TOKENS.title }}>{value}</p>
+    </div>
+  );
+}

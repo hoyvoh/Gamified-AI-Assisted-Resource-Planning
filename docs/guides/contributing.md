@@ -141,4 +141,5 @@ All jobs must pass before merging.
 - [Ticket Workflow](ticket-workflow.md) — How to pick up and complete a ticket
 - [Backend Guide](backend-guide.md) — Backend code patterns (Clean Architecture)
 - [Frontend Guide](frontend-guide.md) — Frontend code patterns (Next.js App Router)
+- [ReactJS & Next.js Coding Standard](react-nextjs-coding-standard.md) — Frontend coding policy and review checklist
 - [Development Phases](../planning/phases/) — All tickets with acceptance criteria

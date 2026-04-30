@@ -1,0 +1,147 @@
+export const MEDIEVAL_THEME = {
+  backgrounds: {
+    pageBase: "#090607",
+    pageTop: "#12151c",
+    pageBottom: "#090607",
+    shellTop: "#181a21",
+    shellBottom: "#0d0a0b",
+    shellMid: "#11131a",
+    panelTop: "#1a1c24",
+    panelBottom: "#100d0e",
+    panelRaisedTop: "#232631",
+    panelRaisedBottom: "#141012",
+    plaqueTop: "#1f232d",
+    plaqueBottom: "#141013",
+    plaqueHoverTop: "#272b36",
+    plaqueHoverBottom: "#171214",
+  },
+  text: {
+    primary: "#e9ddd0",
+    heading: "#f1e4cf",
+    secondary: "#d7c9b6",
+    soft: "#c0b09e",
+    muted: "#a99883",
+    dim: "#897867",
+    inverse: "#2c2012",
+  },
+  accents: {
+    brass: "#d8af63",
+    brassBright: "#f2cb7f",
+    brassSoft: "#e3c99a",
+    brassBorder: "#8f7440",
+    brassBorderStrong: "#b89352",
+    brassBorderMuted: "#6d5730",
+    brassRailTop: "#cfad6f",
+    brassRailBottom: "#8a6d3a",
+    steel: "#42536d",
+    steelLight: "#9eafc5",
+    wax: "#824740",
+    waxLight: "#d8a39b",
+    forest: "#44604c",
+    forestLight: "#a8c0af",
+    iron: "#766b5e",
+    ironLight: "#c8baa4",
+    silver: "#8f826f",
+  },
+  effects: {
+    shellShadow: "0 34px 80px rgba(0, 0, 0, 0.65)",
+    panelShadow: "0 24px 70px rgba(0,0,0,0.35)",
+    parchmentOverlay: "url('/journey-map/backgrounds/base-paper-bg.png')",
+  },
+  status: {
+    active: {
+      border: "#617495",
+      background: "#1d2430",
+      text: "#b7c6dc",
+    },
+    danger: {
+      border: "#8f4538",
+      background: "#281613",
+      text: "#e4aea2",
+    },
+    idle: {
+      border: "#8f826d",
+      background: "#241c14",
+      text: "#d6c6a7",
+    },
+    ready: {
+      border: "#4d684f",
+      background: "#172019",
+      text: "#bad1bd",
+    },
+    unknown: {
+      border: "#b68a44",
+      background: "#261d14",
+      text: "#ead9b7",
+    },
+  },
+  gradients: {
+    page:
+      "radial-gradient(circle at 50% 0%, rgba(217,173,93,0.15), transparent 28%), radial-gradient(circle at 0% 100%, rgba(36,54,79,0.18), transparent 28%), linear-gradient(180deg, #090607 0%, #12151c 100%)",
+    shell:
+      "linear-gradient(180deg, rgba(24,26,33,0.96), rgba(13,10,11,0.98))",
+    shellOverlay:
+      "linear-gradient(180deg, rgba(216,175,99,0.09), rgba(216,175,99,0.02) 58%, transparent)",
+    shellFrame:
+      "radial-gradient(ellipse at 50% 18%, rgba(217,173,93,0.16), transparent 46%), radial-gradient(ellipse at 12% 58%, rgba(36,54,79,0.14), transparent 42%), radial-gradient(ellipse at 88% 70%, rgba(130,71,64,0.09), transparent 44%), linear-gradient(180deg, #090607 0%, #12151c 38%, #090607 100%)",
+    topBar:
+      "linear-gradient(90deg, rgba(216,175,99,0.08), rgba(22,24,31,0.98) 28%, rgba(12,11,14,0.98) 100%)",
+    rail: "linear-gradient(180deg, rgba(19,21,28,0.98), rgba(11,10,13,0.98))",
+    ledger:
+      "linear-gradient(180deg, rgba(22,24,31,0.97), rgba(12,11,14,0.98))",
+    ledgerHeader:
+      "linear-gradient(180deg, rgba(34,36,46,0.92), rgba(20,18,21,0.94))",
+    selectedRow:
+      "linear-gradient(90deg, rgba(109,87,48,0.26), rgba(28,27,33,0.62) 16%, rgba(17,15,18,0.94) 100%)",
+    idleRow:
+      "linear-gradient(90deg, rgba(255,255,255,0.02), transparent 34%)",
+    hoverRow:
+      "linear-gradient(90deg, rgba(109,87,48,0.16), rgba(22,20,25,0.72) 16%, rgba(14,12,15,0.94) 100%)",
+    primaryButton: "linear-gradient(135deg, #f2cb7f, #d6a759)",
+    primaryButtonHover: "linear-gradient(135deg, #f6d48e, #ddb268)",
+    secondaryButton: "linear-gradient(180deg, #1d2029, #141013)",
+    secondaryButtonHover: "linear-gradient(180deg, #242834, #171214)",
+  },
+  premiumNoir: {
+    pageText: "rgba(233, 221, 208, 0.92)",
+    chromeLabel: "rgba(216, 175, 99, 0.45)",
+    chromeMeta: "rgba(233, 221, 208, 0.28)",
+    divider: "rgba(216, 175, 99, 0.14)",
+    heroBorder: "rgba(216, 175, 99, 0.14)",
+    heroInnerBorder: "rgba(255, 255, 255, 0.03)",
+    heroSurface:
+      "linear-gradient(180deg, rgba(24,26,33,0.94), rgba(13,10,11,0.96))",
+    heroHeading: "#d8af63",
+    heroBody: "rgba(233, 221, 208, 0.68)",
+    heroGlow: "rgba(216, 175, 99, 0.22)",
+    footer: "rgba(233, 221, 208, 0.24)",
+  },
+} as const;
+
+export const MEDIEVAL_ANALYSIS_CHAMBER_PALETTE = {
+  parchment: MEDIEVAL_THEME.backgrounds.shellTop,
+  parchmentMid: MEDIEVAL_THEME.backgrounds.shellMid,
+  parchmentDeep: MEDIEVAL_THEME.backgrounds.shellBottom,
+  parchmentSurface: MEDIEVAL_THEME.backgrounds.panelTop,
+  parchmentReading: "#f5e8d0",
+  ink: MEDIEVAL_THEME.text.primary,
+  inkSoft: MEDIEVAL_THEME.text.soft,
+  inkMuted: MEDIEVAL_THEME.text.muted,
+  inkReading: "#1e130a",
+  inkReadingSoft: "#4a3520",
+  inkReadingMuted: "#6b5040",
+  gold: MEDIEVAL_THEME.accents.brass,
+  goldLight: MEDIEVAL_THEME.accents.brassBright,
+  goldPale: "rgba(209, 172, 103, 0.18)",
+  goldDark: MEDIEVAL_THEME.accents.brassBorderMuted,
+  ember: MEDIEVAL_THEME.accents.wax,
+  emberLight: MEDIEVAL_THEME.accents.waxLight,
+  crimson: "#6f241d",
+  crimsonLight: "#cf7d70",
+  azure: MEDIEVAL_THEME.accents.steel,
+  azureLight: MEDIEVAL_THEME.accents.steelLight,
+  vert: MEDIEVAL_THEME.accents.forest,
+  vertLight: MEDIEVAL_THEME.accents.forestLight,
+  silver: MEDIEVAL_THEME.accents.silver,
+  shellShadow: MEDIEVAL_THEME.effects.shellShadow,
+} as const;

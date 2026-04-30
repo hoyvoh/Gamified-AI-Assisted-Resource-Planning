@@ -1,29 +1,100 @@
-@import 'tailwindcss';
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
 
 @theme {
   /* Background layers */
-  --color-bg-deep: #0f1923;
-  --color-bg-surface: #162232;
-  --color-bg-elevated: #1e2f42;
+  --color-bg-deep: #05070d;
+  --color-bg-surface: #0a1320;
+  --color-bg-elevated: #101726;
 
-  /* Text */
-  --color-text-primary: #f1f5f9;
-  --color-text-secondary: #8b9db5;
-  --color-text-dim: #4a6180;
+  /* Text — white with cool blue tint for harmony */
+  --color-text-primary: #e6edf7;
+  --color-text-secondary: #a8b3c7;
+  --color-text-dim: #6b768a;
+  --color-text-muted: #4a5568;
 
-  /* Accents */
-  --color-accent-primary: #4f8ef7;
-  --color-accent-success: #34d399;
-  --color-accent-warning: #ffb830;
-  --color-accent-danger: #ff6b4a;
+  /* Accents — semantic colors */
+  --color-accent-primary: #3fd3ff;
+  --color-accent-success: #2ee6a6;
+  --color-accent-warning: #ffb547;
+  --color-accent-danger: #ff5c5c;
+
+  /* Glass system */
+  --glass-bg: rgba(255, 255, 255, 0.04);
+  --glass-bg-strong: rgba(255, 255, 255, 0.06);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-border-strong: rgba(255, 255, 255, 0.12);
+  --glass-glow: rgba(63, 211, 255, 0.12);
 
   /* Borders */
   --color-border-default: #334155;
   --color-border-subtle: #253549;
 
   /* Typography */
-  --font-sans: 'Inter', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-display: var(--font-orbitron), system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), "Fira Code", monospace;
+  /* Early Renaissance serif — for body descriptions in Analysis Chamber */
+  --font-serif: var(--font-eb-garamond), "Georgia", "Times New Roman", serif;
+}
+
+/* ─── Analysis Chamber — Dynasty Wars (Burgundy + Orange-Fire) ─────────────
+   Single source of truth for the chamber palette.
+   Components reference ANALYSIS_CHAMBER_SHELL_PALETTE (constants file) which
+   mirrors these values. Update here first, then sync the constants file.
+   ─────────────────────────────────────────────────────────────────────────── */
+:root {
+  /* — Shell backgrounds (dark burgundy) — */
+  --chamber-bg-outer: #0d0707; /* page backdrop */
+  --chamber-bg-frame: #15090a; /* outer frame / rail */
+  --chamber-bg-shell: #1a0f0a; /* main shell body */
+  --chamber-bg-topbar: #1b0f0a; /* top bar */
+  --chamber-bg-surface: #201008; /* elevated panel surfaces */
+  --chamber-bg-elevated: #2a1410; /* highest elevation */
+  --chamber-bg-hero: #0e0707; /* hero stage — darkest, character dominant */
+  --chamber-bg-steel: #1c2535; /* steel-blue side panel (unchanged for TRY accent) */
+
+  /* — Reading surface — parchment ONLY for text content areas — */
+  --chamber-reading-bg: #f5e8d0;
+
+  /* — Text on dark surfaces — */
+  --chamber-ink: #ffe8c0; /* primary (golden white on burgundy) */
+  --chamber-ink-soft: #ffb84d; /* secondary golden orange */
+  --chamber-ink-muted: #e8a850; /* tertiary muted orange — 5.2:1 contrast */
+  --chamber-ink-dim: #4a3828; /* near-invisible (unchanged) */
+
+  /* — Text on reading/parchment surfaces — */
+  --chamber-ink-reading: #1e130a; /* dark ink on parchment (unchanged) */
+  --chamber-ink-reading-soft: #4a3520; /* soft dark ink (unchanged) */
+  --chamber-ink-reading-muted: #6b5040; /* dim dark ink (unchanged) */
+
+  /* — Borders — */
+  --chamber-border-bronze: rgba(255, 149, 0, 0.35); /* main orange border */
+  --chamber-border-gold: rgba(255, 149, 0, 0.3); /* orange edge glow */
+  --chamber-border-steel: rgba(
+    58,
+    90,
+    140,
+    0.4
+  ); /* steel-blue accent (unchanged for TRY) */
+  --chamber-border-ember: rgba(255, 122, 31, 0.3); /* fire accent */
+
+  /* — Accents — Dynasty Wars orange-fire palette — */
+  --chamber-gold: #ff9500; /* primary orange-fire accent */
+  --chamber-gold-light: #ffb84d; /* bright golden-orange highlight */
+  --chamber-gold-dark: #d47a1f; /* orange readable on parchment */
+  --chamber-ember: #ff7a1f; /* fire orange — hot accent */
+  --chamber-ember-light: #ffaa4f; /* lighter fire */
+  --chamber-crimson: #8b1a1a; /* deep crimson (unchanged for KPT PROBLEM) */
+  --chamber-crimson-light: #c42828; /* brighter crimson for badges (unchanged) */
+  --chamber-azure: #2a5a9a; /* steel blue (unchanged for KPT TRY) */
+  --chamber-azure-light: #4a7aba; /* lighter steel blue (unchanged) */
+  --chamber-vert: #2a6a3a; /* forest green (unchanged for KPT KEEP) */
+  --chamber-vert-light: #4a8a5a; /* lighter vert (unchanged) */
+  --chamber-silver: #9aabb8; /* steel grey (unchanged) */ --background: oklch(1 0 0); --foreground: oklch(0.145 0 0); --card: oklch(1 0 0); --card-foreground: oklch(0.145 0 0); --popover: oklch(1 0 0); --popover-foreground: oklch(0.145 0 0); --primary: oklch(0.205 0 0); --primary-foreground: oklch(0.985 0 0); --secondary: oklch(0.97 0 0); --secondary-foreground: oklch(0.205 0 0); --muted: oklch(0.97 0 0); --muted-foreground: oklch(0.556 0 0); --accent: oklch(0.97 0 0); --accent-foreground: oklch(0.205 0 0); --destructive: oklch(0.577 0.245 27.325); --border: oklch(0.922 0 0); --input: oklch(0.922 0 0); --ring: oklch(0.708 0 0); --chart-1: oklch(0.87 0 0); --chart-2: oklch(0.556 0 0); --chart-3: oklch(0.439 0 0); --chart-4: oklch(0.371 0 0); --chart-5: oklch(0.269 0 0); --radius: 0.625rem; --sidebar: oklch(0.985 0 0); --sidebar-foreground: oklch(0.145 0 0); --sidebar-primary: oklch(0.205 0 0); --sidebar-primary-foreground: oklch(0.985 0 0); --sidebar-accent: oklch(0.97 0 0); --sidebar-accent-foreground: oklch(0.205 0 0); --sidebar-border: oklch(0.922 0 0); --sidebar-ring: oklch(0.708 0 0);
 }
 
 html,
@@ -31,6 +102,240 @@ body {
   background-color: var(--color-bg-deep);
   color: var(--color-text-primary);
   font-family: var(--font-sans);
+}
+
+body {
+  min-height: 100vh;
+  /* Radial gradient for 3D depth — center lighter, edges darker */
+  background-image: radial-gradient(
+    ellipse at 50% 45%,
+    rgba(10, 18, 33, 1) 0%,
+    rgba(5, 7, 13, 1) 75%
+  );
+}
+
+/* ─── Dossier Chamber Background ────────────────────────────────── */
+.dossier-chamber-bg {
+  background:
+    radial-gradient(
+      ellipse at 35% 45%,
+      rgba(63, 211, 255, 0.06) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse at 65% 55%,
+      rgba(46, 230, 166, 0.04) 0%,
+      transparent 40%
+    ),
+    radial-gradient(
+      ellipse at 50% 50%,
+      rgba(10, 18, 33, 0.95) 0%,
+      rgba(5, 7, 13, 1) 100%
+    );
+}
+
+/* ─── Frosted Glass Panel Utility ───────────────────────────────── */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.glass-panel-strong {
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border-strong);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* ─── Glow Border Utility (corner-focused holographic) ─────────── */
+.glow-border {
+  position: relative;
+}
+
+.glow-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    rgba(63, 211, 255, 0.3) 0%,
+    transparent 40%,
+    transparent 60%,
+    rgba(63, 211, 255, 0.15) 100%
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ─── Beacon Glow for Key Metrics ───────────────────────────────── */
+.beacon-glow {
+  text-shadow:
+    0 0 12px currentColor,
+    0 0 24px currentColor;
+}
+
+.beacon-glow-sm {
+  text-shadow: 0 0 8px currentColor;
+}
+
+/* ─── Sci-Fi Scrollbar ──────────────────────────────────────────── */
+.dossier-scroll {
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  /* Dynasty Wars orange-fire — matches Analysis Chamber palette */
+  scrollbar-color: rgba(255, 149, 0, 0.55) rgba(13, 7, 7, 0.6);
+}
+
+.dossier-scroll::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.dossier-scroll::-webkit-scrollbar-track {
+  background: rgba(13, 7, 7, 0.5);
+  border-left: 1px solid rgba(255, 149, 0, 0.08);
+}
+
+.dossier-scroll::-webkit-scrollbar-thumb {
+  border-radius: 2px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 149, 0, 0.65),
+    rgba(212, 122, 31, 0.5)
+  );
+  box-shadow:
+    0 0 8px rgba(255, 149, 0, 0.25),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.dossier-scroll:hover::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 149, 0, 0.8),
+    rgba(212, 122, 31, 0.65)
+  );
+  box-shadow:
+    0 0 12px rgba(255, 149, 0, 0.4),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.dossier-scroll::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 184, 77, 0.9),
+    rgba(255, 149, 0, 0.75)
+  );
+  box-shadow:
+    0 0 16px rgba(255, 149, 0, 0.5),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.dossier-scroll::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+@keyframes scan-map-grid-drift {
+  from {
+    background-position:
+      0 0,
+      0 0,
+      0 0,
+      0 0;
+  }
+  to {
+    background-position:
+      0 0,
+      0 0,
+      24px 12px,
+      24px 12px;
+  }
+}
+
+@keyframes scan-map-core-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.scan-map-grid-drift {
+  animation: scan-map-grid-drift 18s linear infinite;
+}
+
+.scan-map-core-spin {
+  animation: scan-map-core-spin 24s linear infinite;
+}
+
+.scan-map-core-spin-slow {
+  animation: scan-map-core-spin 36s linear infinite reverse;
+}
+
+.citadel-sigil-spin {
+  animation: citadel-sigil-spin 38s linear infinite;
+  transform-origin: center;
+}
+
+.citadel-sword-glow-idle {
+  animation: citadel-sword-glow-idle 5.6s ease-in-out infinite;
+}
+
+@keyframes citadel-sigil-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes citadel-sword-glow-idle {
+  0%,
+  100% {
+    opacity: 0.28;
+    transform: translateX(-50%) scaleY(0.98);
+  }
+
+  50% {
+    opacity: 0.42;
+    transform: translateX(-50%) scaleY(1.03);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scan-map-grid-drift,
+  .scan-map-core-spin,
+  .scan-map-core-spin-slow,
+  .citadel-sigil-spin,
+  .citadel-sword-glow-idle {
+    animation: none;
+  }
+}
+
+/* Early Renaissance serif for body descriptions in Analysis Chamber */
+.font-body-serif {
+  font-family: var(--font-serif);
 }
 
 :focus-visible {
@@ -45,5 +350,94 @@ body {
   *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+@theme inline {
+  --font-heading: var(--font-sans);
+  --font-sans: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
   }
 }
